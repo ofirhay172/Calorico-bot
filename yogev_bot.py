@@ -123,8 +123,6 @@ def strip_html_tags(text):
 
 # --- עדכון פרומפטים ל-GPT ---
 async def build_daily_menu(user: dict, context=None) -> str:
-    if context and hasattr(context, 'bot'):
-        await context.bot.send_message(chat_id=user['chat_id'], text="רגע, בונה עבורך תפריט...")
     diet_str = ', '.join(user.get('diet', []))
     eaten_today = ''
     if context and hasattr(context, 'user_data'):
@@ -497,8 +495,6 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         return ALLERGIES
 
 async def send_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, new_menu: bool = False):
-    if context.user_data is None:
-        context.user_data = {}
     user = context.user_data
     # פרומפט משופר ל-GPT
     prompt = (

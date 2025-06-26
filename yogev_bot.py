@@ -1086,7 +1086,11 @@ def main():
     application.add_handler(conv_handler)
 
     water_conv = ConversationHandler(
-        entry_points=[CommandHandler('שתיתי', water_intake_start), MessageHandler(filters.Regex('^שתיתי, תודה$'), water_intake_start)],
+        entry_points=[
+            CommandHandler('shititi', water_intake_start),
+            MessageHandler(filters.Regex('^שתיתי$'), water_intake_start),
+            MessageHandler(filters.Regex('^שתיתי, תודה$'), water_intake_start)
+        ],
         states={
             'WATER_AMOUNT': [MessageHandler(filters.TEXT & ~filters.COMMAND, water_intake_amount)]
         },

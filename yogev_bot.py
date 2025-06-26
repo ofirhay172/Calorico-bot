@@ -1099,9 +1099,7 @@ def main():
     )
     application.add_handler(water_conv)
 
-    application.add_handler(CommandHandler('עזרה', help_command))
     application.add_handler(CommandHandler('help', help_command))
-    application.add_handler(CommandHandler('ביטול', cancel))
     application.add_handler(CommandHandler('cancel', cancel))
 
     application.run_polling()

@@ -1306,6 +1306,13 @@ def main():
         event_type = data.get('event_type', '')
         worksheet.append_row([username, user_id, text, timestamp, event_type])
 
+    # --- יצירת credentials.json מתוך משתנה סביבה (לשימוש בענן) ---
+    credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+    if credentials_json:
+        with open("credentials.json", "w") as f:
+            f.write(credentials_json)
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={

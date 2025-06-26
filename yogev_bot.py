@@ -665,12 +665,16 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             context.user_data['eaten_today'] = []
         user = context.user_data
         meal_text = clean_meal_text(update.message.text)
+        # 1. חיזוק הפרומפט ל-GPT
         calorie_prompt = (
             f"עבור הארוחה הבאה: {meal_text}\n"
             "פירוט כל פריט בשורה נפרדת: שם, כמות (אם יש), קלוריות, חלבון (גרם).\n"
             "בסוף, כתוב שורה מסכמת: סה\"כ קלוריות, סה\"כ חלבון.\n"
-            "אל תוסיף טקסט נוסף, רק טבלה פשוטה. אם יש שתייה מתוקה (קולה, מיץ, תה ממותק, וכו'), כלול גם אותה."
+            "אל תוסיף טקסט נוסף, רק טבלה פשוטה. אם יש שתייה מתוקה (קולה, מיץ, תה ממותק, וכו'), כלול גם אותה.\n"
+            "אם התוצאה נמוכה מ-50 קלוריות, כנראה יש טעות – נסה להעריך שוב ולהחזיר תשובה ריאלית בלבד."
         )
+        # 2. שלח הודעת טעינה "רגע, מחשב... 🤖" לפני חישוב קלורי (ב-eaten/מה אכלתי היום)
+        await update.message.reply_text("רגע, מחשב... 🤖")
         # שלח ל-GPT את calorie_prompt
         calorie_response = await openai_client.chat.completions.create(
             model="gpt-4o",
@@ -686,6 +690,13 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         summary = f"<b>הוספת:</b> {clean_desc(eaten_text)} (<b>{calories}</b> קלוריות)\n<b>סה\"כ נאכל היום:</b> <b>{total_eaten}</b> קלוריות\n<b>נשארו לך:</b> <b>{remaining}</b> קלוריות להיום."
         summary = markdown_to_html(summary)
         await update.message.reply_text(summary, parse_mode='HTML')
+        # 3. נסה להצמיד (pin) את ההודעה עם 'נשארו לך: ... קלוריות להיום' (אם אפשרי)
+        # אחרי שליחת ההודעה עם הקלוריות שנותרו:
+        msg = await update.message.reply_text(f"נשארו לך: {remaining} קלוריות להיום.")
+        try:
+            await context.bot.pin_chat_message(chat_id=update.effective_chat.id, message_id=msg.message_id)
+        except Exception:
+            pass
         # לא לשאול שוב 'מה אכלת היום?'. להציע רק 'סיימתי'.
         keyboard = [
             [KeyboardButton('סיימתי')]

@@ -671,9 +671,19 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             "פירוט כל פריט בשורה נפרדת: שם, כמות (אם יש), קלוריות, חלבון (גרם).\n"
             "בסוף, כתוב שורה מסכמת: סה\"כ קלוריות, סה\"כ חלבון.\n"
             "אל תוסיף טקסט נוסף, רק טבלה פשוטה. אם יש שתייה מתוקה (קולה, מיץ, תה ממותק, וכו'), כלול גם אותה.\n"
-            "אם התוצאה נמוכה מ-50 קלוריות, כנראה יש טעות – נסה להעריך שוב ולהחזיר תשובה ריאלית בלבד."
+            "אם התוצאה נמוכה מ-50 קלוריות, כנראה יש טעות – נסה להעריך שוב ולהחזיר תשובה ריאלית בלבד.\n"
+            "דוגמה:\n"
+            "קלט: 2 ביצים, 2 פרוסות לחם, כף חמאה, סלט ירקות, קפה עם חלב סויה, 2 קוביות חלווה.\n"
+            "פלט:\n"
+            "ביצים (2): 140 קלוריות, 12 גרם חלבון\n"
+            "לחם לבן (2 פרוסות): 140 קלוריות, 4 גרם חלבון\n"
+            "חמאה (כף): 100 קלוריות, 0 גרם חלבון\n"
+            "סלט ירקות: 30 קלוריות, 1 גרם חלבון\n"
+            "קפה עם חלב סויה: 50 קלוריות, 2 גרם חלבון\n"
+            "חלווה (2 קוביות): 60 קלוריות, 1 גרם חלבון\n"
+            "סה\"כ: 520 קלוריות, 20 גרם חלבון"
         )
-        # 2. שלח הודעת טעינה "רגע, מחשב... 🤖" לפני חישוב קלורי (ב-eaten/מה אכלתי היום)
+        # 2. שלח הודעת טעינה אחת בלבד ב-eaten
         await update.message.reply_text("רגע, מחשב... 🤖")
         # שלח ל-GPT את calorie_prompt
         calorie_response = await openai_client.chat.completions.create(
@@ -684,7 +694,7 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         import re
         match = re.search(r"(\d+)", calorie_str)
         calories = int(match.group(1)) if match else 0
-        # בדיקה: אם התוצאה נמוכה מ-50 קלוריות, שלח פרומפט נוסף ל-GPT
+        # 3. אם החישוב נכשל, שלח גם הודעה עם הקלוריות שנותרו (לפי מה שידוע כרגע) ותבצע לה pin
         if calories < 50:
             retry_prompt = calorie_prompt + "\nשים לב: התוצאה שחישבת נמוכה מ-50 קלוריות, כנראה יש טעות. אנא הערך מחדש והחזר תשובה ריאלית בלבד."
             retry_response = await openai_client.chat.completions.create(
@@ -699,6 +709,18 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 calorie_str = retry_str
             else:
                 await update.message.reply_text("⚠️ החישוב לא נראה הגיוני. נסה לנסח שוב או לפרט יותר את מה שאכלת.")
+                # שלח הודעה עם הקלוריות שנותרו ותבצע לה pin
+                total_eaten = sum(e['calories'] for e in user['eaten_today'])
+                remaining = user.get('calorie_budget', 0) - total_eaten
+                try:
+                    await context.bot.unpin_all_chat_messages(chat_id=update.effective_chat.id)
+                except Exception:
+                    pass
+                msg = await update.message.reply_text(f"נשארו לך: {remaining} קלוריות להיום.")
+                try:
+                    await context.bot.pin_chat_message(chat_id=update.effective_chat.id, message_id=msg.message_id)
+                except Exception:
+                    pass
                 return DAILY
         user['eaten_today'].append({'desc': eaten_text, 'calories': calories})
         total_eaten = sum(e['calories'] for e in user['eaten_today'])
@@ -978,6 +1000,9 @@ async def menu_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def show_menu_with_keyboard(update, context, menu_text=None):
     user = context.user_data
     calorie_budget = user.get('calorie_budget', 1800)
+    # איפוס יומי
+    user['eaten_today'] = []
+    user['remaining_calories'] = calorie_budget
     if menu_text is None:
         menu_text = user.get('menu', '')
     msg = f"<b>התקציב היומי שלך: {calorie_budget} קלוריות</b>\n\n{menu_text}"
@@ -1001,6 +1026,12 @@ async def show_menu_with_keyboard(update, context, menu_text=None):
             'אני כאן אם תרצה להתייעץ אם אפשר לאכול נניח תפוח, או אם תרצה לכתוב לי מה אכלת היום',
             'אני כאן אם תרצי להתייעץ אם אפשר לאכול נניח תפוח, או אם תרצי לכתוב לי מה אכלת היום'
         ),
+        parse_mode='HTML'
+    )
+    # הודעת פתיחה ליום חדש + כפתור מה אכלתי היום
+    await update.message.reply_text(
+        'יום חדש התחיל! אפשר להתחיל לדווח מה אכלת היום.',
+        reply_markup=ReplyKeyboardMarkup([[KeyboardButton('מה אכלתי היום')]], resize_keyboard=True),
         parse_mode='HTML'
     )
 

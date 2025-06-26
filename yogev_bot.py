@@ -1326,7 +1326,7 @@ def main():
             SCHEDULE: [MessageHandler(filters.TEXT & ~filters.COMMAND, schedule_menu)],
             EDIT: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)],
         },
-        fallbacks=[CommandHandler('start', start), CommandHandler('ביטול', cancel), CommandHandler('cancel', cancel), CommandHandler('עזרה', help_command), CommandHandler('help', help_command)],
+        fallbacks=[CommandHandler('start', start), CommandHandler('cancel', cancel), CommandHandler('help', help_command)],
         allow_reentry=True
     )
     application.add_handler(conv_handler)
@@ -1336,7 +1336,7 @@ def main():
         states={
             'WATER_AMOUNT': [MessageHandler(filters.TEXT & ~filters.COMMAND, water_intake_amount)]
         },
-        fallbacks=[CommandHandler('ביטול', cancel), CommandHandler('cancel', cancel)],
+        fallbacks=[CommandHandler('cancel', cancel)],
         allow_reentry=True
     )
     application.add_handler(water_conv)

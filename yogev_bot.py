@@ -123,6 +123,8 @@ def strip_html_tags(text):
 
 # --- עדכון פרומפטים ל-GPT ---
 async def build_daily_menu(user: dict, context=None) -> str:
+    if context and hasattr(context, 'bot'):
+        await context.bot.send_message(chat_id=user['chat_id'], text="רגע, בונה עבורך תפריט...")
     diet_str = ', '.join(user.get('diet', []))
     eaten_today = ''
     if context and hasattr(context, 'user_data'):
@@ -554,6 +556,7 @@ async def show_daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return DAILY
 
 async def daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("רגע, בונה עבורך תפריט...")
     if update.message and update.message.text:
         if not update.message or not update.message.text:
             return DAILY
@@ -665,11 +668,14 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if 'eaten_today' not in context.user_data:
             context.user_data['eaten_today'] = []
         user = context.user_data
+        meal_text = clean_meal_text(update.message.text)
         calorie_prompt = (
-            f"כמה קלוריות יש ב: {eaten_text}? כתוב רק מספר מדויק או טווח מספרי, בלי טקסט נוסף, בלי הסברים, בלי מילים, בלי סימנים מיוחדים. "
-            "אם יש טווח, כתוב רק את המספר הממוצע. אם מדובר במשקה (למשל קולה, מיץ, חלב) - כתוב את הערך ל-100 מ\"ל. "
-            "אם מדובר במוצר שיש לו גרסה רגילה ו-light, כתוב את הערך לגרסה הרגילה בלבד. אל תמציא, ואם אינך בטוח - כתוב 0."
+            f"עבור הארוחה הבאה: {meal_text}\n"
+            "פירוט כל פריט בשורה נפרדת: שם, כמות (אם יש), קלוריות, חלבון (גרם).\n"
+            "בסוף, כתוב שורה מסכמת: סה\"כ קלוריות, סה\"כ חלבון.\n"
+            "אל תוסיף טקסט נוסף, רק טבלה פשוטה. אם יש שתייה מתוקה (קולה, מיץ, תה ממותק, וכו'), כלול גם אותה."
         )
+        # שלח ל-GPT את calorie_prompt
         calorie_response = await openai_client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": calorie_prompt}]
@@ -875,6 +881,7 @@ async def remind_in_10_minutes(update: Update, context: ContextTypes.DEFAULT_TYP
 
 # --- עדכון menu_decision: הסרת כפתור סיימתי מהשאלה הראשונה ---
 async def menu_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("רגע, בונה עבורך תפריט...")
     if not update.message or not update.message.text:
         return MENU
     # אם נלחץ כפתור 'להרכבת ארוחה לפי מה שיש בבית' – בקשת פירוט
@@ -977,6 +984,12 @@ def clean_desc(desc):
     import re
     return re.sub(r'^(אכלתי|שתיתי|שתיתי קפה|אכלתי קפה)\s+', '', desc.strip())
 
+def clean_meal_text(text):
+    # מסיר ביטויים כמו "בצהריים אכלתי", "בערב אכלתי", "בבוקר אכלתי", "ושתיתי", "ואכלתי" וכו'
+    text = re.sub(r'ב(בוקר|צהריים|ערב|לילה)\s*אכלתי\s*', '', text)
+    text = re.sub(r'ואכלתי\s*', '', text)
+    text = re.sub(r'ושתיתי\s*', '', text)
+    return text.strip()
 
 # --- Water Intake Handlers ---
 from telegram import ReplyKeyboardMarkup, KeyboardButton

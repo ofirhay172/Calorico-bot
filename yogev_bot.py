@@ -681,8 +681,25 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             messages=[{"role": "user", "content": calorie_prompt}]
         )
         calorie_str = calorie_response.choices[0].message.content.strip() if calorie_response and calorie_response.choices and calorie_response.choices[0].message and calorie_response.choices[0].message.content else ''
+        import re
         match = re.search(r"(\d+)", calorie_str)
         calories = int(match.group(1)) if match else 0
+        # בדיקה: אם התוצאה נמוכה מ-50 קלוריות, שלח פרומפט נוסף ל-GPT
+        if calories < 50:
+            retry_prompt = calorie_prompt + "\nשים לב: התוצאה שחישבת נמוכה מ-50 קלוריות, כנראה יש טעות. אנא הערך מחדש והחזר תשובה ריאלית בלבד."
+            retry_response = await openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": retry_prompt}]
+            )
+            retry_str = retry_response.choices[0].message.content.strip() if retry_response and retry_response.choices and retry_response.choices[0].message and retry_response.choices[0].message.content else ''
+            match_retry = re.search(r"(\d+)", retry_str)
+            retry_calories = int(match_retry.group(1)) if match_retry else 0
+            if retry_calories >= 50:
+                calories = retry_calories
+                calorie_str = retry_str
+            else:
+                await update.message.reply_text("⚠️ החישוב לא נראה הגיוני. נסה לנסח שוב או לפרט יותר את מה שאכלת.")
+                return DAILY
         user['eaten_today'].append({'desc': eaten_text, 'calories': calories})
         total_eaten = sum(e['calories'] for e in user['eaten_today'])
         remaining = user.get('calorie_budget', 0) - total_eaten

@@ -1260,6 +1260,8 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if "selected_diet_options" not in context.user_data:
             context.user_data["selected_diet_options"] = []
         selected_options = context.user_data["selected_diet_options"]
+        
+        # Check if user clicked "סיימתי בחירת העדפות"
         if "סיימתי בחירת העדפות" in diet_text:
             if not selected_options:
                 selected_options = ["אין העדפות מיוחדות"]
@@ -1287,6 +1289,8 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 parse_mode="HTML",
             )
             return ALLERGIES
+            
+        # Handle individual diet options
         for option in DIET_OPTIONS:
             if option in diet_text:
                 if option in selected_options:
@@ -1295,29 +1299,24 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     selected_options.append(option)
                 context.user_data["selected_diet_options"] = selected_options
                 keyboard = build_diet_keyboard(selected_options)
-                gender = (
-                    context.user_data.get("gender", "זכר")
-                    if context.user_data
-                    else "זכר"
-                )
+                gender = context.user_data.get("gender", "זכר")
+                
+                # Use gender-specific text
                 if gender == "נקבה":
-                    diet_text = (
-                        "מה העדפות התזונה שלך? (לחצי על אפשרות כדי לבחור/לבטל בחירה)"
-                    )
+                    diet_text_msg = "מה העדפות התזונה שלך? (לחצי על אפשרות כדי לבחור או לבטל בחירה)"
                 elif gender == "זכר":
-                    diet_text = (
-                        "מה העדפות התזונה שלך? (לחץ על אפשרות כדי לבחור/לבטל בחירה)"
-                    )
+                    diet_text_msg = "מה העדפות התזונה שלך? (לחץ על אפשרות כדי לבחור או לבטל בחירה)"
                 else:
-                    diet_text = (
-                        "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור/לבטל בחירה)"
-                    )
+                    diet_text_msg = "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור או לבטל בחירה)"
+                    
                 await update.message.reply_text(
-                    diet_text,
+                    diet_text_msg,
                     reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
                     parse_mode="HTML",
                 )
                 return DIET
+                
+        # If no valid option was selected, show error
         keyboard = build_diet_keyboard(selected_options)
         await update.message.reply_text(
             "אנא בחר/י אפשרות מהתפריט למטה או לחץ/י על 'סיימתי בחירת העדפות'",
@@ -1326,18 +1325,21 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         return DIET
     else:
+        # Initial call - show diet options
         context.user_data["selected_diet_options"] = []
         keyboard = build_diet_keyboard([])
-        gender = context.user_data.get(
-            "gender", "זכר") if context.user_data else "זכר"
+        gender = context.user_data.get("gender", "זכר")
+        
+        # Use gender-specific text
         if gender == "נקבה":
-            diet_text = "מה העדפות התזונה שלך? (לחצי על אפשרות כדי לבחור/לבטל בחירה)"
+            diet_text_msg = "מה העדפות התזונה שלך? (לחצי על אפשרות כדי לבחור או לבטל בחירה)"
         elif gender == "זכר":
-            diet_text = "מה העדפות התזונה שלך? (לחץ על אפשרות כדי לבחור/לבטל בחירה)"
+            diet_text_msg = "מה העדפות התזונה שלך? (לחץ על אפשרות כדי לבחור או לבטל בחירה)"
         else:
-            diet_text = "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור/לבטל בחירה)"
+            diet_text_msg = "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור או לבטל בחירה)"
+            
         await update.message.reply_text(
-            diet_text,
+            diet_text_msg,
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             parse_mode="HTML",
         )
@@ -1695,6 +1697,8 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         context.user_data = {}
     user = context.user_data
     gender = user.get("gender", "זכר")
+    
+    # Check if this is the first call (asking for food input)
     if not user.get("eaten_prompted", False):
         if update.message:
             if gender == "נקבה":
@@ -1708,6 +1712,71 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
         user["eaten_prompted"] = True
         return EATEN
+    
+    # Process food input
+    if update.message and update.message.text:
+        food_text = update.message.text.strip()
+        
+        try:
+            # Use GPT to process the food input
+            user_id = update.effective_user.id if update.effective_user else None
+            calorie_budget = user.get("calorie_budget", 1800)
+            total_eaten = sum(e["calories"] for e in user.get("eaten_today", []))
+            remaining = calorie_budget - total_eaten
+            diet = ", ".join(user.get("diet", []))
+            allergies = ", ".join(user.get("allergies", []))
+            eaten_today = ", ".join(
+                [clean_desc(e["desc"]) for e in user.get("eaten_today", [])]
+            )
+            
+            prompt = f"""המשתמש/ת כתב/ה: "{food_text}"
+
+זה נראה כמו דיווח אכילה. אנא:
+1. זהה את המאכל/ים
+2. חשב/י קלוריות מדויקות (במיוחד למשקאות - קולה, מיץ וכו')
+3. הוסף/י את זה למה שנאכל היום
+4. הצג/י סיכום: מה נוסף, כמה קלוריות, סה"כ היום, כמה נשארו
+
+מידע על המשתמש/ת:
+- תקציב יומי: {calorie_budget} קלוריות
+- נאכל היום: {eaten_today}
+- נשארו: {remaining} קלוריות
+- העדפות תזונה: {diet}
+- אלרגיות: {allergies}
+
+הצג תשובה בעברית, עם HTML בלבד (<b>, <i>), בלי Markdown. אל תמציא ערכים - אם אינך בטוח, ציין זאת."""
+
+            response = await call_gpt(prompt)
+            
+            if response:
+                await update.message.reply_text(response, parse_mode="HTML")
+                
+                # Try to extract calories from GPT response
+                import re
+                calorie_match = re.search(r"(\d+)\s*קלוריות?", response)
+                if calorie_match:
+                    calories = int(calorie_match.group(1))
+                    if "eaten_today" not in user:
+                        user["eaten_today"] = []
+                    user["eaten_today"].append({"desc": food_text, "calories": calories})
+                    user["remaining_calories"] = remaining - calories
+                    
+                    # Save to database
+                    if user_id:
+                        save_user(user_id, user)
+            else:
+                await update.message.reply_text(
+                    "תודה על הדיווח! עיבדתי את המידע.",
+                    parse_mode="HTML",
+                )
+                
+        except Exception as e:
+            logger.error(f"Error processing food input: {e}")
+            await update.message.reply_text(
+                "תודה על הדיווח! עיבדתי את המידע.",
+                parse_mode="HTML",
+            )
+    
     return EATEN
 
 
@@ -1983,12 +2052,70 @@ async def handle_food_report(
         context.user_data = {}
     if not update.message or not update.message.text:
         return ConversationHandler.END
+        
     text = food_text or update.message.text.strip()
-    if update.message:
+    
+    try:
+        # Use GPT to process the food input
+        user = context.user_data
+        user_id = update.effective_user.id if update.effective_user else None
+        calorie_budget = user.get("calorie_budget", 1800)
+        total_eaten = sum(e["calories"] for e in user.get("eaten_today", []))
+        remaining = calorie_budget - total_eaten
+        diet = ", ".join(user.get("diet", []))
+        allergies = ", ".join(user.get("allergies", []))
+        eaten_today = ", ".join(
+            [clean_desc(e["desc"]) for e in user.get("eaten_today", [])]
+        )
+        
+        prompt = f"""המשתמש/ת כתב/ה: "{text}"
+
+זה נראה כמו דיווח אכילה. אנא:
+1. זהה את המאכל/ים
+2. חשב/י קלוריות מדויקות (במיוחד למשקאות - קולה, מיץ וכו')
+3. הוסף/י את זה למה שנאכל היום
+4. הצג/י סיכום: מה נוסף, כמה קלוריות, סה"כ היום, כמה נשארו
+
+מידע על המשתמש/ת:
+- תקציב יומי: {calorie_budget} קלוריות
+- נאכל היום: {eaten_today}
+- נשארו: {remaining} קלוריות
+- העדפות תזונה: {diet}
+- אלרגיות: {allergies}
+
+הצג תשובה בעברית, עם HTML בלבד (<b>, <i>), בלי Markdown. אל תמציא ערכים - אם אינך בטוח, ציין זאת."""
+
+        response = await call_gpt(prompt)
+        
+        if response:
+            await update.message.reply_text(response, parse_mode="HTML")
+            
+            # Try to extract calories from GPT response
+            import re
+            calorie_match = re.search(r"(\d+)\s*קלוריות?", response)
+            if calorie_match:
+                calories = int(calorie_match.group(1))
+                if "eaten_today" not in user:
+                    user["eaten_today"] = []
+                user["eaten_today"].append({"desc": text, "calories": calories})
+                user["remaining_calories"] = remaining - calories
+                
+                # Save to database
+                if user_id:
+                    save_user(user_id, user)
+        else:
+            await update.message.reply_text(
+                f"תודה על הדיווח! עיבדתי את המידע: {text}",
+                parse_mode="HTML",
+            )
+            
+    except Exception as e:
+        logger.error(f"Error processing food report: {e}")
         await update.message.reply_text(
             f"תודה על הדיווח! עיבדתי את המידע: {text}",
             parse_mode="HTML",
         )
+        
     return ConversationHandler.END
 
 
@@ -2021,6 +2148,9 @@ async def generate_personalized_menu(
 ):
     user_data = context.user_data or {}
 
+    if not update.message:
+        return
+
     await update.message.reply_text("בונה עבורך תפריט מותאם אישית... ⏳")
 
     try:
@@ -2030,17 +2160,34 @@ async def generate_personalized_menu(
         # שליחת פרומפט ל-GPT
         response = await call_gpt(prompt)
 
-        # שליחת התפריט למשתמש
-        await update.message.reply_text(
-            response,
-            parse_mode=ParseMode.HTML,
-            disable_web_page_preview=True
-        )
+        if response:
+            # שליחת התפריט למשתמש
+            await update.message.reply_text(
+                response,
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True
+            )
 
-        # (אופציונלי) שמירה למסד נתונים
-        # save_daily_menu(user_data["user_id"], response)
+            # שמירה למסד נתונים
+            user_id = update.effective_user.id if update.effective_user else None
+            if user_id:
+                try:
+                    # Save user data with the menu
+                    user_data["last_menu"] = response
+                    user_data["last_menu_date"] = date.today().isoformat()
+                    save_user(user_id, user_data)
+                except Exception as db_error:
+                    logger.error(f"Error saving menu to database: {db_error}")
+        else:
+            await update.message.reply_text(
+                "לא הצלחתי ליצור תפריט כרגע. נסה/י שוב בעוד רגע.",
+                parse_mode="HTML"
+            )
 
     except Exception as e:
-        print(f"[ERROR] בבניית תפריט אישי: {e}")
-        await update.message.reply_text("אירעה תקלה בבניית התפריט 😔 נסה/י שוב בעוד רגע.")
+        logger.error(f"Error generating personalized menu: {e}")
+        await update.message.reply_text(
+            "אירעה תקלה בבניית התפריט 😔 נסה/י שוב בעוד רגע.",
+            parse_mode="HTML"
+        )
 

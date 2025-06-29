@@ -261,18 +261,22 @@ def validate_numeric_input(text: str, min_val: float, max_val: float, field_name
 
 
 def build_user_prompt_for_gpt(user_data: dict) -> str:
+    """בונה פרומפט מותאם אישית עבור GPT."""
+    diet_str = ", ".join(user_data.get("diet", [])) if user_data.get("diet") else "אין העדפות מיוחדות"
+    allergies_str = ", ".join(user_data.get("allergies", [])) if user_data.get("allergies") else "אין"
+    
     return f"""
     בנה תפריט יומי מותאם אישית עבור המשתמש/ת:
-    - שם: {user_data.get('name')}
-    - מגדר: {user_data.get('gender')}
-    - גיל: {user_data.get('age')}
-    - גובה: {user_data.get('height')} ס\"מ
-    - משקל: {user_data.get('weight')} ק\"ג
-    - מטרה: {user_data.get('goal')}
-    - תקציב קלורי יומי: {user_data.get('calories')}
-    - העדפות תזונה: {user_data.get('diet_preferences')}
-    - אלרגיות: {user_data.get('allergies')}
-    - סוג פעילות: {user_data.get('activity_type')}
+    - שם: {user_data.get('name', 'לא צוין')}
+    - מגדר: {user_data.get('gender', 'לא צוין')}
+    - גיל: {user_data.get('age', 'לא צוין')}
+    - גובה: {user_data.get('height', 'לא צוין')} ס"מ
+    - משקל: {user_data.get('weight', 'לא צוין')} ק"ג
+    - מטרה: {user_data.get('goal', 'לא צוין')}
+    - תקציב קלורי יומי: {user_data.get('calorie_budget', 1800)}
+    - העדפות תזונה: {diet_str}
+    - אלרגיות: {allergies_str}
+    - סוג פעילות: {user_data.get('activity_type', 'לא צוין')}
     - תדירות פעילות: {user_data.get('activity_frequency', 'לא צוין')}
     - משך פעילות: {user_data.get('activity_duration', 'לא צוין')}
     
@@ -283,13 +287,41 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
     - 2-3 נשנושים (~10%)
 
     הפק תפריט ב-HTML ברור, עם כותרות, רשימות ואחוז קלוריות לכל חלק.
+    השתמש בעברית יומיומית ופשוטה בלבד.
     """
 
 async def call_gpt(prompt: str) -> str:
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-    response = await openai.ChatCompletion.acreate(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
-    )
-    return response.choices[0].message.content.strip()
+    """קורא ל-GPT API ומחזיר תשובה."""
+    try:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            logger.error("OpenAI API key not found")
+            return "לא הצלחתי ליצור קשר עם שירות ה-AI. אנא נסה/י שוב מאוחר יותר."
+        
+        client = openai.AsyncOpenAI(api_key=api_key)
+        response = await client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        if response and response.choices and response.choices[0].message:
+            content = response.choices[0].message.content
+            return content.strip() if content else "לא קיבלתי תשובה מ-AI. אנא נסה/י שוב."
+        else:
+            logger.error("Empty response from OpenAI")
+            return "לא קיבלתי תשובה מ-AI. אנא נסה/י שוב."
+            
+    except openai.AuthenticationError:
+        logger.error("OpenAI authentication failed")
+        return "שגיאה באימות עם שירות ה-AI. אנא פנה/י למנהל המערכת."
+    except openai.RateLimitError:
+        logger.error("OpenAI rate limit exceeded")
+        return "שירות ה-AI עמוס כרגע. אנא נסה/י שוב בעוד כמה דקות."
+    except openai.APIError as e:
+        logger.error(f"OpenAI API error: {e}")
+        return "שגיאה בשירות ה-AI. אנא נסה/י שוב מאוחר יותר."
+    except Exception as e:
+        logger.error(f"Unexpected error in call_gpt: {e}")
+        return "אירעה שגיאה לא צפויה. אנא נסה/י שוב."

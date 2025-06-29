@@ -14,6 +14,7 @@ USERS_FILE = "calorico_users.json"
     GOAL,
     BODY_FAT,
     ACTIVITY,
+    ACTIVITY_TYPE,
     DIET,
     ALLERGIES,
     MENU,
@@ -23,7 +24,7 @@ USERS_FILE = "calorico_users.json"
     SCHEDULE,
     EDIT,
     BODY_FAT_TARGET,
-) = range(17)
+) = range(18)
 
 GENDER_OPTIONS = ["זכר", "נקבה", "אחר"]
 GOAL_OPTIONS = [
@@ -47,6 +48,32 @@ ACTIVITY_OPTIONS_FEMALE = [
     "מעט (2-3 אימונים בשבוע)",
     "הרבה (4-5 אימונים בשבוע)",
     "כל יום",
+]
+
+ACTIVITY_TYPE_OPTIONS = [
+    "אימוני כוח",
+    "אימוני כושר",
+    "ריצה",
+    "שחייה",
+    "אופניים",
+    "יוגה",
+    "פילאטיס",
+    "ספורט קבוצתי",
+    "הליכה",
+    "אין סוג ספציפי",
+]
+
+DIET_OPTIONS = [
+    "צמחוני",
+    "טבעוני",
+    "קטוגני",
+    "ללא גלוטן",
+    "ללא לקטוז",
+    "דל פחמימות",
+    "דל שומן",
+    "דל נתרן",
+    "פאלאו",
+    "אין העדפות מיוחדות",
 ]
 
 # System buttons and gendered actions

@@ -19,30 +19,39 @@ from telegram import (
 from telegram.ext import ContextTypes, ConversationHandler
 
 from config import (
+    ACTIVITY_OPTIONS_FEMALE,
+    ACTIVITY_OPTIONS_MALE,
+    ACTIVITY_TYPE,
+    ACTIVITY_TYPE_OPTIONS,
     ALLERGIES,
+    BODY_FAT,
     BODY_FAT_TARGET,
     DAILY,
+    DIET,
+    DIET_OPTIONS,
     EDIT,
     EATEN,
+    GENDER,
+    GENDER_OPTIONS,
+    GOAL,
+    GOAL_OPTIONS,
+    HEIGHT,
     MENU,
+    NAME,
     SCHEDULE,
+    SUMMARY,
+    WEIGHT,
     SYSTEM_BUTTONS,
     GENDERED_ACTION,
-    GENDER_OPTIONS,
-    GOAL_OPTIONS,
-    ACTIVITY_OPTIONS_MALE,
-    ACTIVITY_OPTIONS_FEMALE,
     USERS_FILE,
-    NAME,
-    GENDER,
     AGE,
-    HEIGHT,
-    WEIGHT,
     GOAL,
     BODY_FAT,
     ACTIVITY,
     DIET,
     SUMMARY,
+    ACTIVITY_TYPE_OPTIONS,
+    DIET_OPTIONS,
 )
 from db import save_user, load_user, save_daily_entry
 from utils import (
@@ -346,11 +355,6 @@ async def get_body_fat_target(
         return ACTIVITY
 
 
-# TODO: להמשיך להעביר את כל שאר ה-handlers מהקובץ המקורי, כולל free text, דוחות, מים, תפריט וכו'.
-
-logger = logging.getLogger(__name__)
-
-
 async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """שואל את המשתמש לרמת פעילות וממשיך לשאלת תזונה."""
     if update.message and update.message.text:
@@ -370,11 +374,44 @@ async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             )
             return ACTIVITY
         context.user_data["activity"] = activity
+        
+        # Show activity type options with keyboard
+        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_TYPE_OPTIONS]
+        await update.message.reply_text(
+            "מה סוג הפעילות הגופנית שלך?",
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY_TYPE
+
+
+async def get_activity_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """שואל את המשתמש לסוג הפעילות וממשיך לשאלת תזונה."""
+    if update.message and update.message.text:
+        activity_type = update.message.text.strip()
+        if activity_type not in ACTIVITY_TYPE_OPTIONS:
+            keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_TYPE_OPTIONS]
+            await update.message.reply_text(
+                "בחר/י סוג פעילות מהתפריט למטה:",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+            return ACTIVITY_TYPE
+        context.user_data["activity_type"] = activity_type
+        
+        # Show diet options with keyboard
+        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
         gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
         diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)" if gender == "נקבה" else "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
         await update.message.reply_text(
             diet_text,
-            reply_markup=ReplyKeyboardRemove(),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
             parse_mode="HTML",
         )
         return DIET
@@ -384,25 +421,21 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """שואל את המשתמש להעדפות תזונה וממשיך לשאלת אלרגיות."""
     if update.message and update.message.text:
         diet_text = update.message.text.strip()
-        # Parse diet preferences
-        diet_options = [
-            "צמחוני",
-            "טבעוני",
-            "קטוגני",
-            "ללא גלוטן",
-            "ללא לקטוז",
-            "דל פחמימות",
-            "דל שומן",
-            "דל נתרן",
-            "פאלאו",
-            "אין העדפות מיוחדות",
-        ]
-        selected_diet = []
-        for option in diet_options:
-            if option.lower() in diet_text.lower():
-                selected_diet.append(option)
-        if not selected_diet:
+        
+        # Handle multiple selections
+        if "אין העדפות מיוחדות" in diet_text:
             selected_diet = ["אין העדפות מיוחדות"]
+        else:
+            # Parse selected diet options
+            selected_diet = []
+            for option in DIET_OPTIONS:
+                if option in diet_text:
+                    selected_diet.append(option)
+            
+            # If no specific options selected, default to no preferences
+            if not selected_diet:
+                selected_diet = ["אין העדפות מיוחדות"]
+        
         context.user_data["diet"] = selected_diet
         
         # Calculate BMR and calorie budget

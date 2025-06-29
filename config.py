@@ -15,6 +15,17 @@ USERS_FILE = "calorico_users.json"
     BODY_FAT,
     ACTIVITY,
     ACTIVITY_TYPE,
+    ACTIVITY_FREQUENCY,
+    ACTIVITY_DURATION,
+    TRAINING_TIME,
+    CARDIO_GOAL,
+    STRENGTH_GOAL,
+    SUPPLEMENTS,
+    SUPPLEMENT_TYPES,
+    LIMITATIONS,
+    MIXED_ACTIVITIES,
+    MIXED_FREQUENCY,
+    MIXED_MENU_ADAPTATION,
     DIET,
     ALLERGIES,
     MENU,
@@ -24,7 +35,7 @@ USERS_FILE = "calorico_users.json"
     SCHEDULE,
     EDIT,
     BODY_FAT_TARGET,
-) = range(18)
+) = range(29)
 
 GENDER_OPTIONS = ["זכר", "נקבה", "אחר"]
 GOAL_OPTIONS = [
@@ -51,16 +62,65 @@ ACTIVITY_OPTIONS_FEMALE = [
 ]
 
 ACTIVITY_TYPE_OPTIONS = [
+    "אין פעילות",
+    "הליכה קלה",
+    "הליכה מהירה / ריצה קלה",
     "אימוני כוח",
-    "אימוני כושר",
-    "ריצה",
+    "אימוני HIIT / קרוספיט",
+    "יוגה / פילאטיס",
+    "שילוב של כמה סוגים",
+]
+
+ACTIVITY_FREQUENCY_OPTIONS = [
+    "1-2 פעמים בשבוע",
+    "3-4 פעמים בשבוע",
+    "5-6 פעמים בשבוע",
+    "כל יום",
+]
+
+ACTIVITY_DURATION_OPTIONS = [
+    "15-30 דקות",
+    "30-45 דקות",
+    "45-60 דקות",
+    "60+ דקות",
+]
+
+TRAINING_TIME_OPTIONS = [
+    "בוקר",
+    "צהריים",
+    "ערב",
+]
+
+CARDIO_GOAL_OPTIONS = [
+    "ירידה במשקל",
+    "שיפור סיבולת לב-ריאה",
+    "תחזוקה כללית",
+]
+
+STRENGTH_GOAL_OPTIONS = [
+    "חיטוב",
+    "עלייה במסת שריר",
+    "ירידה באחוזי שומן",
+    "שילוב",
+]
+
+SUPPLEMENT_OPTIONS = [
+    "אבקת חלבון",
+    "קראטין",
+    "מולטי ויטמין",
+    "אומגה 3",
+    "BCAA",
+    "אחר",
+]
+
+MIXED_ACTIVITY_OPTIONS = [
+    "אימוני כוח",
+    "הליכה / ריצה",
+    "יוגה / פילאטיס",
+    "אימוני HIIT",
     "שחייה",
     "אופניים",
-    "יוגה",
-    "פילאטיס",
     "ספורט קבוצתי",
-    "הליכה",
-    "אין סוג ספציפי",
 ]
 
 DIET_OPTIONS = [

@@ -82,23 +82,17 @@ from handlers import (
     handle_daily_choice,
     handle_free_text_input,
     help_command,
-    menu_decision,
     remind_in_10_minutes,
-    report_command,
-    reports_command,
-    reset_command,
     schedule_menu,
     send_summary,
     send_water_reminder,
     set_water_reminder_opt_in,
     show_daily_menu,
-    show_menu_with_keyboard,
-    show_reports_menu,
     start,
     water_intake_amount,
     water_intake_start,
 )
-from utils import calculate_bmr, set_openai_client, build_main_keyboard
+from utils import calculate_bmr, set_openai_client, build_main_keyboard, build_daily_menu
 
 # Configure logging
 logging.basicConfig(
@@ -211,7 +205,7 @@ def main():
             MIXED_MENU_ADAPTATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_menu_adaptation)],
             DIET: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_diet)],
             ALLERGIES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies)],
-            MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, menu_decision)],
+            MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_daily_choice)],
             DAILY: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_daily_choice)],
             EATEN: [MessageHandler(filters.TEXT & ~filters.COMMAND, eaten)],
             SUMMARY: [MessageHandler(filters.TEXT & ~filters.COMMAND, send_summary)],
@@ -264,9 +258,9 @@ def main():
     # Command handlers
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("cancel", cancel))
-    application.add_handler(CommandHandler("reset", reset_command))
-    application.add_handler(CommandHandler("report", report_command))
-    application.add_handler(CommandHandler("reports", reports_command))
+    # application.add_handler(CommandHandler("reset", reset_command))
+    # application.add_handler(CommandHandler("report", report_command))
+    # application.add_handler(CommandHandler("reports", reports_command))
 
     # Set up scheduler
     application.post_init = start_scheduler

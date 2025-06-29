@@ -41,18 +41,19 @@ USERS_FILE = "calorico_users.json"
     SCHEDULE,
     EDIT,
     WATER_REMINDER_OPT_IN,
-) = range(35)
+    BODY_FAT_CURRENT,
+    BODY_FAT_TARGET_GOAL,
+) = range(37)
 
 GENDER_OPTIONS = ["זכר", "נקבה", "אחר"]
 GOAL_OPTIONS = [
     "ירידה במשקל",
     "חיטוב",
-    "שמירה",
     "עלייה במסת שריר",
-    "עלייה כללית",
-    "שיפור ספורט",
-    "פשוט תזונה בריאה",
-    "לרדת באחוזי שומן",
+    "שמירה על המשקל",
+    "תזונה בריאה ומאוזנת",
+    "שיפור ביצועים פיזיים",
+    "ירידה באחוזי שומן",
 ]
 ACTIVITY_OPTIONS_MALE = [
     "לא מתאמן",

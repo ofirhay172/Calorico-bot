@@ -74,6 +74,8 @@ from config import (
     ALLERGIES_ADDITIONAL,
     MIXED_DURATION_OPTIONS,
     WATER_REMINDER_OPT_IN,
+    BODY_FAT_CURRENT,
+    BODY_FAT_TARGET_GOAL,
 )
 from db import save_user, load_user, save_daily_entry, save_user_allergies_data, save_food_entry
 from utils import (
@@ -343,7 +345,7 @@ async def get_weight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש למטרה וממשיך לשאלת פעילות גופנית."""
+    """שואל את המשתמש למטרה וממשיך לשאלת פעילות גופנית או אחוזי שומן."""
     if update.message and update.message.text:
         goal = update.message.text.strip()
         if goal not in GOAL_OPTIONS:
@@ -357,7 +359,12 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
             return GOAL
         context.user_data["goal"] = goal
-        # ישר לפעילות גופנית
+        
+        # אם נבחר "ירידה באחוזי שומן", המשך לשאלות אחוזי שומן
+        if goal == "ירידה באחוזי שומן":
+            return await get_body_fat_current(update, context)
+        
+        # אחרת, המשך לפעילות גופנית
         return await get_activity(update, context)
     else:
         keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
@@ -370,6 +377,116 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 parse_mode="HTML",
             )
         return GOAL
+
+
+async def get_body_fat_current(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """שואל את המשתמש על אחוז השומן הנוכחי."""
+    if update.message and update.message.text:
+        body_fat_text = update.message.text.strip()
+        
+        # בדיקה אם המשתמש בחר "לא ידוע"
+        if body_fat_text.lower() in ["לא ידוע", "לא יודע", "אין לי מושג"]:
+            context.user_data["body_fat_current"] = "לא ידוע"
+            # המשך לשאלת המטרה
+            return await get_body_fat_target_goal(update, context)
+        
+        # אימות קלט מספרי
+        if not validate_numeric_input(body_fat_text, 5, 50):
+            keyboard = [
+                [KeyboardButton("לא ידוע")],
+                [KeyboardButton("5-10%")],
+                [KeyboardButton("10-15%")],
+                [KeyboardButton("15-20%")],
+                [KeyboardButton("20-25%")],
+                [KeyboardButton("25-30%")],
+                [KeyboardButton("30%+")],
+            ]
+            await update.message.reply_text(
+                "אנא הזן/י אחוז שומן תקין (מספר בין 5 ל-50) או בחר/י 'לא ידוע'.",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+            return BODY_FAT_CURRENT
+        
+        body_fat = float(body_fat_text)
+        context.user_data["body_fat_current"] = body_fat
+        
+        # המשך לשאלת המטרה
+        return await get_body_fat_target_goal(update, context)
+    
+    # אם אין הודעה, הצג את השאלה
+    if update.message:
+        keyboard = [
+            [KeyboardButton("לא ידוע")],
+            [KeyboardButton("5-10%")],
+            [KeyboardButton("10-15%")],
+            [KeyboardButton("15-20%")],
+            [KeyboardButton("20-25%")],
+            [KeyboardButton("25-30%")],
+            [KeyboardButton("30%+")],
+        ]
+        await update.message.reply_text(
+            "מה אחוז השומן הנוכחי שלך? (אם לא ידוע, בחר/י 'לא ידוע')",
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+    return BODY_FAT_CURRENT
+
+
+async def get_body_fat_target_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """שואל את המשתמש לאיזה אחוז שומן הוא רוצה לרדת."""
+    if update.message and update.message.text:
+        target_text = update.message.text.strip()
+        
+        # אימות קלט מספרי
+        if not validate_numeric_input(target_text, 5, 30):
+            keyboard = [
+                [KeyboardButton("10%")],
+                [KeyboardButton("12%")],
+                [KeyboardButton("15%")],
+                [KeyboardButton("18%")],
+                [KeyboardButton("20%")],
+                [KeyboardButton("22%")],
+                [KeyboardButton("25%")],
+            ]
+            await update.message.reply_text(
+                "אנא הזן/י אחוז שומן יעד תקין (מספר בין 5 ל-30).",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+            return BODY_FAT_TARGET_GOAL
+        
+        target_fat = float(target_text)
+        context.user_data["body_fat_target"] = target_fat
+        
+        # המשך לפעילות גופנית
+        return await get_activity(update, context)
+    
+    # אם אין הודעה, הצג את השאלה
+    if update.message:
+        keyboard = [
+            [KeyboardButton("10%")],
+            [KeyboardButton("12%")],
+            [KeyboardButton("15%")],
+            [KeyboardButton("18%")],
+            [KeyboardButton("20%")],
+            [KeyboardButton("22%")],
+            [KeyboardButton("25%")],
+        ]
+        await update.message.reply_text(
+            "לאיזה אחוז שומן תרצה/י לרדת?",
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+    return BODY_FAT_TARGET_GOAL
 
 
 async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

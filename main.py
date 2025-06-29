@@ -54,6 +54,8 @@ from config import (
     DIET_OPTIONS,
     TELEGRAM_TOKEN,
     WATER_REMINDER_OPT_IN,
+    BODY_FAT_CURRENT,
+    BODY_FAT_TARGET_GOAL,
 )
 from db import save_user
 from handlers import (
@@ -96,6 +98,8 @@ from handlers import (
     daily_menu,
     eaten,
     generate_personalized_menu,
+    get_body_fat_current,
+    get_body_fat_target_goal,
 )
 from utils import calculate_bmr, set_openai_client, build_main_keyboard, build_daily_menu
 
@@ -195,6 +199,8 @@ def main():
             ALLERGIES_ADDITIONAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies_additional)],
             DIET: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_diet)],
             WATER_REMINDER_OPT_IN: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)],
+            BODY_FAT_CURRENT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_current)],
+            BODY_FAT_TARGET_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_target_goal)],
         },
         fallbacks=[
             CommandHandler("start", start),

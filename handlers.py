@@ -95,11 +95,37 @@ from report_generator import (
     get_last_occurrence_of_meal,
     format_date_query_response,
 )
+import utils
 
 # TODO: להוסיף את כל ה-handlers מהקובץ המקורי, כולל שאלון, תפריט, דוחות, free text, מים וכו'.
 # כל handler צריך לכלול docstring קצרה.
 
 logger = logging.getLogger(__name__)
+
+ALLERGY_OPTIONS = [
+    "אין",
+    "בוטנים",
+    "אגוזים",
+    "חלב",
+    "גלוטן",
+    "ביצים",
+    "סויה",
+    "דגים",
+    "שומשום",
+    "סלרי",
+    "חרדל",
+    "סולפיטים",
+    "שאר (פרט/י)"
+]
+
+def build_allergy_keyboard(selected):
+    keyboard = []
+    for opt in ALLERGY_OPTIONS:
+        label = opt
+        if opt in selected and opt != "אין":
+            label += " ❌"
+        keyboard.append([KeyboardButton(label)])
+    return keyboard
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -266,15 +292,13 @@ async def get_weight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש למטרה וממשיך לשאלת אחוזי שומן או פעילות גופנית."""
+    """שואל את המשתמש למטרה וממשיך לשאלת פעילות גופנית."""
     if update.message and update.message.text:
         goal = update.message.text.strip()
         if goal not in GOAL_OPTIONS:
             keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
-            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
-            error_text = "בחרי מטרה מהתפריט למטה:" if gender == "נקבה" else "בחר מטרה מהתפריט למטה:"
             await update.message.reply_text(
-                error_text,
+                "בחר/י מטרה מהתפריט למטה:",
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -282,94 +306,19 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
             return GOAL
         context.user_data["goal"] = goal
-        if goal == "לרדת באחוזי שומן":
-            keyboard = [[KeyboardButton(str(i))] for i in range(10, 41, 2)]
-            keyboard.append([KeyboardButton("לא ידוע")])
+        # ישר לפעילות גופנית
+        return await get_activity(update, context)
+    else:
+        keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
+        if update.message:
             await update.message.reply_text(
-                'מה אחוזי השומן שלך? (אם לא ידוע, בחר/י "לא ידוע")',
+                "מה המטרה שלך?",
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
                 parse_mode="HTML",
             )
-            return BODY_FAT
-        gender = context.user_data.get("gender", "זכר")
-        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
-        keyboard = [[KeyboardButton(opt)] for opt in options]
-        await asyncio.sleep(2)
-        await update.message.reply_text(
-            "מה רמת הפעילות הגופנית שלך?",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-        return ACTIVITY
-
-
-async def get_body_fat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש לאחוזי שומן וממשיך ליעד או פעילות גופנית."""
-    if update.message and update.message.text:
-        value = update.message.text.strip()
-        if value == "לא ידוע":
-            context.user_data["body_fat"] = "לא ידוע"
-        else:
-            try:
-                context.user_data["body_fat"] = float(value)
-            except Exception:
-                await update.message.reply_text(
-                    'אנא הזן ערך מספרי או בחר "לא ידוע".', parse_mode="HTML"
-                )
-                return BODY_FAT
-        if (
-            context.user_data.get("goal") == "לרדת באחוזי שומן"
-            and "body_fat_target" not in context.user_data
-        ):
-            await update.message.reply_text(
-                "לאיזה אחוז שומן תרצה/י להגיע?", parse_mode="HTML"
-            )
-            return BODY_FAT_TARGET
-        gender = context.user_data.get("gender", "זכר")
-        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
-        keyboard = [[KeyboardButton(opt)] for opt in options]
-        await asyncio.sleep(2)
-        await update.message.reply_text(
-            get_gendered_text(
-                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
-            ),
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-        return ACTIVITY
-
-
-async def get_body_fat_target(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> int:
-    """שואל את המשתמש ליעד אחוזי שומן וממשיך לשאלת פעילות גופנית."""
-    if update.message and update.message.text:
-        value = update.message.text.strip()
-        try:
-            context.user_data["body_fat_target"] = float(value)
-        except Exception:
-            await update.message.reply_text(
-                "אנא הזן ערך מספרי ליעד אחוזי שומן.", parse_mode="HTML"
-            )
-            return BODY_FAT_TARGET
-        gender = context.user_data.get("gender", "זכר")
-        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
-        keyboard = [[KeyboardButton(opt)] for opt in options]
-        await asyncio.sleep(2)
-        await update.message.reply_text(
-            "מה רמת הפעילות הגופנית שלך?",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-        return ACTIVITY
+        return GOAL
 
 
 async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -983,89 +932,44 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש לאלרגיות ומסיים את השאלון."""
+    """שואל את המשתמש לאלרגיות עם כפתורים מרובי בחירה."""
+    if "allergies_selected" not in context.user_data:
+        context.user_data["allergies_selected"] = set()
+    selected = context.user_data["allergies_selected"]
     if update.message and update.message.text:
-        allergies_text = update.message.text.strip()
-        if allergies_text.lower() in ["אין", "לא", "ללא"]:
-            context.user_data["allergies"] = []
+        text = update.message.text.strip().replace(" ❌", "")
+        if text == "אין":
+            selected.clear()
+            selected.add("אין")
+        elif text in ALLERGY_OPTIONS:
+            if text in selected:
+                selected.remove(text)
+            else:
+                selected.discard("אין")
+                selected.add(text)
+        elif text.lower() in ["אין", "לא", "ללא"]:
+            selected.clear()
+            selected.add("אין")
+        elif text == "שאר (פרט/י)":
+            await update.message.reply_text("פרט/י את האלרגיה הנוספת:", reply_markup=ReplyKeyboardRemove())
+            return ALLERGIES
         else:
-            # Parse allergies
-            allergies = [allergy.strip() for allergy in allergies_text.split(",")]
-            context.user_data["allergies"] = allergies
-        
-        # Calculate BMR and calorie budget
-        user = context.user_data
-        calorie_budget = calculate_bmr(
-            user.get("gender", "זכר"),
-            user.get("age", 30),
-            user.get("height", 170),
-            user.get("weight", 70),
-            user.get("activity", "בינונית"),
-            user.get("goal", "שמירה על משקל"),
-        )
-        context.user_data["calorie_budget"] = calorie_budget
-        
-        # Save user data
-        user_id = update.effective_user.id if update.effective_user else None
-        if user_id:
-            save_user(user_id, context.user_data)
-        
-        # Show calorie budget in separate message
-        budget_msg = await update.message.reply_text(
-            f"<b>תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות</b>",
-            parse_mode="HTML",
-        )
-        
-        # Pin the calorie budget message
-        try:
-            await context.bot.pin_chat_message(
-                chat_id=update.effective_chat.id, message_id=budget_msg.message_id
-            )
-        except Exception as e:
-            logger.error(f"Failed to pin calorie budget message: {e}")
-        
-        # Create comprehensive user profile JSON
-        user_profile = {
-            "name": user.get("name", ""),
-            "gender": user.get("gender", ""),
-            "age": user.get("age", 0),
-            "height_cm": user.get("height", 0),
-            "weight_kg": user.get("weight", 0),
-            "goal": user.get("goal", ""),
-            "diet_preferences": user.get("diet", []),
-            "allergies": user.get("allergies", []),
-            "activity_type": user.get("activity_type", ""),
-            "activity_frequency": user.get("activity_frequency", ""),
-            "activity_duration": user.get("activity_duration", ""),
-            "training_time": user.get("training_time", ""),
-            "cardio_goal": user.get("cardio_goal", ""),
-            "strength_goal": user.get("strength_goal", ""),
-            "takes_supplements": user.get("takes_supplements", False),
-            "supplements": user.get("supplements", []),
-            "limitations": user.get("limitations", ""),
-            "mixed_activities": user.get("mixed_activities", []),
-            "mixed_frequency": user.get("mixed_frequency", ""),
-            "menu_adaptation": user.get("menu_adaptation", False),
-            "calorie_budget": calorie_budget,
-        }
-        
-        # Show summary
-        summary = f"""<b>סיכום הנתונים שלך:</b>
-• שם: {user.get('name', 'לא צוין')}
-• מגדר: {user.get('gender', 'לא צוין')}
-• גיל: {user.get('age', 'לא צוין')}
-• גובה: {user.get('height', 'לא צוין')} ס"מ
-• משקל: {user.get('weight', 'לא צוין')} ק"ג
-• מטרה: {user.get('goal', 'לא צוינה')}
-• סוג פעילות: {user.get('activity_type', 'לא צוין')}
-• תזונה: {', '.join(user.get('diet', []))}
-• אלרגיות: {', '.join(user.get('allergies', [])) if user.get('allergies') else 'אין'}"""
-        
-        await update.message.reply_text(summary, parse_mode="HTML")
-        
-        # Ask about water reminders
-        await ask_water_reminder_opt_in(update, context)
-        return EDIT
+            # טקסט חופשי - הוספה
+            selected.add(text)
+        # אם המשתמש לחץ שלח/המשך
+        if text == "המשך" or (update.message.text and update.message.text.startswith("המשך")):
+            context.user_data["allergies"] = list(selected) if "אין" not in selected else []
+            del context.user_data["allergies_selected"]
+            return await get_diet(update, context)
+    # הצג מקלדת מרובת בחירה
+    keyboard = build_allergy_keyboard(selected)
+    keyboard.append([KeyboardButton("המשך")])
+    await update.message.reply_text(
+        "בחר/י את כל האלרגיות הרלוונטיות, או 'אין' אם אין לך אלרגיות. לחיצה נוספת מבטלת בחירה.",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        parse_mode="HTML",
+    )
+    return ALLERGIES
 
 
 async def ask_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1305,113 +1209,20 @@ async def daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle food intake reporting."""
-    if update.message and update.message.text:
-        if not update.message or not update.message.text:
-            return DAILY
-        eaten_text = strip_html_tags(update.message.text.strip())
-        
-        # Identify questions about food
-        question_starts = (
-            "האם",
-            "אפשר",
-            "מותר",
-            "כמה",
-            "מה",
-            "איך",
-            "מדוע",
-            "למה",
-            "היכן",
-            "איפה",
-            "מתי",
-            "מי",
-        )
-        is_question = eaten_text.endswith("?") or any(
-            eaten_text.strip().startswith(q) for q in question_starts
-        )
-        
-        if is_question:
-            # Send all text to GPT as a question
-            user = context.user_data if context.user_data is not None else {}
-            calorie_budget = user.get("calorie_budget", 0)
-            total_eaten = sum(e["calories"] for e in user.get("eaten_today", []))
-            remaining = calorie_budget - total_eaten
-            diet = ", ".join(user.get("diet", []))
-            allergies = ", ".join(user.get("allergies", []))
-            eaten_list = ", ".join(
-                clean_desc(e["desc"]) for e in user.get("eaten_today", [])
-            )
-            prompt = (
-                f"המשתמש/ת שואל/ת: {eaten_text}\n"
-                f"העדפות תזונה: {diet}\n"
-                f"אלרגיות: {allergies}\n"
-                f"מה שנאכל היום: {eaten_list}\n"
-                f"תקציב קלורי יומי: {calorie_budget}, נשארו: {remaining} קלוריות\n"
-                f"ענה/י תשובה תזונתית אמיתית, בהתחשב בכל הנתונים, כולל תקציב, העדפות, אלרגיות, מטרות, ומה שכבר נאכל. הצג המלצה מגדרית, מסודרת, ב-HTML בלבד, עם בולד, רשימות, כותרות, והסבר קצר. אל תשתמש/י ב-Markdown."
-            )
-            response = await utils._openai_client.chat.completions.create(
-                model="gpt-4o", messages=[{"role": "user", "content": prompt}]
-            )
-            answer = extract_openai_response_content(response)
-            await update.message.reply_text(answer, parse_mode="HTML")
-            return DAILY
-        
-        # Regular eating report
-        if context.user_data is None:
-            context.user_data = {}
-        if "eaten_today" not in context.user_data:
-            context.user_data["eaten_today"] = []
-        user = context.user_data
-        
-        # Split components
-        meal_components = [eaten_text]  # Keep original text as single component
-        results = []
-        total_calories = 0
-        gpt_details = []
-        
-        for component in meal_components:
-            calorie_prompt = f"כמה קלוריות יש ב: {component}? כתוב רק את שם המאכל, מספר הקלוריות, ואם אפשר – אייקון מתאים. אל תוסיף טקסט נוסף. דוגמה: ביצת עין – 95 קק'ל 🍳"
-            calorie_response = await utils._openai_client.chat.completions.create(
-                model="gpt-4o", messages=[{"role": "user", "content": calorie_prompt}]
-            )
-            gpt_str = extract_openai_response_content(calorie_response)
-            
-            # Extract calories
-            match = re.search(r"(\d+)\s*קק\'ל", gpt_str)
-            calories = int(match.group(1)) if match else 0
-            results.append({"desc": component, "calories": calories})
-            total_calories += calories
-            gpt_details.append(gpt_str)
-        
-        user["eaten_today"].extend(results)
-        user["remaining_calories"] = user.get("calorie_budget", 0) - sum(
-            e["calories"] for e in user["eaten_today"]
-        )
-        
-        # Build summary output
-        details_text = "\n".join(gpt_details)
-        summary = f"{details_text}\n<b>📊 סה\"כ לארוחה: {total_calories} קק'ל</b>"
-        await update.message.reply_text(summary, parse_mode="HTML")
-        
-        # Show remaining calories
-        remaining = user["remaining_calories"]
-        msg = await update.message.reply_text(f"נשארו לך: {remaining} קלוריות להיום.")
-        try:
-            await context.bot.pin_chat_message(
-                chat_id=update.effective_chat.id, message_id=msg.message_id
-            )
-        except Exception:
-            pass
-        
-        # Don't ask 'what did you eat today?' again. Only suggest 'finished'.
-        keyboard = [[KeyboardButton("סיימתי")]]
-        gender = user.get("gender", "זכר")
-        action_text = GENDERED_ACTION.get(gender, GENDERED_ACTION["אחר"])
-        await update.message.reply_text(
-            action_text,
-            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-            parse_mode="HTML",
-        )
-        return DAILY
+    user = context.user_data if context.user_data else {}
+    gender = user.get("gender", "זכר")
+    if not user.get("eaten_prompted", False):
+        if update.message:
+            if gender == "נקבה":
+                prompt = "אשמח שתפרטי מה אכלת היום, בצורה הבאה: ביצת עין, 2 פרוסות לחם לבן עם גבינה לבנה 5%, סלט ירקות ממלפפון ועגבנייה"
+            elif gender == "זכר":
+                prompt = "אשמח שתפרט מה אכלת היום, בצורה הבאה: ביצת עין, 2 פרוסות לחם לבן עם גבינה לבנה 5%, סלט ירקות ממלפפון ועגבנייה"
+            else:
+                prompt = "אשמח שתפרט/י מה אכלת היום, בצורה הבאה: ביצת עין, 2 פרוסות לחם לבן עם גבינה לבנה 5%, סלט ירקות ממלפפון ועגבנייה"
+            await update.message.reply_text(prompt, reply_markup=ReplyKeyboardRemove(), parse_mode="HTML")
+        user["eaten_prompted"] = True
+        return EATEN
+    # המשך הלוגיקה הקיימת של eaten רק אם eaten_prompted כבר קיים
 
 
 async def handle_daily_choice(

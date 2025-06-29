@@ -52,15 +52,17 @@ from config import (
     ACTIVITY_YES_NO_OPTIONS,
     ALLERGIES_ADDITIONAL,
     DIET_OPTIONS,
+    TELEGRAM_TOKEN,
 )
 from db import save_user
 from handlers import (
-    after_questionnaire,
-    ask_water_reminder_opt_in,
-    cancel_water_reminders,
-    daily_menu,
-    eaten,
-    generate_personalized_menu,
+    start,
+    get_name,
+    get_age,
+    get_gender,
+    get_height,
+    get_weight,
+    get_goal,
     get_activity,
     get_activity_type,
     get_activity_frequency,
@@ -73,18 +75,11 @@ from handlers import (
     get_limitations,
     get_mixed_activities,
     get_mixed_frequency,
+    get_mixed_duration,
     get_mixed_menu_adaptation,
-    get_age,
     get_allergies,
-    get_body_fat,
-    get_body_fat_target,
+    get_allergies_additional,
     get_diet,
-    get_gender,
-    get_goal,
-    get_height,
-    get_name,
-    get_weight,
-    handle_daily_choice,
     handle_free_text_input,
     help_command,
     remind_in_10_minutes,
@@ -93,15 +88,13 @@ from handlers import (
     send_water_reminder,
     set_water_reminder_opt_in,
     show_daily_menu,
-    start,
     water_intake_amount,
     water_intake_start,
-    handle_callback_query,
-    show_main_menu,
-    build_meal,
-    show_reports,
-    water_reminder,
-    error_handler,
+    ask_water_reminder_opt_in,
+    cancel_water_reminders,
+    daily_menu,
+    eaten,
+    generate_personalized_menu,
 )
 from utils import calculate_bmr, set_openai_client, build_main_keyboard, build_daily_menu
 
@@ -172,7 +165,7 @@ async def start_scheduler(application):
 def main():
     """הפונקציה הראשית של הבוט."""
     # יצירת הבוט
-    application = Application.builder().token(TOKEN).build()
+    application = Application.builder().token(TELEGRAM_TOKEN).build()
     
     # הוספת handlers
     conv_handler = ConversationHandler(
@@ -184,30 +177,26 @@ def main():
             HEIGHT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_height)],
             WEIGHT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_weight)],
             GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_goal)],
-            ACTIVITY_YES_NO: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_yes_no)],
             ACTIVITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity)],
             ACTIVITY_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_type)],
             ACTIVITY_FREQUENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_frequency)],
             ACTIVITY_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_duration)],
+            TRAINING_TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_training_time)],
+            CARDIO_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_cardio_goal)],
+            STRENGTH_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_strength_goal)],
+            SUPPLEMENTS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_supplements)],
+            SUPPLEMENT_TYPES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_supplement_types)],
+            LIMITATIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_limitations)],
             MIXED_ACTIVITIES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_activities)],
             MIXED_FREQUENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_frequency)],
-            MIXED_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_duration)],
             MIXED_MENU_ADAPTATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_menu_adaptation)],
             ALLERGIES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies)],
             ALLERGIES_ADDITIONAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies_additional)],
             DIET: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_diet)],
-            DIET_OPTIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_diet_options)],
-            ACTIVITY_YES_NO_OPTIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_yes_no_options)],
         },
         fallbacks=[
             CommandHandler("start", start),
             CommandHandler("help", help_command),
-            CommandHandler("menu", show_main_menu),
-            MessageHandler(filters.Regex("^לקבלת תפריט יומי מותאם אישית$"), generate_personalized_menu),
-            MessageHandler(filters.Regex("^מה אכלתי היום$"), eaten),
-            MessageHandler(filters.Regex("^בניית ארוחה לפי מה שיש לי בבית$"), build_meal),
-            MessageHandler(filters.Regex("^📊 דוחות$"), show_reports),
-            MessageHandler(filters.Regex("^תזכורות על שתיית מים$"), water_reminder),
             MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input),
         ],
         name="nutrition_conversation",
@@ -215,27 +204,9 @@ def main():
     )
     
     application.add_handler(conv_handler)
-    
-    # הוספת handlers נוספים
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("menu", show_main_menu))
-    
-    # הוספת callback handlers לכפתורים
-    application.add_handler(CallbackQueryHandler(handle_callback_query))
-    
-    # הוספת handlers לתפריט הראשי
-    application.add_handler(MessageHandler(filters.Regex("^לקבלת תפריט יומי מותאם אישית$"), generate_personalized_menu))
-    application.add_handler(MessageHandler(filters.Regex("^מה אכלתי היום$"), eaten))
-    application.add_handler(MessageHandler(filters.Regex("^בניית ארוחה לפי מה שיש לי בבית$"), build_meal))
-    application.add_handler(MessageHandler(filters.Regex("^📊 דוחות$"), show_reports))
-    application.add_handler(MessageHandler(filters.Regex("^תזכורות על שתיית מים$"), water_reminder))
-    
     # הוספת handler לטקסט חופשי
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input))
-    
-    # הוספת error handler
-    application.add_error_handler(error_handler)
-    
     # הפעלת הבוט
     application.run_polling()
 

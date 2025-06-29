@@ -70,6 +70,7 @@ from config import (
     SUMMARY,
     ACTIVITY_TYPE_OPTIONS,
     DIET_OPTIONS,
+    ACTIVITY_YES_NO_OPTIONS,
 )
 from db import save_user, load_user, save_daily_entry
 from utils import (
@@ -374,15 +375,18 @@ async def get_body_fat_target(
 
 
 async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש לרמת פעילות וממשיך לשאלת תזונה."""
+    """שואל את המשתמש האם הוא עושה פעילות גופנית."""
     if update.message and update.message.text:
-        activity = update.message.text.strip()
-        gender = context.user_data.get("gender", "זכר")
-        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
-        if activity not in options:
-            keyboard = [[KeyboardButton(opt)] for opt in options]
+        activity_answer = update.message.text.strip()
+        if activity_answer not in ACTIVITY_YES_NO_OPTIONS:
+            keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_YES_NO_OPTIONS]
             gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
-            error_text = "בחרי רמת פעילות מהתפריט למטה:" if gender == "נקבה" else "בחר רמת פעילות מהתפריט למטה:"
+            if gender == "נקבה":
+                error_text = "בחרי כן או לא מהתפריט למטה:"
+            elif gender == "זכר":
+                error_text = "בחר כן או לא מהתפריט למטה:"
+            else:
+                error_text = "בחר/י כן או לא מהתפריט למטה:"
             await update.message.reply_text(
                 error_text,
                 reply_markup=ReplyKeyboardMarkup(
@@ -391,18 +395,63 @@ async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 parse_mode="HTML",
             )
             return ACTIVITY
-        context.user_data["activity"] = activity
         
-        # Show activity type options with keyboard
-        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_TYPE_OPTIONS]
+        context.user_data["does_activity"] = activity_answer
+        
+        if activity_answer == "לא":
+            # Skip to diet questions
+            keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            if gender == "נקבה":
+                diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+            elif gender == "זכר":
+                diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+            else:
+                diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+            await update.message.reply_text(
+                diet_text,
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+            return DIET
+        else:
+            # Ask for activity type
+            keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_TYPE_OPTIONS]
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            if gender == "נקבה":
+                activity_text = "איזו פעילות גופנית את עושה?"
+            elif gender == "זכר":
+                activity_text = "איזו פעילות גופנית אתה עושה?"
+            else:
+                activity_text = "איזו פעילות גופנית את/ה עושה?"
+            await update.message.reply_text(
+                activity_text,
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+            return ACTIVITY_TYPE
+    else:
+        # First time asking the question
+        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_YES_NO_OPTIONS]
+        gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+        if gender == "נקבה":
+            question_text = "האם את עושה פעילות גופנית?"
+        elif gender == "זכר":
+            question_text = "האם אתה עושה פעילות גופנית?"
+        else:
+            question_text = "האם את/ה עושה פעילות גופנית?"
         await update.message.reply_text(
-            "מה סוג הפעילות הגופנית שלך?",
+            question_text,
             reply_markup=ReplyKeyboardMarkup(
                 keyboard, one_time_keyboard=True, resize_keyboard=True
             ),
             parse_mode="HTML",
         )
-        return ACTIVITY_TYPE
+        return ACTIVITY
 
 
 async def get_activity_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -427,7 +476,12 @@ async def get_activity_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             # Skip to diet questions
             keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
             gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
-            diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)" if gender == "נקבה" else "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+            if gender == "נקבה":
+                diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+            elif gender == "זכר":
+                diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+            else:
+                diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
             await update.message.reply_text(
                 diet_text,
                 reply_markup=ReplyKeyboardMarkup(
@@ -438,10 +492,17 @@ async def get_activity_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             return DIET
         
         elif activity_type == "הליכה מהירה / ריצה קלה":
-            # Ask frequency
+            # Ask frequency with gender-appropriate text
             keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            if gender == "נקבה":
+                frequency_text = "כמה פעמים בשבוע את מבצעת את הפעילות?"
+            elif gender == "זכר":
+                frequency_text = "כמה פעמים בשבוע אתה מבצע את הפעילות?"
+            else:
+                frequency_text = "כמה פעמים בשבוע את/ה מבצע/ת את הפעילות?"
             await update.message.reply_text(
-                "כמה פעמים בשבוע את/ה מבצע/ת את הפעילות?",
+                frequency_text,
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -450,10 +511,17 @@ async def get_activity_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             return ACTIVITY_FREQUENCY
         
         elif activity_type in ["אימוני כוח", "אימוני HIIT / קרוספיט"]:
-            # Ask frequency
+            # Ask frequency with gender-appropriate text
             keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            if gender == "נקבה":
+                frequency_text = "כמה פעמים בשבוע את מתאמנת?"
+            elif gender == "זכר":
+                frequency_text = "כמה פעמים בשבוע אתה מתאמן?"
+            else:
+                frequency_text = "כמה פעמים בשבוע את/ה מתאמן/ת?"
             await update.message.reply_text(
-                "כמה פעמים בשבוע את/ה מתאמן/ת?",
+                frequency_text,
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -462,10 +530,17 @@ async def get_activity_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             return ACTIVITY_FREQUENCY
         
         elif activity_type == "יוגה / פילאטיס":
-            # Ask frequency
+            # Ask frequency with gender-appropriate text
             keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            if gender == "נקבה":
+                frequency_text = "כמה פעמים בשבוע את מתאמנת?"
+            elif gender == "זכר":
+                frequency_text = "כמה פעמים בשבוע אתה מתאמן?"
+            else:
+                frequency_text = "כמה פעמים בשבוע את/ה מתאמן/ת?"
             await update.message.reply_text(
-                "כמה פעמים בשבוע את/ה מתאמן/ת?",
+                frequency_text,
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -476,8 +551,15 @@ async def get_activity_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         elif activity_type == "שילוב של כמה סוגים":
             # Ask for mixed activities
             keyboard = [[KeyboardButton(opt)] for opt in MIXED_ACTIVITY_OPTIONS]
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            if gender == "נקבה":
+                mixed_text = "אילו סוגי אימונים את מבצעת במהלך השבוע? (בחרי כל מה שמתאים)"
+            elif gender == "זכר":
+                mixed_text = "אילו סוגי אימונים אתה מבצע במהלך השבוע? (בחר כל מה שמתאים)"
+            else:
+                mixed_text = "אילו סוגי אימונים את/ה מבצע/ת במהלך השבוע? (בחר/י כל מה שמתאים)"
             await update.message.reply_text(
-                "אילו סוגי אימונים את/ה מבצע/ת במהלך השבוע? (בחר/י כל מה שמתאים)",
+                mixed_text,
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),

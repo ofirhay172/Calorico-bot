@@ -61,6 +61,9 @@ ACTIVITY_OPTIONS_FEMALE = [
     "כל יום",
 ]
 
+# New simplified activity options
+ACTIVITY_YES_NO_OPTIONS = ["כן", "לא"]
+
 ACTIVITY_TYPE_OPTIONS = [
     "אין פעילות",
     "הליכה קלה",

@@ -235,11 +235,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return ConversationHandler.END
 
-    # המשתמש חדש - התחל שאלון
+    # המשתמש חדש - הצג פתיח מדויק
+    user_name = user.first_name or user.username or "חבר/ה"
     await update.message.reply_text(
-        "ברוכים הבאים לבוט התזונה קלוריקו! 🥗\n\n"
-        "אני כאן כדי לעזור לך להשיג את המטרות התזונתיות שלך.\n"
-        "בואו נתחיל בשאלון קצר כדי להתאים לך תפריט אישי.",
+        f"שלום {user_name}! אני קלוריקו – הבוט שיעזור לך לשמור על תזונה, מעקב והתמדה 🙌\n\n"
+        "הנה מה שאני יודע לעשות:\n"
+        "✅ התאמה אישית של תפריט יומי – לפי הגובה, משקל, גיל, מטרה ותזונה שלך\n"
+        "📊 דוחות תזונתיים – שבועי וחודשי\n"
+        "💧 תזכורות חכמות לשתיית מים\n"
+        '🍽 רישום יומי של \"מה אכלתי היום\" או \"מה אכלתי אתמול\"\n'
+        "🔥 מעקב קלוריות יומי, ממוצע לארוחה וליום\n"
+        "📅 ניתוח מגמות – צריכת חלבון, שומן ופחמימות\n"
+        "🏋️ חיבור לאימונים שדיווחת עליהם\n"
+        "📝 אפשרות לעדכן בכל שלב את המשקל, המטרה, התזונה או רמת הפעילות שלך\n"
+        "⏰ תפריט יומי שנשלח אליך אוטומטית בשעה שתבחר\n\n"
+        "בוא/י נתחיל בהרשמה קצרה:",
         reply_markup=ReplyKeyboardRemove(),
         parse_mode="HTML",
     )
@@ -478,57 +488,16 @@ async def get_weight(
 
 
 async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש למטרתו וממשיך לשאלת אחוז שומן או פעילות."""
-    if update.message and update.message.text:
-        goal = update.message.text.strip()
-        if goal not in GOAL_OPTIONS:
-            keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
-            if context.user_data is None:
-                context.user_data = {}
-            gender = context.user_data.get("gender", "זכר")
-            error_text = "בחר מטרה מהתפריט למטה:" if gender == "זכר" else "בחרי מטרה מהתפריט למטה:"
-            await update.message.reply_text(
-                error_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
-            return GOAL
-
-        if context.user_data is None:
-            context.user_data = {}
-        context.user_data["goal"] = goal
-
-        # שמירה למסד נתונים
-        user_id = update.effective_user.id if update.effective_user else None
-        if user_id and context.user_data:
-            save_user(user_id, context.user_data)
-
-        # המשך לשאלת אחוז שומן נוכחי
-        gender = context.user_data.get("gender", "זכר")
-        fat_text = "מה אחוז השומן הנוכחי שלך?" if gender == "זכר" else "מה אחוז השומן הנוכחי שלך?"
-        await update.message.reply_text(
-            fat_text,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
-        return BODY_FAT_CURRENT
-
     if context.user_data is None:
         context.user_data = {}
-    gender = context.user_data.get("gender", "זכר")
-    goal_text = "מה המטרה שלך?" if gender == "זכר" else "מה המטרה שלך?"
-    keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
-    if update.message:
-        await update.message.reply_text(
-            goal_text,
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-    return GOAL
+    if not update.message or not update.message.text:
+        return GOAL
+    goal = update.message.text.strip()
+    context.user_data["goal"] = goal
+    if goal == "ירידה באחוזי שומן":
+        return await get_body_fat_current(update, context)
+    # דלג על אחוז שומן אם המטרה אינה ירידה באחוזי שומן
+    return await get_activity(update, context)
 
 
 async def get_body_fat_current(

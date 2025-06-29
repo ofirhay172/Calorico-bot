@@ -131,6 +131,21 @@ def build_allergy_keyboard(selected):
         keyboard.append([KeyboardButton(label)])
     return keyboard
 
+def build_diet_keyboard(selected_options):
+    """בונה מקלדת תזונה עם אימוג'י איקס על בחירות נבחרות."""
+    keyboard = []
+    for option in DIET_OPTIONS:
+        if option in selected_options:
+            # אם נבחר - הוסף איקס
+            button_text = f"❌ {option}"
+        else:
+            # אם לא נבחר - הצג רגיל
+            button_text = option
+        keyboard.append([KeyboardButton(button_text)])
+    
+    # כפתור לסיום
+    keyboard.append([KeyboardButton("סיימתי בחירת העדפות")])
+    return keyboard
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """פותח שיחה עם המשתמש ומתחיל את שאלון הפתיחה."""
@@ -338,7 +353,7 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if goal not in GOAL_OPTIONS:
             keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
             await update.message.reply_text(
-                "בחר/י מטרה מהתפריט למטה:",
+                "מה המטרה התזונתית שלך?",
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -352,7 +367,7 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
         if update.message:
             await update.message.reply_text(
-                "מה המטרה שלך?",
+                "מה המטרה התזונתית שלך?",
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -369,11 +384,11 @@ async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_YES_NO_OPTIONS]
             gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
             if gender == "נקבה":
-                error_text = "בחרי כן או לא מהתפריט למטה:"
+                error_text = "האם את עושה פעילות גופנית? (בחרי כן או לא מהתפריט למטה)"
             elif gender == "זכר":
-                error_text = "בחר כן או לא מהתפריט למטה:"
+                error_text = "האם אתה עושה פעילות גופנית? (בחר כן או לא מהתפריט למטה)"
             else:
-                error_text = "בחר/י כן או לא מהתפריט למטה:"
+                error_text = "האם את/ה עושה פעילות גופנית? (בחר/י כן או לא מהתפריט למטה)"
             await update.message.reply_text(
                 error_text,
                 reply_markup=ReplyKeyboardMarkup(
@@ -382,9 +397,7 @@ async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 parse_mode="HTML",
             )
             return ACTIVITY
-        
         context.user_data["does_activity"] = activity_answer
-        
         if activity_answer == "לא":
             # Skip to diet questions
             keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
@@ -403,42 +416,26 @@ async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 parse_mode="HTML",
             )
             return DIET
-        else:
-            # Ask for activity type
-            keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_TYPE_OPTIONS]
-            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
-            if gender == "נקבה":
-                activity_text = "איזו פעילות גופנית את עושה?"
-            elif gender == "זכר":
-                activity_text = "איזו פעילות גופנית אתה עושה?"
-            else:
-                activity_text = "איזו פעילות גופנית את/ה עושה?"
-            await update.message.reply_text(
-                activity_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
-            return ACTIVITY_TYPE
-    else:
-        # First time asking the question
+        # אם כן - המשך לשאלות פעילות
+        return await get_activity_type(update, context)
+    # אם אין הודעה, הצג את השאלה
+    if update.message:
         keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_YES_NO_OPTIONS]
         gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
         if gender == "נקבה":
-            question_text = "האם את עושה פעילות גופנית?"
+            activity_text = "האם את עושה פעילות גופנית? (בחרי כן או לא)"
         elif gender == "זכר":
-            question_text = "האם אתה עושה פעילות גופנית?"
+            activity_text = "האם אתה עושה פעילות גופנית? (בחר כן או לא)"
         else:
-            question_text = "האם את/ה עושה פעילות גופנית?"
+            activity_text = "האם את/ה עושה פעילות גופנית? (בחר/י כן או לא)"
         await update.message.reply_text(
-            question_text,
+            activity_text,
             reply_markup=ReplyKeyboardMarkup(
                 keyboard, one_time_keyboard=True, resize_keyboard=True
             ),
             parse_mode="HTML",
         )
-        return ACTIVITY
+    return ACTIVITY
 
 
 async def get_activity_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -555,6 +552,7 @@ async def get_activity_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             return MIXED_ACTIVITIES
         
         return DIET
+    return DIET
 
 
 async def get_activity_frequency(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -584,6 +582,7 @@ async def get_activity_frequency(update: Update, context: ContextTypes.DEFAULT_T
             parse_mode="HTML",
         )
         return ACTIVITY_DURATION
+    return ACTIVITY_FREQUENCY
 
 
 async def get_activity_duration(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -642,6 +641,7 @@ async def get_activity_duration(update: Update, context: ContextTypes.DEFAULT_TY
             return DIET  # Continue to diet questions
         
         return DIET
+    return DIET
 
 
 async def get_training_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -950,58 +950,108 @@ async def get_mixed_menu_adaptation(update: Update, context: ContextTypes.DEFAUL
 
 
 async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש להעדפות תזונה וממשיך לשאלת אלרגיות."""
+    """שואל את המשתמש להעדפות תזונה עם בחירה מרובה אינטראקטיבית."""
     if update.message and update.message.text:
         diet_text = update.message.text.strip()
         
-        # Handle multiple selections
-        if "אין העדפות מיוחדות" in diet_text:
-            selected_diet = ["אין העדפות מיוחדות"]
-        else:
-            # Parse selected diet options
-            selected_diet = []
-            for option in DIET_OPTIONS:
-                if option in diet_text:
-                    selected_diet.append(option)
+        # אתחול בחירות אם לא קיימות
+        if "selected_diet_options" not in context.user_data:
+            context.user_data["selected_diet_options"] = []
+        
+        selected_options = context.user_data["selected_diet_options"]
+        
+        # בדיקה אם המשתמש לחץ על "סיימתי"
+        if "סיימתי בחירת העדפות" in diet_text:
+            # שמירת הבחירות הסופיות
+            if not selected_options:
+                selected_options = ["אין העדפות מיוחדות"]
+            context.user_data["diet"] = selected_options
             
-            # If no specific options selected, default to no preferences
-            if not selected_diet:
-                selected_diet = ["אין העדפות מיוחדות"]
+            # חישוב BMR ותקציב קלוריות
+            user = context.user_data
+            calorie_budget = calculate_bmr(
+                user.get("gender", "זכר"),
+                user.get("age", 30),
+                user.get("height", 170),
+                user.get("weight", 70),
+                user.get("activity", "בינונית"),
+                user.get("goal", "שמירה על משקל"),
+            )
+            context.user_data["calorie_budget"] = calorie_budget
+            
+            # הצגת סיכום הבחירות
+            diet_summary = ", ".join(selected_options)
+            await update.message.reply_text(
+                f"העדפות התזונה שלך: {diet_summary}\n\n"
+                "עכשיו בואו נמשיך לשאלה הבאה...",
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+            
+            await update.message.reply_text(
+                "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+            return ALLERGIES
         
-        context.user_data["diet"] = selected_diet
+        # בדיקה אם המשתמש לחץ על אפשרות
+        for option in DIET_OPTIONS:
+            if option in diet_text:
+                if option in selected_options:
+                    # הסרת הבחירה אם כבר נבחרה
+                    selected_options.remove(option)
+                else:
+                    # הוספת הבחירה אם לא נבחרה
+                    selected_options.append(option)
+                
+                # עדכון context
+                context.user_data["selected_diet_options"] = selected_options
+                
+                # הצגת מקלדת מעודכנת
+                keyboard = build_diet_keyboard(selected_options)
+                gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+                if gender == "נקבה":
+                    diet_text = "מה העדפות התזונה שלך? (לחצי על אפשרות כדי לבחור/לבטל בחירה)"
+                elif gender == "זכר":
+                    diet_text = "מה העדפות התזונה שלך? (לחץ על אפשרות כדי לבחור/לבטל בחירה)"
+                else:
+                    diet_text = "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור/לבטל בחירה)"
+                
+                await update.message.reply_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+                return DIET
         
-        # Calculate BMR and calorie budget
-        user = context.user_data
-        calorie_budget = calculate_bmr(
-            user.get("gender", "זכר"),
-            user.get("age", 30),
-            user.get("height", 170),
-            user.get("weight", 70),
-            user.get("activity", "בינונית"),
-            user.get("goal", "שמירה על משקל"),
-        )
-        context.user_data["calorie_budget"] = calorie_budget
-        
+        # אם לא זוהתה בחירה - הצג הודעה
+        keyboard = build_diet_keyboard(selected_options)
         await update.message.reply_text(
-            "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
-            reply_markup=ReplyKeyboardRemove(),
+            "אנא בחר/י אפשרות מהתפריט למטה או לחץ/י על 'סיימתי בחירת העדפות'",
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, resize_keyboard=True
+            ),
             parse_mode="HTML",
         )
-        return ALLERGIES
+        return DIET
     else:
-        # First time asking - show keyboard
-        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
+        # פעם ראשונה - הצג מקלדת
+        context.user_data["selected_diet_options"] = []
+        keyboard = build_diet_keyboard([])
         gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
         if gender == "נקבה":
-            diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+            diet_text = "מה העדפות התזונה שלך? (לחצי על אפשרות כדי לבחור/לבטל בחירה)"
         elif gender == "זכר":
-            diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+            diet_text = "מה העדפות התזונה שלך? (לחץ על אפשרות כדי לבחור/לבטל בחירה)"
         else:
-            diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+            diet_text = "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור/לבטל בחירה)"
         await update.message.reply_text(
             diet_text,
             reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
+                keyboard, resize_keyboard=True
             ),
             parse_mode="HTML",
         )
@@ -1042,7 +1092,7 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "עכשיו בואו נמשיך לשאלה הבאה...",
                 reply_markup=ReplyKeyboardRemove()
             )
-            return await get_activity(update, context)
+            return await ask_water_reminder_opt_in(update, context)
         else:
             # בקשה להבהרה
             await update.message.reply_text(
@@ -1066,7 +1116,7 @@ async def get_allergies_additional(update: Update, context: ContextTypes.DEFAULT
             "מעולה! עכשיו בואו נמשיך לשאלה הבאה...",
             reply_markup=ReplyKeyboardRemove()
         )
-        return await get_activity(update, context)
+        return await ask_water_reminder_opt_in(update, context)
     else:
         # זיהוי אלרגנים נוספים
         additional_allergies = extract_allergens_from_text(text)
@@ -1086,7 +1136,7 @@ async def get_allergies_additional(update: Update, context: ContextTypes.DEFAULT
                 "עכשיו בואו נמשיך לשאלה הבאה...",
                 reply_markup=ReplyKeyboardRemove()
             )
-            return await get_activity(update, context)
+            return await ask_water_reminder_opt_in(update, context)
         else:
             await update.message.reply_text(
                 "לא זיהיתי אלרגיות נוספות. אם אין עוד אלרגיות, כתוב 'אין'.",

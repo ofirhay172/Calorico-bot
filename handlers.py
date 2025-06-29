@@ -104,7 +104,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Add 5 second delay
         await asyncio.sleep(5)
         
-        await get_name(update, context)
+        # Ask for name directly
+        await update.message.reply_text(
+            "מה השם שלך?",
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
     return NAME
 
 

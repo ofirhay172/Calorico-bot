@@ -199,8 +199,7 @@ def main():
             CommandHandler("help", help_command),
             MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input),
         ],
-        name="nutrition_conversation",
-        persistent=True,
+        name="nutrition_conversation"
     )
     
     application.add_handler(conv_handler)

@@ -142,9 +142,9 @@ async def daily_menu_scheduler(context):
 def main():
     """הפונקציה הראשית שמתחילה את הבוט."""
     # Get bot token from environment
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    bot_token = os.getenv("TELEGRAM_TOKEN")
     if not bot_token:
-        logger.error("TELEGRAM_BOT_TOKEN not found in environment variables")
+        logger.error("TELEGRAM_TOKEN not found in environment variables")
         return
 
     # Create application

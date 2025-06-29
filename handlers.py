@@ -110,9 +110,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """שואל את המשתמש לשמו וממשיך לשאלת מגדר."""
+    logger.info(f"get_name called with text: {update.message.text if update.message and update.message.text else 'None'}")
     if update.message and update.message.text:
         # This is when user provides their name
         name = update.message.text.strip()
+        logger.info(f"Name provided: '{name}'")
         context.user_data["name"] = name
         keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
         await update.message.reply_text(
@@ -125,6 +127,7 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return GENDER
     else:
         # This is when called from start function - ask for name
+        logger.info("get_name called from start - asking for name")
         if update.message:
             await update.message.reply_text(
                 "מה השם שלך?",
@@ -136,9 +139,12 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def get_gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """שואל את המשתמש למגדר וממשיך לשאלת גיל."""
+    logger.info(f"get_gender called with text: {update.message.text if update.message and update.message.text else 'None'}")
     if update.message and update.message.text:
         gender = update.message.text.strip()
+        logger.info(f"Gender selected: '{gender}', valid options: {GENDER_OPTIONS}")
         if gender not in GENDER_OPTIONS:
+            logger.warning(f"Invalid gender selected: '{gender}'")
             keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
             await update.message.reply_text(
                 "בחר/י מגדר מהתפריט למטה:",
@@ -149,6 +155,7 @@ async def get_gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
             return GENDER
         context.user_data["gender"] = gender
+        logger.info(f"Gender saved: {gender}")
         gender_text = "בת כמה את?" if gender == "נקבה" else "בן כמה אתה?"
         await update.message.reply_text(
             gender_text,
@@ -156,10 +163,13 @@ async def get_gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             parse_mode="HTML",
         )
         return AGE
+    else:
+        logger.error("get_gender called without text")
+        return GENDER
 
 
 async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש לגילו וממשיך לשאלת גובה."""
+    """שואל את המשתמש גילו וממשיך לשאלת גובה."""
     if update.message and update.message.text:
         age = update.message.text.strip()
         if not age.isdigit() or not (5 <= int(age) <= 120):
@@ -979,6 +989,7 @@ async def after_questionnaire(
 
 async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle all free text input - identify if it's a question or eating report."""
+    logger.info(f"handle_free_text_input called with text: {update.message.text if update.message and update.message.text else 'None'}")
     if not update.message or not update.message.text:
         return
 

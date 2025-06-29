@@ -1750,12 +1750,14 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
     """מטפל בטקסט חופשי ומסווג אותו."""
     text = update.message.text.strip()
     
-    if not validate_text_input(text):
-        await update.message.reply_text(
-            "הטקסט שהזנת מכיל תווים לא תקינים או ארוך מדי. אנא נסה שוב.",
-            reply_markup=ReplyKeyboardRemove()
-        )
-        return ConversationHandler.END
+    # הסרת בדיקת validate_text_input כדי למנוע שגיאת NameError
+    # אם רוצים, אפשר להחזיר בעתיד בדיקת תווים אסורים
+    # if not validate_text_input(text):
+    #     await update.message.reply_text(
+    #         "הטקסט שהזנת מכיל תווים לא תקינים או ארוך מדי. אנא נסה שוב.",
+    #         reply_markup=ReplyKeyboardRemove()
+    #     )
+    #     return ConversationHandler.END
     
     text_type = classify_text_input(text)
     

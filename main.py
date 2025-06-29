@@ -100,6 +100,7 @@ from handlers import (
     generate_personalized_menu,
     get_body_fat_current,
     get_body_fat_target_goal,
+    handle_daily_choice,
 )
 from utils import calculate_bmr, set_openai_client, build_main_keyboard, build_daily_menu
 
@@ -201,6 +202,7 @@ def main():
             WATER_REMINDER_OPT_IN: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)],
             BODY_FAT_CURRENT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_current)],
             BODY_FAT_TARGET_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_target_goal)],
+            MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_daily_choice)],
         },
         fallbacks=[
             CommandHandler("start", start),

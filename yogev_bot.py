@@ -26,6 +26,7 @@ from telegram.ext import (
 from openai import AsyncOpenAI
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 # --- מפתחות דרך משתני סביבה ---
 import os
@@ -277,6 +278,7 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         gender = context.user_data.get('gender', 'זכר')
         options = ACTIVITY_OPTIONS_MALE if gender == 'זכר' else ACTIVITY_OPTIONS_FEMALE
         keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
         await update.message.reply_text(
             get_gendered_text(context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"),
             reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True),
@@ -304,6 +306,7 @@ async def get_body_fat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         gender = context.user_data.get('gender', 'זכר')
         options = ACTIVITY_OPTIONS_MALE if gender == 'זכר' else ACTIVITY_OPTIONS_FEMALE
         keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
         await update.message.reply_text(
             get_gendered_text(context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"),
             reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True),
@@ -322,6 +325,7 @@ async def get_body_fat_target(update: Update, context: ContextTypes.DEFAULT_TYPE
         gender = context.user_data.get('gender', 'זכר')
         options = ACTIVITY_OPTIONS_MALE if gender == 'זכר' else ACTIVITY_OPTIONS_FEMALE
         keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
         await update.message.reply_text(
             get_gendered_text(context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"),
             reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True),
@@ -628,63 +632,30 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         eaten_text = strip_html_tags(update.message.text.strip())
         # לוג ל-Google Sheets
         if eaten_text == 'מה אכלתי היום':
-            await update.message.reply_text('מה אכלת היום? להזין עם פסיקים.', parse_mode='HTML')
+            await update.message.reply_text('מה אכלת היום? (הפרד/י בין מאכלים באמצעות פסיק – לדוגמה: ביצת עין, סלט ירקות, פרוסת לחם עם גבינה)', parse_mode='HTML')
             return DAILY
         # החרגת כפתורי מערכת
         if eaten_text in SYSTEM_BUTTONS:
             return DAILY
         # זיהוי שאלה על מאכל
-        question_starts = ("האם", "אפשר", "מותר", "כמה", "להוסיף")
-        # --- תמיכה בשאלה 'מה אני יכולה/יכול לאכול עכשיו?' ---
-        if eaten_text in ["מה אני יכולה לאכול עכשיו?", "מה אני יכול לאכול עכשיו?", "מה אפשר לאכול עכשיו?", "מה כדאי לאכול עכשיו?"]:
+        question_starts = ("האם", "אפשר", "מותר", "כמה", "מה", "איך", "מדוע", "למה", "היכן", "איפה", "מתי", "מי")
+        is_question = eaten_text.endswith('?') or any(eaten_text.strip().startswith(q) for q in question_starts)
+        if is_question:
+            # שלח את כל הטקסט ל-GPT כשאלה
             user = context.user_data if context.user_data is not None else {}
             calorie_budget = user.get('calorie_budget', 0)
             total_eaten = sum(e['calories'] for e in user.get('eaten_today', []))
             remaining = calorie_budget - total_eaten
             diet = ', '.join(user.get('diet', []))
             allergies = ', '.join(user.get('allergies', []))
-            menu = user.get('menu', '')
-            prompt = (
-                f"המשתמשת שואלת: מה אני יכולה לאכול עכשיו?\n"
-                f"העדפות תזונה: {diet}\n"
-                f"אלרגיות: {allergies}\n"
-                f"מה שנאכל היום: {', '.join(clean_desc(e['desc']) for e in user.get('eaten_today', []))}\n"
-                f"תקציב קלורי יומי: {calorie_budget}, נשארו: {remaining} קלוריות\n"
-                f"תפריט מוצע: {menu}\n"
-                f"המלץ/י על מאכלים שמתאימים להעדפות, לתקציב, למטרות, ולמה שנאכל עד כה. אל תמליץ/י על מאכלים שכבר נאכלו או שאינם בהעדפות. הצג המלצה מגדרית, מסודרת, ב-HTML בלבד, עם בולד, רשימות, כותרות, והסבר קצר. אל תשתמש/י ב-Markdown."
-            )
-            response = await openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            rec = response.choices[0].message.content.strip() if response and response.choices and response.choices[0].message and response.choices[0].message.content else ''
-            await update.message.reply_text(rec, parse_mode='HTML')
-            return DAILY
-        if eaten_text.endswith('?') or any(eaten_text.startswith(q) for q in question_starts):
-            # חילוץ שם המאכל מהשאלה
-            match = re.search(r'לאכול ([^?]*)', eaten_text)
-            food = match.group(1).strip() if match else None
-            if not food:
-                # fallback: כל המילה האחרונה לפני סימן שאלה
-                food = eaten_text.replace('?', '').split()[-1]
-            # שליחת כל המידע לצ'אט
-            user = context.user_data if context.user_data is not None else {}
-            calorie_budget = user.get('calorie_budget', 0)
-            total_eaten = sum(e['calories'] for e in user.get('eaten_today', []))
-            remaining = calorie_budget - total_eaten
-            diet = ', '.join(user.get('diet', []))
-            allergies = ', '.join(user.get('allergies', []))
-            menu = user.get('menu', '')
             eaten_list = ', '.join(clean_desc(e['desc']) for e in user.get('eaten_today', []))
             prompt = (
-                f"המשתמשת שואלת: {eaten_text}\n"
+                f"המשתמש/ת שואל/ת: {eaten_text}\n"
                 f"העדפות תזונה: {diet}\n"
                 f"אלרגיות: {allergies}\n"
                 f"מה שנאכל היום: {eaten_list}\n"
                 f"תקציב קלורי יומי: {calorie_budget}, נשארו: {remaining} קלוריות\n"
-                f"מטרה: {user.get('goal', '')}\n"
-                f"תפריט מוצע: {menu}\n"
-                f"האם אפשר לאכול {food}? ענה/י תשובה תזונתית אמיתית, בהתחשב בכל הנתונים, כולל תקציב, העדפות, אלרגיות, מטרות, ומה שכבר נאכל. הצג המלצה מגדרית, מסודרת, ב-HTML בלבד, עם בולד, רשימות, כותרות, והסבר קצר. אל תשתמש/י ב-Markdown."
+                f"ענה/י תשובה תזונתית אמיתית, בהתחשב בכל הנתונים, כולל תקציב, העדפות, אלרגיות, מטרות, ומה שכבר נאכל. הצג המלצה מגדרית, מסודרת, ב-HTML בלבד, עם בולד, רשימות, כותרות, והסבר קצר. אל תשתמש/י ב-Markdown."
             )
             response = await openai_client.chat.completions.create(
                 model="gpt-4o",
@@ -693,78 +664,40 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             answer = response.choices[0].message.content.strip() if response and response.choices and response.choices[0].message and response.choices[0].message.content else ''
             await update.message.reply_text(answer, parse_mode='HTML')
             return DAILY
+        # --- דיווח אכילה רגיל ---
         if context.user_data is None:
             context.user_data = {}
         if 'eaten_today' not in context.user_data:
             context.user_data['eaten_today'] = []
         user = context.user_data
-        meal_text = clean_meal_text(update.message.text)
-        # 1. חיזוק הפרומפט ל-GPT
-        calorie_prompt = (
-            f"עבור הארוחה הבאה: {meal_text}\n"
-            "פירוט כל פריט בשורה נפרדת: שם, כמות (אם יש), קלוריות, חלבון (גרם).\n"
-            "בסוף, כתוב שורה מסכמת: סה\"כ קלוריות, סה\"כ חלבון.\n"
-            "אל תוסיף טקסט נוסף, רק טבלה פשוטה. אם יש שתייה מתוקה (קולה, מיץ, תה ממותק, וכו'), כלול גם אותה.\n"
-            "אם התוצאה נמוכה מ-50 קלוריות, כנראה יש טעות – נסה להעריך שוב ולהחזיר תשובה ריאלית בלבד.\n"
-            "דוגמה:\n"
-            "קלט: 2 ביצים, 2 פרוסות לחם, כף חמאה, סלט ירקות, קפה עם חלב סויה, 2 קוביות חלווה.\n"
-            "פלט:\n"
-            "ביצים (2): 140 קלוריות, 12 גרם חלבון\n"
-            "לחם לבן (2 פרוסות): 140 קלוריות, 4 גרם חלבון\n"
-            "חמאה (כף): 100 קלוריות, 0 גרם חלבון\n"
-            "סלט ירקות: 30 קלוריות, 1 גרם חלבון\n"
-            "קפה עם חלב סויה: 50 קלוריות, 2 גרם חלבון\n"
-            "חלווה (2 קוביות): 60 קלוריות, 1 גרם חלבון\n"
-            "סה\"כ: 520 קלוריות, 20 גרם חלבון"
-        )
-        # 2. שלח הודעת טעינה אחת בלבד ב-eaten
-        await update.message.reply_text("רגע, מחשב... 🤖")
-        # שלח ל-GPT את calorie_prompt
-        calorie_response = await openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": calorie_prompt}]
-        )
-        calorie_str = calorie_response.choices[0].message.content.strip() if calorie_response and calorie_response.choices and calorie_response.choices[0].message and calorie_response.choices[0].message.content else ''
-        import re
-        match = re.search(r"(\d+)", calorie_str)
-        calories = int(match.group(1)) if match else 0
-        # 3. אם החישוב נכשל, שלח גם הודעה עם הקלוריות שנותרו (לפי מה שידוע כרגע) ותבצע לה pin
-        if calories < 50:
-            retry_prompt = calorie_prompt + "\nשים לב: התוצאה שחישבת נמוכה מ-50 קלוריות, כנראה יש טעות. אנא הערך מחדש והחזר תשובה ריאלית בלבד."
-            retry_response = await openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": retry_prompt}]
+        # --- פיצול רכיבים ---
+        meal_components = split_meal_components(eaten_text)
+        results = []
+        total_calories = 0
+        gpt_details = []
+        for component in meal_components:
+            calorie_prompt = (
+                f"כמה קלוריות יש ב: {component}? כתוב רק את שם המאכל, מספר הקלוריות, ואם אפשר – אייקון מתאים. אל תוסיף טקסט נוסף. דוגמה: ביצת עין – 95 קק\'ל 🍳"
             )
-            retry_str = retry_response.choices[0].message.content.strip() if retry_response and retry_response.choices and retry_response.choices[0].message and retry_response.choices[0].message.content else ''
-            match_retry = re.search(r"(\d+)", retry_str)
-            retry_calories = int(match_retry.group(1)) if match_retry else 0
-            if retry_calories >= 50:
-                calories = retry_calories
-                calorie_str = retry_str
-            else:
-                await update.message.reply_text("⚠️ החישוב לא נראה הגיוני. נסה לנסח שוב או לפרט יותר את מה שאכלת.")
-                # שלח הודעה עם הקלוריות שנותרו ותבצע לה pin
-                total_eaten = sum(e['calories'] for e in user['eaten_today'])
-                remaining = user.get('calorie_budget', 0) - total_eaten
-                try:
-                    await context.bot.unpin_all_chat_messages(chat_id=update.effective_chat.id)
-                except Exception:
-                    pass
-                msg = await update.message.reply_text(f"נשארו לך: {remaining} קלוריות להיום.")
-                try:
-                    await context.bot.pin_chat_message(chat_id=update.effective_chat.id, message_id=msg.message_id)
-                except Exception:
-                    pass
-                return DAILY
-        user['eaten_today'].append({'desc': eaten_text, 'calories': calories})
-        total_eaten = sum(e['calories'] for e in user['eaten_today'])
-        remaining = user.get('calorie_budget', 0) - total_eaten
-        user['remaining_calories'] = remaining
-        summary = f"<b>הוספת:</b> {clean_desc(eaten_text)} (<b>{calories}</b> קלוריות)\n<b>סה\"כ נאכל היום:</b> <b>{total_eaten}</b> קלוריות\n<b>נשארו לך:</b> <b>{remaining}</b> קלוריות להיום."
-        summary = markdown_to_html(summary)
+            calorie_response = await openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": calorie_prompt}]
+            )
+            gpt_str = calorie_response.choices[0].message.content.strip() if calorie_response and calorie_response.choices and calorie_response.choices[0].message and calorie_response.choices[0].message.content else ''
+            # חילוץ קלוריות
+            match = re.search(r'(\d+)\s*קק\'ל', gpt_str)
+            calories = int(match.group(1)) if match else 0
+            results.append({'desc': component, 'calories': calories})
+            total_calories += calories
+            gpt_details.append(gpt_str)
+        user['eaten_today'].extend(results)
+        user['remaining_calories'] = user.get('calorie_budget', 0) - sum(e['calories'] for e in user['eaten_today'])
+        # בניית פלט מסכם
+        details_text = '\n'.join(gpt_details)
+        summary = f"{details_text}\n<b>📊 סה\"כ לארוחה: {total_calories} קק\'ל</b>"
         await update.message.reply_text(summary, parse_mode='HTML')
-        # 3. נסה להצמיד (pin) את ההודעה עם 'נשארו לך: ... קלוריות להיום' (אם אפשרי)
-        # אחרי שליחת ההודעה עם הקלוריות שנותרו:
+        # הצג קלוריות שנותרו
+        remaining = user['remaining_calories']
         msg = await update.message.reply_text(f"נשארו לך: {remaining} קלוריות להיום.")
         try:
             await context.bot.pin_chat_message(chat_id=update.effective_chat.id, message_id=msg.message_id)
@@ -850,12 +783,11 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # שמירה לבסיס הנתונים
             save_daily_entry(
                 user_id=user_id,
-                date=datetime.datetime.now().strftime('%Y-%m-%d'),
                 calories=total_eaten,
                 protein=estimated_protein,
                 fat=estimated_fat,
                 carbs=estimated_carbs,
-                meals=meals_list,
+                meals_list=meals_list,
                 goal=user.get('goal', '')
             )
             
@@ -1302,7 +1234,7 @@ async def show_menu_with_keyboard(update, context, menu_text=None):
     )
     # הודעת פתיחה ליום חדש + כפתור מה אכלתי היום
     await update.message.reply_text(
-        'יום חדש התחיל! אפשר להתחיל לדווח מה אכלת היום.',
+        'יום חדש התחיל! אפשר להתחיל לדווח מה אכלת היום. (הפרד/י בין מאכלים באמצעות פסיק – לדוגמה: ביצת עין, סלט ירקות, פרוסת לחם עם גבינה)',
         reply_markup=ReplyKeyboardMarkup([[KeyboardButton('מה אכלתי היום')]], resize_keyboard=True),
         parse_mode='HTML'
     )
@@ -1716,6 +1648,60 @@ def main():
 
     # --- Callback Query Handler for Reports Menu ---
     application.add_handler(CallbackQueryHandler(handle_reports_callback))
+
+    # אתחול ה-Scheduler
+    scheduler = AsyncIOScheduler()
+    scheduler.start()
+
+    # --- שליחה אוטומטית של תפריט יומי לכל המשתמשים ---
+    async def send_daily_menus_to_all_users(application):
+        now = datetime.datetime.now()
+        current_time = now.strftime('%H:00')
+        # טען את כל המשתמשים
+        if not os.path.exists(USERS_FILE):
+            return
+        with open(USERS_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        for user_id_str, user_data in data.items():
+            schedule_time = user_data.get('schedule_time')
+            if schedule_time == current_time:
+                try:
+                    chat_id = int(user_id_str)
+                    # בנה תפריט יומי חדש
+                    menu_text = await build_daily_menu(user_data)
+                    calorie_budget = user_data.get('calorie_budget', 1800)
+                    keyboard = [
+                        [KeyboardButton('להרכבת ארוחה לפי מה שיש בבית')],
+                        [KeyboardButton('מה אכלתי היום')],
+                        [KeyboardButton('📊 דוחות')],
+                        [KeyboardButton('סיימתי')]
+                    ]
+                    await application.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"<b>התקציב היומי שלך: {calorie_budget} קלוריות</b>\n\n{menu_text}",
+                        parse_mode='HTML',
+                        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+                    )
+                    # המלצת שתייה יומית בליטרים
+                    weight = user_data.get('weight', 70)
+                    min_l = round(weight * 30 / 1000, 1)
+                    max_l = round(weight * 35 / 1000, 1)
+                    min_cups = round((weight * 30) / 240)
+                    max_cups = round((weight * 35) / 240)
+                    await application.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"<b>המלצת שתייה להיום:</b> {min_l}–{max_l} ליטר מים (כ-{min_cups}–{max_cups} כוסות)",
+                        parse_mode='HTML'
+                    )
+                except Exception as e:
+                    logger.error(f"שגיאה בשליחת תפריט יומי אוטומטי ל-{user_id_str}: {e}")
+
+    # הוסף את המשימה ל-Scheduler (כל דקה)
+    async def scheduler_tick(application: Application):
+        await send_daily_menus_to_all_users(application)
+
+    # יש להפעיל את ה-tick כל דקה
+    scheduler.add_job(lambda: asyncio.create_task(scheduler_tick(application)), 'interval', minutes=1)
 
     application.run_polling()
 

@@ -3,4 +3,5 @@ openai
 gspread
 oauth2client
 matplotlib
+APScheduler
 

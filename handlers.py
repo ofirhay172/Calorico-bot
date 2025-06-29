@@ -104,15 +104,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Add 5 second delay
         await asyncio.sleep(5)
         
-        # Add additional message
-        await update.message.reply_text(
-            "אשמח להכיר אותך קצת 😊",
-            parse_mode="HTML"
-        )
-        
-        # Add another 5 second delay
-        await asyncio.sleep(5)
-        
         await get_name(update, context)
     return NAME
 
@@ -120,6 +111,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """שואל את המשתמש לשמו וממשיך לשאלת מגדר."""
     if update.message and update.message.text:
+        # This is when user provides their name
         name = update.message.text.strip()
         context.user_data["name"] = name
         keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
@@ -131,6 +123,15 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             parse_mode="HTML",
         )
         return GENDER
+    else:
+        # This is when called from start function - ask for name
+        if update.message:
+            await update.message.reply_text(
+                "מה השם שלך?",
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        return NAME
 
 
 async def get_gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -244,11 +245,7 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             keyboard = [[KeyboardButton(str(i))] for i in range(10, 41, 2)]
             keyboard.append([KeyboardButton("לא ידוע")])
             await update.message.reply_text(
-                get_gendered_text(
-                    context,
-                    'מה אחוזי השומן שלך? (אם לא ידוע, בחר/י "לא ידוע")',
-                    'מה אחוזי השומן שלך? (אם לא ידוע, בחרי "לא ידוע")',
-                ),
+                'מה אחוזי השומן שלך? (אם לא ידוע, בחר/י "לא ידוע")',
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),

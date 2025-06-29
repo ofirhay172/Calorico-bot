@@ -176,24 +176,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🏋️ חיבור לאימונים שדיווחת עליהם\n"
         "📝 אפשרות לעדכן בכל שלב את המשקל, המטרה, התזונה או רמת הפעילות שלך\n"
         "⏰ תפריט יומי שנשלח אליך אוטומטית בשעה שתבחר\n\n"
-        "<b>מה תרצה לעשות עכשיו?</b>"
+        "<b>בוא/י נתחיל בהרשמה קצרה:</b>"
     )
-
-    main_menu_keyboard = ReplyKeyboardMarkup(
-        keyboard=[
-            ["📅 תפריט יומי", "🍽 מה אכלתי"],
-            ["📊 דוחות", "💧 שתייה"],
-            ["⚙️ עדכון פרטים", "🆕 כפתור חדש"]
-        ],
-        resize_keyboard=True,
-        input_field_placeholder="בחר/י פעולה מהירה…"
-    )
-
     await update.message.reply_text(
         welcome_message,
-        reply_markup=main_menu_keyboard,
+        reply_markup=ReplyKeyboardRemove(),
         parse_mode='HTML'
     )
+    # התחלת השאלון מיד אחרי הודעת הפתיחה
+    await get_name(update, context)
+    return NAME
 
 async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message and update.message.text:

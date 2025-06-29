@@ -1497,3 +1497,18 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
     user_text = update.message.text.strip()
     user_id = update.effective_user.id if update.effective_user else None
     user = context.user_data if context.user_data else {}
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    help_text = (
+        "<b>עזרה - קלוריקו</b>\n\n"
+        "פקודות:\n"
+        "/start - התחלה מחדש\n"
+        "/help - עזרה\n"
+        "/cancel - ביטול פעולה\n"
+        "/reset - איפוס נתונים\n"
+        "/report - דוח מהיר\n"
+        "/reports - תפריט דוחות\n"
+        "/shititi - דיווח שתיית מים\n"
+    )
+    await update.message.reply_text(help_text, parse_mode="HTML")

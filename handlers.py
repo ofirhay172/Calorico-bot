@@ -83,8 +83,6 @@ from utils import (
     build_daily_menu,
     water_recommendation,
     learning_logic,
-    set_openai_client,
-    _openai_client,
     extract_openai_response_content,
     build_main_keyboard,
     parse_date_from_text,
@@ -964,6 +962,24 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             parse_mode="HTML",
         )
         return ALLERGIES
+    else:
+        # First time asking - show keyboard
+        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
+        gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+        if gender == "נקבה":
+            diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+        elif gender == "זכר":
+            diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+        else:
+            diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+        await update.message.reply_text(
+            diet_text,
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return DIET
 
 
 async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -995,10 +1011,18 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             save_user(user_id, context.user_data)
         
         # Show calorie budget in separate message
-        await update.message.reply_text(
+        budget_msg = await update.message.reply_text(
             f"<b>תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות</b>",
             parse_mode="HTML",
         )
+        
+        # Pin the calorie budget message
+        try:
+            await context.bot.pin_chat_message(
+                chat_id=update.effective_chat.id, message_id=budget_msg.message_id
+            )
+        except Exception as e:
+            logger.error(f"Failed to pin calorie budget message: {e}")
         
         # Create comprehensive user profile JSON
         user_profile = {
@@ -1096,6 +1120,7 @@ async def set_water_reminder_opt_in(
     
     # After water answer - show new main menu
     keyboard = [
+        [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
         [KeyboardButton("מה אכלתי היום")],
         [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
         [KeyboardButton("קבלת דוח")],
@@ -1323,7 +1348,7 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 f"תקציב קלורי יומי: {calorie_budget}, נשארו: {remaining} קלוריות\n"
                 f"ענה/י תשובה תזונתית אמיתית, בהתחשב בכל הנתונים, כולל תקציב, העדפות, אלרגיות, מטרות, ומה שכבר נאכל. הצג המלצה מגדרית, מסודרת, ב-HTML בלבד, עם בולד, רשימות, כותרות, והסבר קצר. אל תשתמש/י ב-Markdown."
             )
-            response = await _openai_client.chat.completions.create(
+            response = await utils._openai_client.chat.completions.create(
                 model="gpt-4o", messages=[{"role": "user", "content": prompt}]
             )
             answer = extract_openai_response_content(response)
@@ -1345,7 +1370,7 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         
         for component in meal_components:
             calorie_prompt = f"כמה קלוריות יש ב: {component}? כתוב רק את שם המאכל, מספר הקלוריות, ואם אפשר – אייקון מתאים. אל תוסיף טקסט נוסף. דוגמה: ביצת עין – 95 קק'ל 🍳"
-            calorie_response = await _openai_client.chat.completions.create(
+            calorie_response = await utils._openai_client.chat.completions.create(
                 model="gpt-4o", messages=[{"role": "user", "content": calorie_prompt}]
             )
             gpt_str = extract_openai_response_content(calorie_response)
@@ -1394,11 +1419,26 @@ async def handle_daily_choice(
 ) -> int:
     """Handle choices in daily menu."""
     if not update.message or not update.message.text:
-        return DAILY
+        return MENU
 
     choice = update.message.text.strip()
 
-    if choice == "📊 דוחות":
+    if choice == "לקבלת תפריט יומי מותאם אישית":
+        await generate_personalized_menu(update, context)
+        return MENU
+
+    elif choice == "בניית ארוחה לפי מה שיש לי בבית":
+        await update.message.reply_text(
+            "פרטי לי מה יש לך בבית, לדוגמא - חזה עוף, בשר טחון, סלמון, פסטה וכו'",
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+        return EATEN
+
+    elif choice == "מה אכלתי היום":
+        return await eaten(update, context)
+
+    elif choice == "קבלת דוח":
         # Show reports menu
         keyboard = [
             [InlineKeyboardButton("📅 שבוע אחרון", callback_data="report_weekly")],
@@ -1412,15 +1452,21 @@ async def handle_daily_choice(
 
         # Return to normal keyboard
         keyboard = [
+            [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
             [KeyboardButton("מה אכלתי היום")],
-            [KeyboardButton("📊 דוחות")],
-            [KeyboardButton("סיימתי")],
+            [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
+            [KeyboardButton("קבלת דוח")],
+            [KeyboardButton("תזכורות על שתיית מים")],
         ]
         await update.message.reply_text(
             "בחר/י פעולה:",
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
-        return DAILY
+        return MENU
+
+    elif choice == "תזכורות על שתיית מים":
+        await water_intake_start(update, context)
+        return "WATER_AMOUNT"
 
     elif choice == "סיימתי":
         await send_summary(update, context)
@@ -1579,6 +1625,56 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
     user_text = update.message.text.strip()
     user_id = update.effective_user.id if update.effective_user else None
     user = context.user_data if context.user_data else {}
+    
+    # Check if this is an eating report (contains food-related words or comma-separated items)
+    food_indicators = ["אכלתי", "אכלתי", "אכל", "אכלה", "חטיף", "ארוחה", "ביצה", "לחם", "בשר", "ירקות", "פירות", "חלב", "גבינה", "דג", "עוף", "פסטה", "אורז", "סלט", "חביתה", "שניצל", "המבורגר", "פיצה", "סושי", "חטיף", "עוגה", "שוקולד", "גלידה", "יוגורט", "קוטג", "חומוס", "טחינה", "אבוקדו", "בננה", "תפוח", "עגבניה", "מלפפון", "גזר", "בטטה", "תות", "ענבים", "תפוז", "מנדרינה", "אגוזים", "שקדים", "בוטנים", "קשיו", "גרעינים", "חמניה", "דלעת", "שומשום", "פרג", "זיתים", "חמוצים", "מלח", "סוכר", "דבש", "סילאן", "ריבה", "חמאה", "שמן", "מרגרינה", "מיונז", "קטשופ", "חרדל", "רוטב", "תבלינים", "פלפל", "כורכום", "קינמון", "וניל", "קפה", "תה", "מיץ", "משקה", "קולה", "ספרייט", "מיץ תפוזים", "מיץ ענבים", "חלב", "שוקו", "שייק", "מילקשייק", "בירה", "יין", "וודקה", "ויסקי", "רום", "ג'ין", "ברנדי", "ליקר", "שמפניה", "פרוסקו", "מרטיני", "קוקטייל", "מוחיטו", "פינה קולדה", "מרגריטה", "בלודי מרי", "קוסמופוליטן", "מנהטן", "אולד פאשנד", "ויסקי סאור", "ג'ין טוניק", "בירה שחורה", "בירה בהירה", "בירה לבנה", "בירה אדומה", "בירה חומה", "בירה זהובה", "בירה כהה", "בירה קלה", "בירה חזקה", "בירה מתוקה", "בירה מרירה", "בירה חמוצה", "בירה מתוקה", "בירה חריפה", "בירה עדינה", "בירה חזקה", "בירה קלה", "בירה כבדה", "בירה קלה", "בירה חזקה", "בירה מתוקה", "בירה מרירה", "בירה חמוצה", "בירה מתוקה", "בירה חריפה", "בירה עדינה", "בירה חזקה", "בירה קלה", "בירה כבדה"]
+    
+    # Check if text contains food indicators or is comma-separated
+    has_food_words = any(indicator in user_text for indicator in food_indicators)
+    is_comma_separated = "," in user_text
+    is_question = user_text.endswith("?") or any(user_text.startswith(q) for q in ["האם", "אפשר", "מותר", "כמה", "מה", "איך", "מדוע", "למה", "היכן", "איפה", "מתי", "מי"])
+    
+    if has_food_words or is_comma_separated or (not is_question and len(user_text.split()) > 1):
+        # This looks like an eating report
+        return await eaten(update, context)
+    elif is_question:
+        # This is a question - send to GPT for nutrition advice
+        calorie_budget = user.get("calorie_budget", 0)
+        total_eaten = sum(e["calories"] for e in user.get("eaten_today", []))
+        remaining = calorie_budget - total_eaten
+        diet = ", ".join(user.get("diet", []))
+        allergies = ", ".join(user.get("allergies", []))
+        eaten_list = ", ".join(clean_desc(e["desc"]) for e in user.get("eaten_today", []))
+        
+        prompt = f"המשתמש/ת שואל/ת: {user_text}\nהעדפות תזונה: {diet}\nאלרגיות: {allergies}\nמה שנאכל היום: {eaten_list}\nתקציב קלורי יומי: {calorie_budget}, נשארו: {remaining} קלוריות\nענה/י תשובה תזונתית אמיתית, בהתחשב בכל הנתונים, כולל תקציב, העדפות, אלרגיות, מטרות, ומה שכבר נאכל. הצג המלצה מגדרית, מסודרת, ב-HTML בלבד, עם בולד, רשימות, כותרות, והסבר קצר. אל תשתמש/י ב-Markdown."
+        
+        try:
+            response = await utils._openai_client.chat.completions.create(
+                model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+            )
+            answer = extract_openai_response_content(response)
+            await update.message.reply_text(answer, parse_mode="HTML")
+        except Exception as e:
+            logger.error(f"Error generating nutrition advice: {e}")
+            await update.message.reply_text("מצטער, לא הצלחתי לענות על השאלה כרגע. נסה/י שוב מאוחר יותר.")
+    else:
+        # Default to eating report
+        return await eaten(update, context)
+    
+    # Show main menu after handling
+    keyboard = [
+        [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
+        [KeyboardButton("מה אכלתי היום")],
+        [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
+        [KeyboardButton("קבלת דוח")],
+        [KeyboardButton("תזכורות על שתיית מים")],
+    ]
+    await update.message.reply_text(
+        "מה תרצה לעשות כעת?",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        parse_mode="HTML",
+    )
+    return MENU
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1594,3 +1690,102 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/shititi - דיווח שתיית מים\n"
     )
     await update.message.reply_text(help_text, parse_mode="HTML")
+
+
+async def generate_personalized_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Generate a personalized daily menu based on user profile."""
+    user = context.user_data if context.user_data else {}
+    
+    # Create comprehensive user profile for GPT
+    user_profile = {
+        "name": user.get("name", ""),
+        "gender": user.get("gender", ""),
+        "age": user.get("age", 0),
+        "height_cm": user.get("height", 0),
+        "weight_kg": user.get("weight", 0),
+        "goal": user.get("goal", ""),
+        "diet_preferences": user.get("diet", []),
+        "allergies": user.get("allergies", []),
+        "activity_type": user.get("activity_type", ""),
+        "activity_frequency": user.get("activity_frequency", ""),
+        "activity_duration": user.get("activity_duration", ""),
+        "training_time": user.get("training_time", ""),
+        "cardio_goal": user.get("cardio_goal", ""),
+        "strength_goal": user.get("strength_goal", ""),
+        "takes_supplements": user.get("takes_supplements", False),
+        "supplements": user.get("supplements", []),
+        "limitations": user.get("limitations", ""),
+        "mixed_activities": user.get("mixed_activities", []),
+        "mixed_frequency": user.get("mixed_frequency", ""),
+        "menu_adaptation": user.get("menu_adaptation", False),
+        "calorie_budget": user.get("calorie_budget", 1800),
+    }
+    
+    # Create prompt for GPT
+    prompt = f"""בנה תפריט יומי מותאם אישית עבור המשתמש/ת הבא/ה:
+
+פרופיל המשתמש/ת:
+- שם: {user_profile['name']}
+- מגדר: {user_profile['gender']}
+- גיל: {user_profile['age']}
+- גובה: {user_profile['height_cm']} ס"מ
+- משקל: {user_profile['weight_kg']} ק"ג
+- מטרה: {user_profile['goal']}
+- תקציב קלורי יומי: {user_profile['calorie_budget']} קלוריות
+- העדפות תזונה: {', '.join(user_profile['diet_preferences'])}
+- אלרגיות: {', '.join(user_profile['allergies']) if user_profile['allergies'] else 'אין'}
+- סוג פעילות: {user_profile['activity_type']}
+- תדירות פעילות: {user_profile['activity_frequency']}
+- משך פעילות: {user_profile['activity_duration']}
+
+בנה תפריט יומי מלא הכולל:
+1. ארוחת בוקר (כ-25% מהקלוריות היומיות)
+2. ארוחת צהריים (כ-35% מהקלוריות היומיות)
+3. ארוחת ערב (כ-30% מהקלוריות היומיות)
+4. 2-3 נשנושים (כ-10% מהקלוריות היומיות)
+
+התפריט צריך להיות:
+- מותאם למטרה של המשתמש/ת
+- מתחשב בהעדפות התזונה והאלרגיות
+- מתאים לפעילות הגופנית
+- מגוון וטעים
+- עם הסברים קצרים לכל מנה
+
+הצג את התפריט בפורמט HTML עם כותרות, רשימות, ואחוזי קלוריות לכל ארוחה."""
+
+    try:
+        # Generate menu using GPT
+        response = await utils._openai_client.chat.completions.create(
+            model="gpt-4o", 
+            messages=[{"role": "user", "content": prompt}]
+        )
+        menu_text = extract_openai_response_content(response)
+        
+        # Send the personalized menu
+        await update.message.reply_text(
+            f"<b>🍽️ תפריט יומי מותאם אישית עבור {user_profile['name']}</b>\n\n{menu_text}",
+            parse_mode="HTML"
+        )
+        
+        # Show main menu again
+        keyboard = [
+            [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
+            [KeyboardButton("מה אכלתי היום")],
+            [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
+            [KeyboardButton("קבלת דוח")],
+            [KeyboardButton("תזכורות על שתיית מים")],
+        ]
+        gender = user.get("gender", "זכר")
+        action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
+        await update.message.reply_text(
+            action_text,
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            parse_mode="HTML",
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating personalized menu: {e}")
+        await update.message.reply_text(
+            "מצטער, לא הצלחתי ליצור תפריט מותאם אישית כרגע. נסה/י שוב מאוחר יותר.",
+            parse_mode="HTML"
+        )

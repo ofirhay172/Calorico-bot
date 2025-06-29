@@ -56,6 +56,7 @@ from handlers import (
     cancel_water_reminders,
     daily_menu,
     eaten,
+    generate_personalized_menu,
     get_activity,
     get_activity_type,
     get_activity_frequency,

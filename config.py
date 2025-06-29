@@ -7,34 +7,39 @@ USERS_FILE = "calorico_users.json"
 # Conversation states
 (
     NAME,
-    GENDER,
     AGE,
+    GENDER,
     HEIGHT,
     WEIGHT,
     GOAL,
-    BODY_FAT,
+    ACTIVITY_YES_NO,
     ACTIVITY,
     ACTIVITY_TYPE,
     ACTIVITY_FREQUENCY,
     ACTIVITY_DURATION,
+    MIXED_ACTIVITIES,
+    MIXED_FREQUENCY,
+    MIXED_DURATION,
+    MIXED_MENU_ADAPTATION,
+    ALLERGIES,
+    ALLERGIES_ADDITIONAL,
+    DIET,
+    DIET_OPTIONS,
+    ACTIVITY_YES_NO_OPTIONS,
+    BODY_FAT,
+    BODY_FAT_TARGET,
     TRAINING_TIME,
     CARDIO_GOAL,
     STRENGTH_GOAL,
     SUPPLEMENTS,
     SUPPLEMENT_TYPES,
     LIMITATIONS,
-    MIXED_ACTIVITIES,
-    MIXED_FREQUENCY,
-    MIXED_MENU_ADAPTATION,
-    DIET,
-    ALLERGIES,
     MENU,
     DAILY,
     EATEN,
     SUMMARY,
     SCHEDULE,
     EDIT,
-    BODY_FAT_TARGET,
 ) = range(29)
 
 GENDER_OPTIONS = ["זכר", "נקבה", "אחר"]
@@ -158,5 +163,20 @@ GENDERED_ACTION = {
     "נקבה": "האם סיימת לאכול להיום?",
     "אחר": "בחר/י פעולה:",
 }
+
+MIXED_DURATION_OPTIONS = [
+    ["15-30 דקות"],
+    ["30-45 דקות"],
+    ["45-60 דקות"],
+    ["60-90 דקות"],
+    ["90+ דקות"],
+]
+
+MIXED_FREQUENCY_OPTIONS = [
+    ["1-2 פעמים בשבוע"],
+    ["3-4 פעמים בשבוע"],
+    ["5-6 פעמים בשבוע"],
+    ["כל יום"],
+]
 
 # אפשר להוסיף כאן קבועים נוספים בעתיד

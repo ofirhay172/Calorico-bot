@@ -48,6 +48,10 @@ from config import (
     SCHEDULE,
     EDIT,
     BODY_FAT_TARGET,
+    ACTIVITY_YES_NO,
+    ACTIVITY_YES_NO_OPTIONS,
+    ALLERGIES_ADDITIONAL,
+    DIET_OPTIONS,
 )
 from db import save_user
 from handlers import (
@@ -92,6 +96,12 @@ from handlers import (
     start,
     water_intake_amount,
     water_intake_start,
+    handle_callback_query,
+    show_main_menu,
+    build_meal,
+    show_reports,
+    water_reminder,
+    error_handler,
 )
 from utils import calculate_bmr, set_openai_client, build_main_keyboard, build_daily_menu
 
@@ -160,114 +170,73 @@ async def start_scheduler(application):
 
 
 def main():
-    """Main function to set up and run the bot."""
-    # Check for required environment variables
-    telegram_token = os.environ.get("TELEGRAM_TOKEN")
-    openai_api_key = os.environ.get("OPENAI_API_KEY")
+    """הפונקציה הראשית של הבוט."""
+    # יצירת הבוט
+    application = Application.builder().token(TOKEN).build()
     
-    if not telegram_token:
-        logger.error("TELEGRAM_TOKEN environment variable is not set")
-        return
-    
-    if not openai_api_key:
-        logger.error("OPENAI_API_KEY environment variable is not set")
-        return
-
-    # Initialize OpenAI client
-    openai_client = openai.AsyncOpenAI(api_key=openai_api_key)
-    set_openai_client(openai_client)
-
-    # Create application
-    application = Application.builder().token(telegram_token).build()
-
-    # Main conversation handler
+    # הוספת handlers
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
             NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_name)],
-            GENDER: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_gender)],
             AGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_age)],
+            GENDER: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_gender)],
             HEIGHT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_height)],
             WEIGHT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_weight)],
             GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_goal)],
-            BODY_FAT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat)],
+            ACTIVITY_YES_NO: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_yes_no)],
             ACTIVITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity)],
             ACTIVITY_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_type)],
             ACTIVITY_FREQUENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_frequency)],
             ACTIVITY_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_duration)],
-            TRAINING_TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_training_time)],
-            CARDIO_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_cardio_goal)],
-            STRENGTH_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_strength_goal)],
-            SUPPLEMENTS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_supplements)],
-            SUPPLEMENT_TYPES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_supplement_types)],
-            LIMITATIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_limitations)],
             MIXED_ACTIVITIES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_activities)],
             MIXED_FREQUENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_frequency)],
+            MIXED_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_duration)],
             MIXED_MENU_ADAPTATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_menu_adaptation)],
-            DIET: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_diet)],
             ALLERGIES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies)],
-            MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_daily_choice)],
-            DAILY: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_daily_choice)],
-            EATEN: [MessageHandler(filters.TEXT & ~filters.COMMAND, eaten)],
-            SUMMARY: [MessageHandler(filters.TEXT & ~filters.COMMAND, send_summary)],
-            SCHEDULE: [MessageHandler(filters.TEXT & ~filters.COMMAND, schedule_menu)],
-            EDIT: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)],
-            BODY_FAT_TARGET: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_target)],
+            ALLERGIES_ADDITIONAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies_additional)],
+            DIET: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_diet)],
+            DIET_OPTIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_diet_options)],
+            ACTIVITY_YES_NO_OPTIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_yes_no_options)],
         },
         fallbacks=[
             CommandHandler("start", start),
-            CommandHandler("cancel", cancel),
             CommandHandler("help", help_command),
+            CommandHandler("menu", show_main_menu),
+            MessageHandler(filters.Regex("^לקבלת תפריט יומי מותאם אישית$"), generate_personalized_menu),
+            MessageHandler(filters.Regex("^מה אכלתי היום$"), eaten),
+            MessageHandler(filters.Regex("^בניית ארוחה לפי מה שיש לי בבית$"), build_meal),
+            MessageHandler(filters.Regex("^📊 דוחות$"), show_reports),
+            MessageHandler(filters.Regex("^תזכורות על שתיית מים$"), water_reminder),
             MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input),
         ],
+        name="nutrition_conversation",
+        persistent=True,
     )
+    
     application.add_handler(conv_handler)
-
-    # Water conversation handler
-    water_conv = ConversationHandler(
-        entry_points=[
-            CommandHandler("shititi", water_intake_start),
-            MessageHandler(filters.Regex("^שתיתי$"), water_intake_start),
-            MessageHandler(filters.Regex("^שתיתי, תודה$"), water_intake_start),
-        ],
-        states={
-            "WATER_AMOUNT": [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, water_intake_amount)
-            ]
-        },
-        fallbacks=[CommandHandler("cancel", cancel)],
-        allow_reentry=True,
-    )
-    application.add_handler(water_conv)
-
-    # Global handlers
-    application.add_handler(
-        MessageHandler(filters.Regex("^תזכיר לי בעוד עשר דקות$"), remind_in_10_minutes)
-    )
-    application.add_handler(
-        MessageHandler(
-            filters.Regex(
-                "^(תפסיק להזכיר לי לשתות מים|ביטול תזכורות מים|תפסיק תזכורות מים)$"
-            ),
-            cancel_water_reminders,
-        )
-    )
-    application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input)
-    )
-
-    # Command handlers
+    
+    # הוספת handlers נוספים
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("cancel", cancel))
-    # application.add_handler(CommandHandler("reset", reset_command))
-    # application.add_handler(CommandHandler("report", report_command))
-    # application.add_handler(CommandHandler("reports", reports_command))
-
-    # Set up scheduler
-    application.post_init = start_scheduler
-
-    # Start the bot
-    logger.info("Starting bot...")
+    application.add_handler(CommandHandler("menu", show_main_menu))
+    
+    # הוספת callback handlers לכפתורים
+    application.add_handler(CallbackQueryHandler(handle_callback_query))
+    
+    # הוספת handlers לתפריט הראשי
+    application.add_handler(MessageHandler(filters.Regex("^לקבלת תפריט יומי מותאם אישית$"), generate_personalized_menu))
+    application.add_handler(MessageHandler(filters.Regex("^מה אכלתי היום$"), eaten))
+    application.add_handler(MessageHandler(filters.Regex("^בניית ארוחה לפי מה שיש לי בבית$"), build_meal))
+    application.add_handler(MessageHandler(filters.Regex("^📊 דוחות$"), show_reports))
+    application.add_handler(MessageHandler(filters.Regex("^תזכורות על שתיית מים$"), water_reminder))
+    
+    # הוספת handler לטקסט חופשי
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input))
+    
+    # הוספת error handler
+    application.add_error_handler(error_handler)
+    
+    # הפעלת הבוט
     application.run_polling()
 
 

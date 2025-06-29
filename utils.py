@@ -1,5 +1,7 @@
 import re
 import datetime
+import openai
+from typing import List, Optional
 
 def extract_openai_response_content(response):
     """Extracts the content string from an OpenAI response object safely."""
@@ -31,25 +33,33 @@ def strip_html_tags(text):
 
 
 def calculate_bmr(gender, age, height, weight, activity, goal):
-    """מחשב BMR לפי נתוני משתמש."""
-    # TODO: לשפר נוסחה לפי צורך
+    """מחשב BMR לפי נוסחת Mifflin-St Jeor."""
+    # Mifflin-St Jeor Formula
     if gender == "נקבה":
-        bmr = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
+        bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161
     else:
-        bmr = 66 + (13.7 * weight) + (5 * height) - (6.8 * age)
-    # התאמת פעילות
+        bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5
+    
+    # התאמת פעילות - שיפור המפתחות
     activity_factor = {
         "לא מתאמן": 1.2,
+        "לא מתאמנת": 1.2,
         "מעט (2-3 אימונים בשבוע)": 1.375,
         "הרבה (4-5 אימונים בשבוע)": 1.55,
         "כל יום": 1.725,
+        "1-2 פעמים בשבוע": 1.375,
+        "3-4 פעמים בשבוע": 1.55,
+        "5-6 פעמים בשבוע": 1.725,
     }.get(activity, 1.2)
+    
     bmr *= activity_factor
+    
     # התאמת מטרה
     if goal == "ירידה במשקל":
         bmr -= 300
     elif goal == "עלייה במסת שריר":
         bmr += 300
+    
     return int(bmr)
 
 
@@ -175,8 +185,19 @@ async def build_daily_menu(user: dict, context=None) -> str:
                 for e in context.user_data.get("eaten_today", [])
             ]
         )
+    
+    # חישוב BMR לפי Mifflin-St Jeor
+    calorie_budget = calculate_bmr(
+        user.get("gender", "זכר"),
+        user.get("age", 30),
+        user.get("height", 170),
+        user.get("weight", 70),
+        user.get("activity", "בינונית"),
+        user.get("goal", "שמירה על משקל"),
+    )
+    
     prompt = (
-        f"המשתמש/ת: {user.get('name','')}, גיל: {user.get('age','')}, מגדר: {user.get('gender','')}, גובה: {user.get('height','')}, משקל: {user.get('weight','')}, מטרה: {user.get('goal','')}, רמת פעילות: {user.get('activity','')}, העדפות תזונה: {diet_str}, אלרגיות: {user.get('allergies') or 'אין'}.\n"
+        f"המשתמש/ת: {user.get('name','')}, גיל: {user.get('age','')}, מגדר: {user.get('gender','')}, גובה: {user.get('height','')}, משקל: {user.get('weight','')}, מטרה: {user.get('goal','')}, רמת פעילות: {user.get('activity','')}, העדפות תזונה: {diet_str}, תקציב קלורי יומי: {calorie_budget}.\n"
         f"המשתמש/ת כבר אכל/ה היום: {eaten_today}.\n"
         "בנה לי תפריט יומי מאוזן ובריא, ישראלי, פשוט, עם 5–6 ארוחות (בוקר, ביניים, צהריים, ביניים, ערב, קינוח רשות). \n"
         "השתמש בעברית יומיומית, פשוטה וברורה בלבד. אל תשתמש במילים לא שגרתיות, תיאורים פיוטיים, או מנות לא הגיוניות. \n"
@@ -189,13 +210,16 @@ async def build_daily_menu(user: dict, context=None) -> str:
         f"הנחיה מגדרית: כתוב את כל ההנחיות בלשון {user.get('gender','זכר')}.\n"
         "אל תמליץ/י, אל תציע/י, ואל תכלול/י מאכלים, מוצרים או מרכיבים שאינם מופיעים בהעדפות התזונה שלי, גם לא כהמלצה או דוגמה.\n"
         "אם כבר אכלתי היום עוף או חלבון, אל תמליץ/י לי שוב על עוף או חלבון, אלא אם זה הכרחי לתפריט מאוזן.\n"
-        # אין עיצוב בפרומפט ל-GPT!
     )
-    response = await _openai_client.chat.completions.create(
-        model="gpt-4o", messages=[{"role": "user", "content": prompt}]
-    )
-    menu_text = extract_openai_response_content(response)
-    return menu_text
+    
+    try:
+        response = await _openai_client.chat.completions.create(
+            model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+        )
+        menu_text = extract_openai_response_content(response)
+        return menu_text
+    except Exception as e:
+        return f"שגיאה בבניית תפריט: {str(e)}"
 
 
 def build_main_keyboard():
@@ -207,3 +231,63 @@ def build_main_keyboard():
         [KeyboardButton("📊 דוחות")],
         [KeyboardButton("סיימתי")],
     ]
+
+
+def extract_allergens_from_text(text: str) -> List[str]:
+    """מזהה אלרגנים נפוצים מתוך טקסט."""
+    text_lower = text.lower()
+    allergens = []
+    
+    # מיפוי אלרגנים נפוצים
+    allergen_mapping = {
+        "חלב": ["חלב", "לקטוז", "גבינה", "יוגורט", "קוטג", "גלידה", "חמאה", "שמנת"],
+        "בוטנים": ["בוטנים", "חמאת בוטנים", "בוטן"],
+        "אגוזים": ["אגוזים", "שקדים", "קשיו", "פיסטוקים", "ברזיל", "מקדמיה", "פקאן"],
+        "גלוטן": ["גלוטן", "חיטה", "לחם", "פסטה", "בורגול", "קוסקוס", "קמח"],
+        "ביצים": ["ביצים", "ביצה", "חלבון", "חלמון"],
+        "סויה": ["סויה", "טופו", "רוטב סויה", "מיסו"],
+        "דגים": ["דג", "דגים", "סלמון", "טונה", "בקלה", "סרדינים"],
+        "שומשום": ["שומשום", "טחינה", "חלבה"],
+        "סלרי": ["סלרי"],
+        "חרדל": ["חרדל"],
+        "סולפיטים": ["סולפיטים", "סולפיט"],
+    }
+    
+    for allergen, keywords in allergen_mapping.items():
+        if any(keyword in text_lower for keyword in keywords):
+            allergens.append(allergen)
+    
+    return list(set(allergens))  # הסרת כפילויות
+
+
+def validate_text_input(text: str) -> bool:
+    """מאמת קלט טקסט - בודק תווים אסורים."""
+    if not text or not text.strip():
+        return False
+    
+    # בדיקת תווים אסורים
+    forbidden_chars = ['<', '>', '{', '}', '[', ']', '\\', '/', '*', '&', '%', '$', '#', '@', '!']
+    if any(char in text for char in forbidden_chars):
+        return False
+    
+    # בדיקת אורך סביר
+    if len(text.strip()) > 500:
+        return False
+    
+    return True
+
+
+def validate_numeric_input(value: str, min_val: float, max_val: float) -> bool:
+    """מאמת קלט מספרי."""
+    try:
+        num = float(value)
+        return min_val <= num <= max_val
+    except (ValueError, TypeError):
+        return False
+
+
+def add_rtl_markup(text: str) -> str:
+    """מוסיף סימון RTL להודעות HTML."""
+    if text.startswith('<'):
+        return f'‎{text}'  # RTL mark at start
+    return text

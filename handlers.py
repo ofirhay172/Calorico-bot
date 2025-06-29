@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import re
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 from telegram import (
@@ -71,8 +71,10 @@ from config import (
     ACTIVITY_TYPE_OPTIONS,
     DIET_OPTIONS,
     ACTIVITY_YES_NO_OPTIONS,
+    ALLERGIES_ADDITIONAL,
+    MIXED_DURATION_OPTIONS,
 )
-from db import save_user, load_user, save_daily_entry
+from db import save_user, load_user, save_daily_entry, save_user_allergies_data, save_food_entry
 from utils import (
     clean_desc,
     clean_meal_text,
@@ -86,6 +88,8 @@ from utils import (
     extract_openai_response_content,
     build_main_keyboard,
     parse_date_from_text,
+    extract_allergens_from_text,
+    validate_numeric_input,
 )
 from report_generator import (
     get_weekly_report, 
@@ -226,69 +230,109 @@ async def get_gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש גילו וממשיך לשאלת גובה."""
+    """שואל את המשתמש לגיל עם אימות קלט."""
     if update.message and update.message.text:
-        age = update.message.text.strip()
-        if not age.isdigit() or not (5 <= int(age) <= 120):
-            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
-            error_text = "אנא הזיני גיל תקין (5-120)." if gender == "נקבה" else "אנא הזן גיל תקין (5-120)."
+        age_text = update.message.text.strip()
+        
+        # אימות קלט
+        if not validate_numeric_input(age_text, 1, 120):
             await update.message.reply_text(
-                error_text,
-                parse_mode="HTML",
+                "אנא הזן/י גיל תקין (מספר בין 1 ל-120).",
+                reply_markup=ReplyKeyboardRemove()
             )
             return AGE
-        context.user_data["age"] = int(age)
+        
+        age = int(age_text)
+        context.user_data["age"] = age
+        
+        # מעבר לשאלה הבאה
+        gender_keyboard = [
+            [KeyboardButton("זכר"), KeyboardButton("נקבה")],
+            [KeyboardButton("אחר")]
+        ]
         await update.message.reply_text(
-            'מה הגובה שלך בס"מ?',
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
+            "מה המגדר שלך?",
+            reply_markup=ReplyKeyboardMarkup(gender_keyboard, resize_keyboard=True)
         )
-        return HEIGHT
+        return GENDER
+    
+    # אם אין הודעה, הצג את השאלה
+    if update.message:
+        await update.message.reply_text(
+            "מה הגיל שלך?",
+            reply_markup=ReplyKeyboardRemove()
+        )
+    return AGE
 
 
 async def get_height(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש לגובהו וממשיך לשאלת משקל."""
+    """שואל את המשתמש לגובה עם אימות קלט."""
     if update.message and update.message.text:
-        height = update.message.text.strip()
-        if not height.isdigit() or not (80 <= int(height) <= 250):
-            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
-            error_text = 'אנא הזיני גובה תקין בס"מ (80-250).' if gender == "נקבה" else 'אנא הזן גובה תקין בס"מ (80-250).'
+        height_text = update.message.text.strip()
+        
+        # אימות קלט
+        if not validate_numeric_input(height_text, 50, 250):
             await update.message.reply_text(
-                error_text,
-                parse_mode="HTML",
+                "אנא הזן/י גובה תקין (מספר בין 50 ל-250 ס\"מ).",
+                reply_markup=ReplyKeyboardRemove()
             )
             return HEIGHT
-        context.user_data["height"] = int(height)
+        
+        height = float(height_text)
+        context.user_data["height"] = height
+        
+        # מעבר לשאלה הבאה
         await update.message.reply_text(
-            'מה המשקל שלך בק"ג?',
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
+            "מה המשקל שלך בק\"ג?",
+            reply_markup=ReplyKeyboardRemove()
         )
         return WEIGHT
+    
+    # אם אין הודעה, הצג את השאלה
+    if update.message:
+        await update.message.reply_text(
+            "מה הגובה שלך בס\"מ?",
+            reply_markup=ReplyKeyboardRemove()
+        )
+    return HEIGHT
 
 
 async def get_weight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש למשקלו וממשיך לשאלת מטרה."""
+    """שואל את המשתמש למשקל עם אימות קלט."""
     if update.message and update.message.text:
-        weight = update.message.text.strip()
-        if not weight.isdigit() or not (20 <= int(weight) <= 300):
-            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
-            error_text = 'אנא הזיני משקל תקין בק"ג (20-300).' if gender == "נקבה" else 'אנא הזן משקל תקין בק"ג (20-300).'
+        weight_text = update.message.text.strip()
+        
+        # אימות קלט
+        if not validate_numeric_input(weight_text, 20, 300):
             await update.message.reply_text(
-                error_text,
-                parse_mode="HTML",
+                "אנא הזן/י משקל תקין (מספר בין 20 ל-300 ק\"ג).",
+                reply_markup=ReplyKeyboardRemove()
             )
             return WEIGHT
-        context.user_data["weight"] = int(weight)
-        keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
+        
+        weight = float(weight_text)
+        context.user_data["weight"] = weight
+        
+        # מעבר לשאלה הבאה
+        goal_keyboard = [
+            [KeyboardButton("ירידה במשקל")],
+            [KeyboardButton("עלייה במסת שריר")],
+            [KeyboardButton("שמירה על משקל")],
+            [KeyboardButton("חיטוב")]
+        ]
         await update.message.reply_text(
             "מה המטרה התזונתית שלך?",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
+            reply_markup=ReplyKeyboardMarkup(goal_keyboard, resize_keyboard=True)
         )
         return GOAL
+    
+    # אם אין הודעה, הצג את השאלה
+    if update.message:
+        await update.message.reply_text(
+            "מה המשקל שלך בק\"ג?",
+            reply_markup=ReplyKeyboardRemove()
+        )
+    return WEIGHT
 
 
 async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -776,69 +820,106 @@ async def get_limitations(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return DIET
 
 
-async def get_mixed_activities(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש לסוגי הפעילויות המעורבות וממשיך לשאלה הבאה."""
+async def get_mixed_activities(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """מטפל בבחירת סוגי פעילות מרובות."""
+    if "mixed_activities_selected" not in context.user_data:
+        context.user_data["mixed_activities_selected"] = set()
+    
+    selected = context.user_data["mixed_activities_selected"]
+    
     if update.message and update.message.text:
-        activities_text = update.message.text.strip()
+        text = update.message.text.strip().replace(" ❌", "")
         
-        # Parse selected activities
-        selected_activities = []
-        for option in MIXED_ACTIVITY_OPTIONS:
-            if option in activities_text:
-                selected_activities.append(option)
+        if text == "המשך":
+            if not selected:
+                await update.message.reply_text(
+                    "אנא בחר/י לפחות סוג פעילות אחד לפני ההמשך.",
+                    reply_markup=build_mixed_activities_keyboard(selected)
+                )
+                return MIXED_ACTIVITIES
+            
+            # שמירת הפעילויות שנבחרו
+            context.user_data["mixed_activities"] = list(selected)
+            del context.user_data["mixed_activities_selected"]
+            
+            # מעבר לשאלת תדירות כוללת
+            return await get_mixed_frequency(update, context)
         
-        if not selected_activities:
-            keyboard = [[KeyboardButton(opt)] for opt in MIXED_ACTIVITY_OPTIONS]
-            await update.message.reply_text(
-                "בחר/י לפחות פעילות אחת מהתפריט למטה:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
-            return MIXED_ACTIVITIES
+        elif text in MIXED_ACTIVITY_OPTIONS:
+            if text in selected:
+                selected.remove(text)
+            else:
+                selected.add(text)
         
-        context.user_data["mixed_activities"] = selected_activities
-        
-        # Ask about frequency
-        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
-        await update.message.reply_text(
-            "כמה פעמים בשבוע את/ה עושה כל סוג?",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-        return MIXED_FREQUENCY
+        elif text == "אין":
+            selected.clear()
+            selected.add("אין")
+    
+    # הצג מקלדת עם הפעילויות שנבחרו
+    await update.message.reply_text(
+        "בחר/י את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):",
+        reply_markup=build_mixed_activities_keyboard(selected)
+    )
+    return MIXED_ACTIVITIES
 
-
-async def get_mixed_frequency(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש לתדירות הפעילויות המעורבות וממשיך לשאלה הבאה."""
+async def get_mixed_frequency(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """שואל על תדירות כוללת לפעילות מעורבת."""
     if update.message and update.message.text:
-        frequency = update.message.text.strip()
-        if frequency not in ACTIVITY_FREQUENCY_OPTIONS:
-            keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
+        text = update.message.text.strip()
+        
+        if text in MIXED_FREQUENCY_OPTIONS:
+            context.user_data["mixed_frequency"] = text
+            
+            # מעבר לשאלת משך כולל
             await update.message.reply_text(
-                "בחר/י תדירות מהתפריט למטה:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
+                "כמה זמן נמשך כל אימון בממוצע?",
+                reply_markup=ReplyKeyboardMarkup(MIXED_DURATION_OPTIONS, resize_keyboard=True)
             )
-            return MIXED_FREQUENCY
+            return MIXED_DURATION
+    
+    await update.message.reply_text(
+        "כמה פעמים בשבוע את/ה מתאמן/ת?",
+        reply_markup=ReplyKeyboardMarkup(MIXED_FREQUENCY_OPTIONS, resize_keyboard=True)
+    )
+    return MIXED_FREQUENCY
+
+async def get_mixed_duration(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """שואל על משך כולל לפעילות מעורבת."""
+    if update.message and update.message.text:
+        text = update.message.text.strip()
         
-        context.user_data["mixed_frequency"] = frequency
-        
-        # Ask about menu adaptation
-        keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
-        await update.message.reply_text(
-            "האם את/ה רוצה שהתפריט יותאם לפי הימים השונים?",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-        return MIXED_MENU_ADAPTATION
+        if text in MIXED_DURATION_OPTIONS:
+            context.user_data["mixed_duration"] = text
+            
+            # חישוב כולל של תדירות ומשך
+            frequency = context.user_data.get("mixed_frequency", "")
+            duration = context.user_data.get("mixed_duration", "")
+            activities = context.user_data.get("mixed_activities", [])
+            
+            # יצירת סיכום פעילות
+            activity_summary = f"שילוב: {', '.join(activities)}, {frequency}, {duration}"
+            context.user_data["activity"] = activity_summary
+            
+            # מעבר לשאלת התאמת תפריט
+            return await get_mixed_menu_adaptation(update, context)
+    
+    await update.message.reply_text(
+        "כמה זמן נמשך כל אימון בממוצע?",
+        reply_markup=ReplyKeyboardMarkup(MIXED_DURATION_OPTIONS, resize_keyboard=True)
+    )
+    return MIXED_DURATION
+
+def build_mixed_activities_keyboard(selected_activities):
+    """בונה מקלדת לבחירת פעילויות מרובות."""
+    keyboard = []
+    for activity in MIXED_ACTIVITY_OPTIONS:
+        if activity in selected_activities:
+            keyboard.append([KeyboardButton(f"{activity} ❌")])
+        else:
+            keyboard.append([KeyboardButton(activity)])
+    
+    keyboard.append([KeyboardButton("המשך")])
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 
 async def get_mixed_menu_adaptation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -931,45 +1012,91 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return DIET
 
 
-async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """שואל את המשתמש לאלרגיות עם כפתורים מרובי בחירה."""
-    if "allergies_selected" not in context.user_data:
-        context.user_data["allergies_selected"] = set()
-    selected = context.user_data["allergies_selected"]
-    if update.message and update.message.text:
-        text = update.message.text.strip().replace(" ❌", "")
-        if text == "אין":
-            selected.clear()
-            selected.add("אין")
-        elif text in ALLERGY_OPTIONS:
-            if text in selected:
-                selected.remove(text)
-            else:
-                selected.discard("אין")
-                selected.add(text)
-        elif text.lower() in ["אין", "לא", "ללא"]:
-            selected.clear()
-            selected.add("אין")
-        elif text == "שאר (פרט/י)":
-            await update.message.reply_text("פרט/י את האלרגיה הנוספת:", reply_markup=ReplyKeyboardRemove())
-            return ALLERGIES
+async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """מטפל בשאלת אלרגיות עם זיהוי אוטומטי."""
+    text = update.message.text.strip()
+    
+    # זיהוי אלרגנים אוטומטית
+    detected_allergies = extract_allergens_from_text(text)
+    
+    if detected_allergies:
+        # שמירת אלרגיות במסד נתונים
+        user_id = update.effective_user.id
+        save_user_allergies_data(user_id, detected_allergies)
+        
+        # עדכון context
+        context.user_data["allergies"] = detected_allergies
+        
+        # הודעה עם האלרגנים שזוהו
+        allergies_text = ", ".join(detected_allergies)
+        await update.message.reply_text(
+            f"זיהיתי את האלרגיות הבאות: {allergies_text}\n\n"
+            "אם יש אלרגיות נוספות שלא זוהו, אנא כתוב אותן.",
+            reply_markup=ReplyKeyboardMarkup([["אין אלרגיות נוספות"]], resize_keyboard=True)
+        )
+        return ALLERGIES_ADDITIONAL
+    else:
+        # אם לא זוהו אלרגנים, בדוק אם המשתמש כתב "אין" או משהו דומה
+        if any(word in text.lower() for word in ["אין", "לא", "ללא", "אפס", "כלום"]):
+            context.user_data["allergies"] = []
+            save_user_allergies_data(update.effective_user.id, [])
+            
+            await update.message.reply_text(
+                "מעולה! אין אלרגיות.\n\n"
+                "עכשיו בואו נמשיך לשאלה הבאה...",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return await get_activity(update, context)
         else:
-            # טקסט חופשי - הוספה
-            selected.add(text)
-        # אם המשתמש לחץ שלח/המשך
-        if text == "המשך" or (update.message.text and update.message.text.startswith("המשך")):
-            context.user_data["allergies"] = list(selected) if "אין" not in selected else []
-            del context.user_data["allergies_selected"]
-            return await get_diet(update, context)
-    # הצג מקלדת מרובת בחירה
-    keyboard = build_allergy_keyboard(selected)
-    keyboard.append([KeyboardButton("המשך")])
-    await update.message.reply_text(
-        "בחר/י את כל האלרגיות הרלוונטיות, או 'אין' אם אין לך אלרגיות. לחיצה נוספת מבטלת בחירה.",
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-        parse_mode="HTML",
-    )
-    return ALLERGIES
+            # בקשה להבהרה
+            await update.message.reply_text(
+                "לא זיהיתי אלרגנים ספציפיים בטקסט שלך.\n\n"
+                "אנא כתוב את האלרגיות שלך בצורה ברורה, למשל:\n"
+                "• חלב, בוטנים\n"
+                "• גלוטן, ביצים\n"
+                "• אין אלרגיות\n\n"
+                "או כתוב 'אין' אם אין לך אלרגיות.",
+                reply_markup=ReplyKeyboardMarkup([["אין אלרגיות"]], resize_keyboard=True)
+            )
+            return ALLERGIES
+
+async def get_allergies_additional(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """מטפל באלרגיות נוספות."""
+    text = update.message.text.strip()
+    
+    if "אין" in text.lower():
+        # המשך לשאלה הבאה
+        await update.message.reply_text(
+            "מעולה! עכשיו בואו נמשיך לשאלה הבאה...",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return await get_activity(update, context)
+    else:
+        # זיהוי אלרגנים נוספים
+        additional_allergies = extract_allergens_from_text(text)
+        if additional_allergies:
+            # הוספה לאלרגיות הקיימות
+            current_allergies = context.user_data.get("allergies", [])
+            all_allergies = list(set(current_allergies + additional_allergies))
+            
+            # שמירה במסד נתונים
+            user_id = update.effective_user.id
+            save_user_allergies_data(user_id, all_allergies)
+            context.user_data["allergies"] = all_allergies
+            
+            allergies_text = ", ".join(all_allergies)
+            await update.message.reply_text(
+                f"סה\"כ האלרגיות שלך: {allergies_text}\n\n"
+                "עכשיו בואו נמשיך לשאלה הבאה...",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return await get_activity(update, context)
+        else:
+            await update.message.reply_text(
+                "לא זיהיתי אלרגיות נוספות. אם אין עוד אלרגיות, כתוב 'אין'.",
+                reply_markup=ReplyKeyboardMarkup([["אין אלרגיות נוספות"]], resize_keyboard=True)
+            )
+            return ALLERGIES_ADDITIONAL
 
 
 async def ask_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1427,65 +1554,111 @@ async def after_questionnaire(
     return EDIT
 
 
-async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle all free text input - identify if it's a question or eating report."""
-    logger.info(f"handle_free_text_input called with text: {update.message.text if update.message and update.message.text else 'None'}")
-    if not update.message or not update.message.text:
-        return MENU
-
-    user_text = update.message.text.strip()
-    user_id = update.effective_user.id if update.effective_user else None
-    user = context.user_data if context.user_data else {}
+def classify_text_input(text: str) -> str:
+    """מסווג טקסט חופשי לקטגוריות."""
+    text_lower = text.lower().strip()
     
-    # Check if this is an eating report (contains food-related words or comma-separated items)
-    food_indicators = ["אכלתי", "אכלתי", "אכל", "אכלה", "חטיף", "ארוחה", "ביצה", "לחם", "בשר", "ירקות", "פירות", "חלב", "גבינה", "דג", "עוף", "פסטה", "אורז", "סלט", "חביתה", "שניצל", "המבורגר", "פיצה", "סושי", "חטיף", "עוגה", "שוקולד", "גלידה", "יוגורט", "קוטג", "חומוס", "טחינה", "אבוקדו", "בננה", "תפוח", "עגבניה", "מלפפון", "גזר", "בטטה", "תות", "ענבים", "תפוז", "מנדרינה", "אגוזים", "שקדים", "בוטנים", "קשיו", "גרעינים", "חמניה", "דלעת", "שומשום", "פרג", "זיתים", "חמוצים", "מלח", "סוכר", "דבש", "סילאן", "ריבה", "חמאה", "שמן", "מרגרינה", "מיונז", "קטשופ", "חרדל", "רוטב", "תבלינים", "פלפל", "כורכום", "קינמון", "וניל", "קפה", "תה", "מיץ", "משקה", "קולה", "ספרייט", "מיץ תפוזים", "מיץ ענבים", "חלב", "שוקו", "שייק", "מילקשייק", "בירה", "יין", "וודקה", "ויסקי", "רום", "ג'ין", "ברנדי", "ליקר", "שמפניה", "פרוסקו", "מרטיני", "קוקטייל", "מוחיטו", "פינה קולדה", "מרגריטה", "בלודי מרי", "קוסמופוליטן", "מנהטן", "אולד פאשנד", "ויסקי סאור", "ג'ין טוניק", "בירה שחורה", "בירה בהירה", "בירה לבנה", "בירה אדומה", "בירה חומה", "בירה זהובה", "בירה כהה", "בירה קלה", "בירה חזקה", "בירה מתוקה", "בירה מרירה", "בירה חמוצה", "בירה מתוקה", "בירה חריפה", "בירה עדינה", "בירה חזקה", "בירה קלה", "בירה כבדה", "בירה קלה", "בירה חזקה", "בירה מתוקה", "בירה מרירה", "בירה חמוצה", "בירה מתוקה", "בירה חריפה", "בירה עדינה", "בירה חזקה", "בירה קלה", "בירה כבדה"]
+    # בדיקה אם זו שאלה
+    question_words = ["מה", "האם", "כמה", "איך", "מתי", "איפה", "למה", "מי"]
+    if any(text_lower.startswith(word) for word in question_words) or text_lower.endswith("?"):
+        return "question"
     
-    # Check if text contains food indicators or is comma-separated
-    has_food_words = any(indicator in user_text for indicator in food_indicators)
-    is_comma_separated = "," in user_text
-    is_question = user_text.endswith("?") or any(user_text.startswith(q) for q in ["האם", "אפשר", "מותר", "כמה", "מה", "איך", "מדוע", "למה", "היכן", "איפה", "מתי", "מי"])
-    
-    if has_food_words or is_comma_separated or (not is_question and len(user_text.split()) > 1):
-        # This looks like an eating report
-        return await eaten(update, context)
-    elif is_question:
-        # This is a question - send to GPT for nutrition advice
-        calorie_budget = user.get("calorie_budget", 0)
-        total_eaten = sum(e["calories"] for e in user.get("eaten_today", []))
-        remaining = calorie_budget - total_eaten
-        diet = ", ".join(user.get("diet", []))
-        allergies = ", ".join(user.get("allergies", []))
-        eaten_list = ", ".join(clean_desc(e["desc"]) for e in user.get("eaten_today", []))
-        
-        prompt = f"המשתמש/ת שואל/ת: {user_text}\nהעדפות תזונה: {diet}\nאלרגיות: {allergies}\nמה שנאכל היום: {eaten_list}\nתקציב קלורי יומי: {calorie_budget}, נשארו: {remaining} קלוריות\nענה/י תשובה תזונתית אמיתית, בהתחשב בכל הנתונים, כולל תקציב, העדפות, אלרגיות, מטרות, ומה שכבר נאכל. הצג המלצה מגדרית, מסודרת, ב-HTML בלבד, עם בולד, רשימות, כותרות, והסבר קצר. אל תשתמש/י ב-Markdown."
-        
-        try:
-            response = await utils._openai_client.chat.completions.create(
-                model="gpt-4o", messages=[{"role": "user", "content": prompt}]
-            )
-            answer = extract_openai_response_content(response)
-            await update.message.reply_text(answer, parse_mode="HTML")
-        except Exception as e:
-            logger.error(f"Error generating nutrition advice: {e}")
-            await update.message.reply_text("מצטער, לא הצלחתי לענות על השאלה כרגע. נסה/י שוב מאוחר יותר.")
-    else:
-        # Default to eating report
-        return await eaten(update, context)
-    
-    # Show main menu after handling
-    keyboard = [
-        [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
-        [KeyboardButton("מה אכלתי היום")],
-        [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
-        [KeyboardButton("קבלת דוח")],
-        [KeyboardButton("תזכורות על שתיית מים")],
+    # בדיקה אם זו רשימת מאכלים (פסיקים או ריבוי מילים מוכרות)
+    food_words = [
+        "לחם", "חלב", "ביצה", "עוף", "בשר", "דג", "אורז", "פסטה", "תפוח", "בננה",
+        "עגבניה", "מלפפון", "גזר", "בטטה", "תות", "ענבים", "אבוקדו", "שקדים",
+        "אגוזים", "יוגורט", "גבינה", "קוטג", "חמאה", "שמן", "מלח", "פלפל",
+        "סוכר", "קפה", "תה", "מים", "מיץ", "חלב", "שוקו", "גלידה", "עוגה",
+        "ביסקוויט", "קרקר", "חטיף", "שוקולד", "ממתק", "פיצה", "המבורגר",
+        "סושי", "סלט", "מרק", "קציצה", "שניצל", "סטייק", "פאייה", "פסטה"
     ]
-    await update.message.reply_text(
-        "מה תרצה לעשות כעת?",
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-        parse_mode="HTML",
-    )
-    return MENU
+    
+    words = text_lower.split()
+    food_word_count = sum(1 for word in words if word in food_words)
+    
+    # אם יש פסיקים או ריבוי מילים מוכרות
+    if "," in text or "ו" in text or food_word_count >= 2:
+        return "food_list"
+    
+    # אם יש מילה אחת מוכרת
+    if food_word_count == 1 and len(words) <= 3:
+        return "food_list"
+    
+    return "other"
+
+async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """מטפל בטקסט חופשי ומסווג אותו."""
+    text = update.message.text.strip()
+    
+    if not validate_text_input(text):
+        await update.message.reply_text(
+            "הטקסט שהזנת מכיל תווים לא תקינים או ארוך מדי. אנא נסה שוב.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return ConversationHandler.END
+    
+    text_type = classify_text_input(text)
+    
+    if text_type == "question":
+        # טיפול בשאלה
+        await update.message.reply_text(
+            "זיהיתי שזו שאלה. אנא השתמש/י בתפריט הראשי או פנה/י אליי ישירות עם השאלה שלך.",
+            reply_markup=ReplyKeyboardMarkup(build_main_keyboard(), resize_keyboard=True)
+        )
+        return ConversationHandler.END
+    
+    elif text_type == "food_list":
+        # טיפול ברשימת מאכלים
+        return await handle_food_report(update, context, text)
+    
+    else:
+        # טקסט לא מזוהה
+        await update.message.reply_text(
+            "לא הצלחתי לזהות אם זו רשימת מאכלים או שאלה.\n\n"
+            "אם זו רשימת מאכלים, אנא כתוב אותם עם פסיקים ביניהם.\n"
+            "אם זו שאלה, אנא השתמש/י בתפריט הראשי.",
+            reply_markup=ReplyKeyboardMarkup(build_main_keyboard(), resize_keyboard=True)
+        )
+        return ConversationHandler.END
+
+async def handle_food_report(update: Update, context: ContextTypes.DEFAULT_TYPE, food_text: str = None):
+    """מטפל בדיווח אכילה."""
+    if food_text is None:
+        food_text = update.message.text.strip()
+    
+    # ניקוי הטקסט
+    cleaned_food = clean_meal_text(food_text)
+    
+    # שמירה במסד נתונים
+    user_id = update.effective_user.id
+    meal_data = {
+        'date': date.today().isoformat(),
+        'meal_type': 'snack',
+        'description': cleaned_food,
+        'calories': 0,  # TODO: חישוב קלוריות אוטומטי
+        'protein': 0.0,
+        'carbs': 0.0,
+        'fat': 0.0
+    }
+    
+    if save_food_entry(user_id, meal_data):
+        # עדכון context
+        if "eaten_today" not in context.user_data:
+            context.user_data["eaten_today"] = []
+        context.user_data["eaten_today"].append(cleaned_food)
+        
+        await update.message.reply_text(
+            f"תודה! רשמתי שאכלת: {cleaned_food}\n\n"
+            "האם יש עוד משהו שאכלת היום?",
+            reply_markup=ReplyKeyboardMarkup([["סיימתי"]], resize_keyboard=True)
+        )
+        return "FOOD_REPORT"
+    else:
+        await update.message.reply_text(
+            "שגיאה בשמירת הדיווח. אנא נסה שוב.",
+            reply_markup=ReplyKeyboardMarkup(build_main_keyboard(), resize_keyboard=True)
+        )
+        return ConversationHandler.END
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

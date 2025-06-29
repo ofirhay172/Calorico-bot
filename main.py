@@ -214,6 +214,17 @@ def main():
     
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("help", help_command))
+    # הוספת handler גלובלי לכפתורי תפריט ראשי
+    main_menu_buttons = [
+        "לקבלת תפריט יומי מותאם אישית",
+        "מה אכלתי היום",
+        "בניית ארוחה לפי מה שיש לי בבית",
+        "קבלת דוח",
+        "תזכורות על שתיית מים",
+    ]
+    import re
+    menu_regex = re.compile(r"^(%s)$" % "|".join(re.escape(btn) for btn in main_menu_buttons))
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex(menu_regex), handle_daily_choice))
     # הוספת handler לטקסט חופשי
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input))
     # הפעלת הבוט

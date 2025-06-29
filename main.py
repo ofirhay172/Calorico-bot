@@ -81,7 +81,6 @@ from handlers import (
     get_weight,
     handle_daily_choice,
     handle_free_text_input,
-    handle_reports_callback,
     help_command,
     menu_decision,
     remind_in_10_minutes,
@@ -268,9 +267,6 @@ def main():
     application.add_handler(CommandHandler("reset", reset_command))
     application.add_handler(CommandHandler("report", report_command))
     application.add_handler(CommandHandler("reports", reports_command))
-
-    # Callback query handler for reports
-    application.add_handler(CallbackQueryHandler(handle_reports_callback))
 
     # Set up scheduler
     application.post_init = start_scheduler

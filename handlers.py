@@ -1749,15 +1749,15 @@ def classify_text_input(text: str) -> str:
 async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """מטפל בטקסט חופשי ומסווג אותו."""
     text = update.message.text.strip()
-    
-    # הסרת בדיקת validate_text_input כדי למנוע שגיאת NameError
-    # אם רוצים, אפשר להחזיר בעתיד בדיקת תווים אסורים
-    # if not validate_text_input(text):
-    #     await update.message.reply_text(
-    #         "הטקסט שהזנת מכיל תווים לא תקינים או ארוך מדי. אנא נסה שוב.",
-    #         reply_markup=ReplyKeyboardRemove()
-    #     )
-    #     return ConversationHandler.END
+    main_menu_buttons = [
+        "לקבלת תפריט יומי מותאם אישית",
+        "מה אכלתי היום",
+        "בניית ארוחה לפי מה שיש לי בבית",
+        "קבלת דוח",
+        "תזכורות על שתיית מים",
+    ]
+    if text in main_menu_buttons:
+        return await handle_daily_choice(update, context)
     
     text_type = classify_text_input(text)
     

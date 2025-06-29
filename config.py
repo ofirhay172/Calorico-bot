@@ -1,74 +1,60 @@
-import os
+"""Configuration constants for the Calorico nutrition bot.
 
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-USERS_FILE = "calorico_users.json"
+This module contains all the configuration constants used throughout the bot,
+including conversation states, keyboard options, and system settings.
+"""
+
+from typing import Dict, List
 
 # Conversation states
-(
-    NAME,
-    AGE,
-    GENDER,
-    HEIGHT,
-    WEIGHT,
-    GOAL,
-    ACTIVITY_YES_NO,
-    ACTIVITY,
-    ACTIVITY_TYPE,
-    ACTIVITY_FREQUENCY,
-    ACTIVITY_DURATION,
-    MIXED_ACTIVITIES,
-    MIXED_FREQUENCY,
-    MIXED_DURATION,
-    MIXED_MENU_ADAPTATION,
-    ALLERGIES,
-    ALLERGIES_ADDITIONAL,
-    DIET,
-    DIET_OPTIONS,
-    ACTIVITY_YES_NO_OPTIONS,
-    BODY_FAT,
-    BODY_FAT_TARGET,
-    TRAINING_TIME,
-    CARDIO_GOAL,
-    STRENGTH_GOAL,
-    SUPPLEMENTS,
-    SUPPLEMENT_TYPES,
-    LIMITATIONS,
-    MENU,
-    DAILY,
-    EATEN,
-    SUMMARY,
-    SCHEDULE,
-    EDIT,
-    WATER_REMINDER_OPT_IN,
-    BODY_FAT_CURRENT,
-    BODY_FAT_TARGET_GOAL,
-) = range(37)
+NAME = 1
+GENDER = 2
+AGE = 3
+HEIGHT = 4
+WEIGHT = 5
+GOAL = 6
+BODY_FAT_CURRENT = 7
+BODY_FAT_TARGET_GOAL = 8
+ACTIVITY = 9
+ACTIVITY_TYPE = 10
+ACTIVITY_FREQUENCY = 11
+ACTIVITY_DURATION = 12
+TRAINING_TIME = 13
+CARDIO_GOAL = 14
+STRENGTH_GOAL = 15
+SUPPLEMENTS = 16
+SUPPLEMENT_TYPES = 17
+LIMITATIONS = 18
+MIXED_ACTIVITIES = 19
+MIXED_FREQUENCY = 20
+MIXED_DURATION = 21
+MIXED_MENU_ADAPTATION = 22
+DIET = 23
+ALLERGIES = 24
+ALLERGIES_ADDITIONAL = 25
+WATER_REMINDER_OPT_IN = 26
+DAILY = 27
+EATEN = 28
+MENU = 29
+SCHEDULE = 30
+SUMMARY = 31
+EDIT = 32
+BODY_FAT = 33
+BODY_FAT_TARGET = 34
 
+# Gender options
 GENDER_OPTIONS = ["זכר", "נקבה", "אחר"]
+
+# Goal options
 GOAL_OPTIONS = [
     "ירידה במשקל",
-    "חיטוב",
-    "עלייה במסת שריר",
-    "שמירה על המשקל",
-    "תזונה בריאה ומאוזנת",
-    "שיפור ביצועים פיזיים",
     "ירידה באחוזי שומן",
-]
-ACTIVITY_OPTIONS_MALE = [
-    "לא מתאמן",
-    "מעט (2-3 אימונים בשבוע)",
-    "הרבה (4-5 אימונים בשבוע)",
-    "כל יום",
-]
-ACTIVITY_OPTIONS_FEMALE = [
-    "לא מתאמנת",
-    "מעט (2-3 אימונים בשבוע)",
-    "הרבה (4-5 אימונים בשבוע)",
-    "כל יום",
+    "שמירה על משקל",
+    "עלייה במשקל",
+    "בניית שריר",
 ]
 
-# New simplified activity options
+# Activity options
 ACTIVITY_YES_NO_OPTIONS = ["כן", "לא"]
 
 ACTIVITY_TYPE_OPTIONS = [
@@ -89,96 +75,138 @@ ACTIVITY_FREQUENCY_OPTIONS = [
 ]
 
 ACTIVITY_DURATION_OPTIONS = [
-    "15-30 דקות",
+    "פחות מ-30 דקות",
     "30-45 דקות",
     "45-60 דקות",
-    "60+ דקות",
+    "יותר מ-60 דקות",
 ]
 
 TRAINING_TIME_OPTIONS = [
-    "בוקר",
-    "צהריים",
-    "ערב",
+    "בוקר (6:00-9:00)",
+    "צהריים (12:00-14:00)",
+    "אחר הצהריים (15:00-18:00)",
+    "ערב (19:00-22:00)",
 ]
 
 CARDIO_GOAL_OPTIONS = [
-    "ירידה במשקל",
     "שיפור סיבולת לב-ריאה",
-    "תחזוקה כללית",
+    "שריפת שומן",
+    "שיפור ביצועים",
+    "בריאות כללית",
 ]
 
 STRENGTH_GOAL_OPTIONS = [
-    "חיטוב",
-    "עלייה במסת שריר",
-    "ירידה באחוזי שומן",
-    "שילוב",
+    "בניית שריר",
+    "חיזוק כללי",
+    "שיפור כוח",
+    "שיפור יציבה",
 ]
 
 SUPPLEMENT_OPTIONS = [
-    "אבקת חלבון",
-    "קראטין",
-    "מולטי ויטמין",
+    "חלבון",
+    "קריאטין",
+    "ויטמין D",
     "אומגה 3",
+    "מולטי-ויטמין",
     "BCAA",
+    "גלוטמין",
     "אחר",
 ]
 
-MIXED_ACTIVITY_OPTIONS = [
-    "אימוני כוח",
-    "הליכה / ריצה",
-    "יוגה / פילאטיס",
-    "אימוני HIIT",
-    "שחייה",
-    "אופניים",
-    "ספורט קבוצתי",
-]
-
+# Diet options
 DIET_OPTIONS = [
+    "אין העדפות מיוחדות",
     "צמחוני",
     "טבעוני",
     "קטוגני",
-    "ללא גלוטן",
-    "ללא לקטוז",
     "דל פחמימות",
     "דל שומן",
+    "גלוטן חופשי",
+    "חלב חופשי",
     "דל נתרן",
-    "פאלאו",
-    "אין העדפות מיוחדות",
+    "דל סוכר",
+    "פליאו",
+    "מדיטראני",
+    "אחר",
 ]
 
-# System buttons and gendered actions
-SYSTEM_BUTTONS = [
-    "להרכבת ארוחה לפי מה שיש בבית",
-    "מה אכלתי היום",
-    "📊 דוחות",
-    "סיימתי",
-    "שתיתי",
-    "שתיתי, תודה",
-    "תזכיר לי בעוד עשר דקות",
-    "תפסיק להזכיר לי לשתות מים",
-    "ביטול תזכורות מים",
-    "תפסיק תזכורות מים",
-]
-
-GENDERED_ACTION = {
-    "זכר": "בחר פעולה:",
-    "נקבה": "האם סיימת לאכול להיום?",
-    "אחר": "בחר/י פעולה:",
-}
-
-MIXED_DURATION_OPTIONS = [
-    ["15-30 דקות"],
-    ["30-45 דקות"],
-    ["45-60 דקות"],
-    ["60-90 דקות"],
-    ["90+ דקות"],
+# Mixed activities options
+MIXED_ACTIVITY_OPTIONS = [
+    "הליכה",
+    "ריצה",
+    "אימוני כוח",
+    "יוגה",
+    "פילאטיס",
+    "שחייה",
+    "רכיבה",
+    "אימוני HIIT",
+    "קרוספיט",
+    "אין",
 ]
 
 MIXED_FREQUENCY_OPTIONS = [
-    ["1-2 פעמים בשבוע"],
-    ["3-4 פעמים בשבוע"],
-    ["5-6 פעמים בשבוע"],
-    ["כל יום"],
+    "1-2 פעמים בשבוע",
+    "3-4 פעמים בשבוע",
+    "5-6 פעמים בשבוע",
+    "כל יום",
 ]
 
-# אפשר להוסיף כאן קבועים נוספים בעתיד
+MIXED_DURATION_OPTIONS = [
+    "פחות מ-30 דקות",
+    "30-45 דקות",
+    "45-60 דקות",
+    "יותר מ-60 דקות",
+]
+
+# Allergy options
+ALLERGY_OPTIONS = [
+    "אין",
+    "בוטנים",
+    "אגוזים",
+    "חלב",
+    "גלוטן",
+    "ביצים",
+    "סויה",
+    "דגים",
+    "שומשום",
+    "סלרי",
+    "חרדל",
+    "סולפיטים",
+    "שאר (פרט/י)",
+]
+
+# System buttons
+SYSTEM_BUTTONS = [
+    "לקבלת תפריט יומי מותאם אישית",
+    "מה אכלתי היום",
+    "בניית ארוחה לפי מה שיש לי בבית",
+    "קבלת דוח",
+    "תזכורות על שתיית מים",
+]
+
+# Gendered action text
+GENDERED_ACTION = {
+    "זכר": {
+        "choose": "בחר",
+        "you": "אתה",
+        "your": "שלך",
+        "do": "עושה",
+        "train": "מתאמן",
+        "perform": "מבצע",
+        "want": "תרצה",
+        "select": "בחר",
+    },
+    "נקבה": {
+        "choose": "בחרי",
+        "you": "את",
+        "your": "שלך",
+        "do": "עושה",
+        "train": "מתאמנת",
+        "perform": "מבצעת",
+        "want": "תרצי",
+        "select": "בחרי",
+    },
+}
+
+# Water reminder options
+WATER_REMINDER_OPT_IN = ["כן", "לא"]

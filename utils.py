@@ -10,6 +10,8 @@ import datetime
 import logging
 from typing import List, Optional
 from telegram import KeyboardButton, ReplyKeyboardMarkup
+import os
+import openai
 
 logger = logging.getLogger(__name__)
 
@@ -256,3 +258,38 @@ def validate_numeric_input(text: str, min_val: float, max_val: float, field_name
         return False, 0, f"{field_name} חייב להיות בין {min_val} ל-{max_val}."
     except ValueError:
         return False, 0, f"אנא הזן מספר תקין ל-{field_name}."
+
+
+def build_user_prompt_for_gpt(user_data: dict) -> str:
+    return f"""
+    בנה תפריט יומי מותאם אישית עבור המשתמש/ת:
+    - שם: {user_data.get('name')}
+    - מגדר: {user_data.get('gender')}
+    - גיל: {user_data.get('age')}
+    - גובה: {user_data.get('height')} ס\"מ
+    - משקל: {user_data.get('weight')} ק\"ג
+    - מטרה: {user_data.get('goal')}
+    - תקציב קלורי יומי: {user_data.get('calories')}
+    - העדפות תזונה: {user_data.get('diet_preferences')}
+    - אלרגיות: {user_data.get('allergies')}
+    - סוג פעילות: {user_data.get('activity_type')}
+    - תדירות פעילות: {user_data.get('activity_frequency', 'לא צוין')}
+    - משך פעילות: {user_data.get('activity_duration', 'לא צוין')}
+    
+    התפריט צריך לכלול:
+    - ארוחת בוקר (~25%)
+    - ארוחת צהריים (~35%)
+    - ארוחת ערב (~30%)
+    - 2-3 נשנושים (~10%)
+
+    הפק תפריט ב-HTML ברור, עם כותרות, רשימות ואחוז קלוריות לכל חלק.
+    """
+
+async def call_gpt(prompt: str) -> str:
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    response = await openai.ChatCompletion.acreate(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    return response.choices[0].message.content.strip()

@@ -17,6 +17,7 @@ from telegram import (
     Update,
 )
 from telegram.ext import ContextTypes, ConversationHandler
+from telegram.constants import ParseMode
 
 from config import (
     NAME,
@@ -89,6 +90,8 @@ from utils import (
     extract_openai_response_content,
     build_main_keyboard,
     extract_allergens_from_text,
+    build_user_prompt_for_gpt,
+    call_gpt,
 )
 from report_generator import (
     get_weekly_report,
@@ -2016,11 +2019,28 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def generate_personalized_menu(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
-    if context.user_data is None:
-        context.user_data = {}
-    if update.message:
+    user_data = context.user_data or {}
+
+    await update.message.reply_text("בונה עבורך תפריט מותאם אישית... ⏳")
+
+    try:
+        # בניית פרומפט מותאם אישית
+        prompt = build_user_prompt_for_gpt(user_data)
+
+        # שליחת פרומפט ל-GPT
+        response = await call_gpt(prompt)
+
+        # שליחת התפריט למשתמש
         await update.message.reply_text(
-            "בונה עבורך תפריט מותאם אישית...",
-            parse_mode="HTML",
+            response,
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True
         )
+
+        # (אופציונלי) שמירה למסד נתונים
+        # save_daily_menu(user_data["user_id"], response)
+
+    except Exception as e:
+        print(f"[ERROR] בבניית תפריט אישי: {e}")
+        await update.message.reply_text("אירעה תקלה בבניית התפריט 😔 נסה/י שוב בעוד רגע.")
 

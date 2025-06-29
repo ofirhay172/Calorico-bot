@@ -40,7 +40,8 @@ USERS_FILE = "calorico_users.json"
     SUMMARY,
     SCHEDULE,
     EDIT,
-) = range(34)
+    WATER_REMINDER_OPT_IN,
+) = range(35)
 
 GENDER_OPTIONS = ["זכר", "נקבה", "אחר"]
 GOAL_OPTIONS = [

@@ -53,6 +53,7 @@ from config import (
     ALLERGIES_ADDITIONAL,
     DIET_OPTIONS,
     TELEGRAM_TOKEN,
+    WATER_REMINDER_OPT_IN,
 )
 from db import save_user
 from handlers import (
@@ -193,6 +194,7 @@ def main():
             ALLERGIES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies)],
             ALLERGIES_ADDITIONAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies_additional)],
             DIET: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_diet)],
+            WATER_REMINDER_OPT_IN: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)],
         },
         fallbacks=[
             CommandHandler("start", start),

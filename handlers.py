@@ -73,6 +73,7 @@ from config import (
     ACTIVITY_YES_NO_OPTIONS,
     ALLERGIES_ADDITIONAL,
     MIXED_DURATION_OPTIONS,
+    WATER_REMINDER_OPT_IN,
 )
 from db import save_user, load_user, save_daily_entry, save_user_allergies_data, save_food_entry
 from utils import (
@@ -325,12 +326,7 @@ async def get_weight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         context.user_data["weight"] = weight
         
         # מעבר לשאלה הבאה
-        goal_keyboard = [
-            [KeyboardButton("ירידה במשקל")],
-            [KeyboardButton("עלייה במסת שריר")],
-            [KeyboardButton("שמירה על משקל")],
-            [KeyboardButton("חיטוב")]
-        ]
+        goal_keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
         await update.message.reply_text(
             "מה המטרה התזונתית שלך?",
             reply_markup=ReplyKeyboardMarkup(goal_keyboard, resize_keyboard=True)
@@ -353,7 +349,7 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if goal not in GOAL_OPTIONS:
             keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
             await update.message.reply_text(
-                "מה המטרה התזונתית שלך?",
+                "בחר/י מטרה מהתפריט למטה:",
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -1157,6 +1153,7 @@ async def ask_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
         ),
         parse_mode="HTML",
     )
+    return WATER_REMINDER_OPT_IN
 
 
 async def set_water_reminder_opt_in(

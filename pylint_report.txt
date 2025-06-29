@@ -1,0 +1,2413 @@
+************* Module config
+config.py:1:0: C0114: Missing module docstring (missing-module-docstring)
+************* Module db
+db.py:80:9: W0511: TODO: טיפול בשגיאות כתיבה (fixme)
+db.py:93:9: W0511: TODO: טיפול בשגיאות קריאה (fixme)
+db.py:1:0: C0114: Missing module docstring (missing-module-docstring)
+db.py:29:0: R0913: Too many arguments (7/5) (too-many-arguments)
+db.py:29:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+db.py:79:11: W0718: Catching too general exception Exception (broad-exception-caught)
+db.py:92:11: W0718: Catching too general exception Exception (broad-exception-caught)
+db.py:4:0: C0411: standard import "os" should be placed before first party import "config.USERS_FILE"  (wrong-import-order)
+************* Module handlers
+handlers.py:92:0: C0301: Line too long (104/100) (line-too-long)
+handlers.py:158:0: C0325: Unnecessary parens after 'not' keyword (superfluous-parens)
+handlers.py:179:0: C0325: Unnecessary parens after 'not' keyword (superfluous-parens)
+handlers.py:202:0: C0325: Unnecessary parens after 'not' keyword (superfluous-parens)
+handlers.py:401:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:413:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:436:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:441:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:456:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:458:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:515:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:669:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:723:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:742:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:760:0: C0301: Line too long (215/100) (line-too-long)
+handlers.py:775:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:782:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:788:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:790:0: C0301: Line too long (171/100) (line-too-long)
+handlers.py:802:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:809:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:814:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:819:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:829:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:897:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:899:0: C0301: Line too long (143/100) (line-too-long)
+handlers.py:943:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:947:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:951:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:1106:0: C0301: Line too long (111/100) (line-too-long)
+handlers.py:1229:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:1237:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:1247:0: C0301: Line too long (134/100) (line-too-long)
+handlers.py:1248:0: C0301: Line too long (128/100) (line-too-long)
+handlers.py:1250:0: C0301: Line too long (167/100) (line-too-long)
+handlers.py:1252:0: C0301: Line too long (115/100) (line-too-long)
+handlers.py:1253:0: C0301: Line too long (356/100) (line-too-long)
+handlers.py:1254:0: C0301: Line too long (120/100) (line-too-long)
+handlers.py:1271:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:1281:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:1291:0: C0301: Line too long (133/100) (line-too-long)
+handlers.py:1292:0: C0301: Line too long (133/100) (line-too-long)
+handlers.py:1343:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:1354:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:1364:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:1367:0: C0301: Line too long (140/100) (line-too-long)
+handlers.py:1445:0: C0303: Trailing whitespace (trailing-whitespace)
+handlers.py:1569:0: C0301: Line too long (102/100) (line-too-long)
+handlers.py:1:0: C0302: Too many lines in module (1603/1000) (too-many-lines)
+handlers.py:59:1: W0511: TODO: להוסיף את כל ה-handlers מהקובץ המקורי, כולל שאלון, תפריט, דוחות, free text, מים וכו'. (fixme)
+handlers.py:341:1: W0511: TODO: להמשיך להעביר את כל שאר ה-handlers מהקובץ המקורי, כולל free text, דוחות, מים, תפריט וכו'. (fixme)
+handlers.py:1551:9: W0511: TODO: Implement monthly report generation (fixme)
+handlers.py:283:19: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:320:15: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:566:15: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:567:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+handlers.py:710:8: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+handlers.py:717:0: R0914: Too many local variables (31/15) (too-many-locals)
+handlers.py:827:15: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:851:4: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+handlers.py:884:0: R0914: Too many local variables (18/15) (too-many-locals)
+handlers.py:892:8: W0621: Redefining name 'eaten' from outer scope (line 717) (redefined-outer-name)
+handlers.py:932:15: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:933:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+handlers.py:1023:0: R0914: Too many local variables (30/15) (too-many-locals)
+handlers.py:1064:12: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+handlers.py:1067:31: E1121: Too many positional arguments for function call (too-many-function-args)
+handlers.py:1069:31: E1121: Too many positional arguments for function call (too-many-function-args)
+handlers.py:1071:31: E1121: Too many positional arguments for function call (too-many-function-args)
+handlers.py:1104:12: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+handlers.py:1219:11: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:1220:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+handlers.py:1023:0: R0912: Too many branches (20/12) (too-many-branches)
+handlers.py:1023:0: R0915: Too many statements (65/50) (too-many-statements)
+handlers.py:1141:4: W0612: Unused variable 'is_question' (unused-variable)
+handlers.py:1282:4: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+handlers.py:1242:8: W0612: Unused variable 'calorie_budget' (unused-variable)
+handlers.py:1274:4: W0612: Unused variable 'opt_track' (unused-variable)
+handlers.py:1375:39: W0613: Unused argument 'context' (unused-argument)
+handlers.py:1421:19: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:1422:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+handlers.py:1461:11: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:1450:26: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+handlers.py:1454:16: W0702: No exception type(s) specified (bare-except)
+handlers.py:1462:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+handlers.py:1430:41: W0613: Unused argument 'context' (unused-argument)
+handlers.py:1473:44: W0613: Unused argument 'context' (unused-argument)
+handlers.py:1541:11: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:1525:22: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+handlers.py:1529:12: W0702: No exception type(s) specified (bare-except)
+handlers.py:1542:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+handlers.py:1544:0: W1404: Implicit string concatenation found in call (implicit-str-concat)
+handlers.py:1599:11: W0718: Catching too general exception Exception (broad-exception-caught)
+handlers.py:1582:22: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+handlers.py:1587:12: W0702: No exception type(s) specified (bare-except)
+handlers.py:1600:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+handlers.py:1602:0: W1404: Implicit string concatenation found in call (implicit-str-concat)
+handlers.py:1548:41: W0613: Unused argument 'user_id' (unused-argument)
+handlers.py:8:0: W0611: Unused datetime imported from datetime (unused-import)
+handlers.py:9:0: W0611: Unused Optional imported from typing (unused-import)
+handlers.py:21:0: W0611: Unused SYSTEM_BUTTONS imported from config (unused-import)
+handlers.py:37:0: W0611: Unused load_user imported from db (unused-import)
+handlers.py:38:0: W0611: Unused clean_meal_text imported from utils (unused-import)
+handlers.py:38:0: W0611: Unused set_openai_client imported from utils (unused-import)
+************* Module main
+main.py:116:0: C0301: Line too long (115/100) (line-too-long)
+main.py:137:0: C0303: Trailing whitespace (trailing-whitespace)
+main.py:141:0: C0303: Trailing whitespace (trailing-whitespace)
+main.py:173:0: C0301: Line too long (102/100) (line-too-long)
+main.py:128:5: W0511: TODO: Implement proper scheduler (fixme)
+main.py:70:25: W0613: Unused argument 'context' (unused-argument)
+main.py:81:4: R0914: Too many local variables (18/15) (too-many-locals)
+main.py:119:23: W0718: Catching too general exception Exception (broad-exception-caught)
+main.py:120:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+main.py:124:4: W0612: Unused variable 'scheduler_tick' (unused-variable)
+main.py:3:0: W0611: Unused import asyncio (unused-import)
+main.py:21:0: W0611: Unused save_user imported from db (unused-import)
+main.py:22:0: W0611: Unused after_questionnaire imported from handlers (unused-import)
+main.py:22:0: W0611: Unused ask_water_reminder_opt_in imported from handlers (unused-import)
+main.py:22:0: W0611: Unused check_dessert_permission imported from handlers (unused-import)
+main.py:22:0: W0611: Unused daily_menu imported from handlers (unused-import)
+main.py:22:0: W0611: Unused send_water_reminder imported from handlers (unused-import)
+main.py:22:0: W0611: Unused show_daily_menu imported from handlers (unused-import)
+main.py:22:0: W0611: Unused show_menu_with_keyboard imported from handlers (unused-import)
+main.py:22:0: W0611: Unused show_reports_menu imported from handlers (unused-import)
+main.py:61:0: W0611: Unused calculate_bmr imported from utils (unused-import)
+************* Module nutrition_db
+nutrition_db.py:103:0: C0303: Trailing whitespace (trailing-whitespace)
+nutrition_db.py:105:0: C0303: Trailing whitespace (trailing-whitespace)
+nutrition_db.py:111:0: C0303: Trailing whitespace (trailing-whitespace)
+nutrition_db.py:117:0: C0303: Trailing whitespace (trailing-whitespace)
+nutrition_db.py:125:0: C0303: Trailing whitespace (trailing-whitespace)
+nutrition_db.py:1:0: C0114: Missing module docstring (missing-module-docstring)
+nutrition_db.py:7:0: C0116: Missing function or method docstring (missing-function-docstring)
+nutrition_db.py:27:0: C0116: Missing function or method docstring (missing-function-docstring)
+nutrition_db.py:27:0: R0913: Too many arguments (7/5) (too-many-arguments)
+nutrition_db.py:27:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+nutrition_db.py:40:0: C0116: Missing function or method docstring (missing-function-docstring)
+nutrition_db.py:94:15: W0718: Catching too general exception Exception (broad-exception-caught)
+nutrition_db.py:109:4: W0702: No exception type(s) specified (bare-except)
+nutrition_db.py:4:0: W0611: Unused datetime imported from datetime (unused-import)
+************* Module report_generator
+report_generator.py:47:0: C0301: Line too long (125/100) (line-too-long)
+report_generator.py:307:0: C0301: Line too long (186/100) (line-too-long)
+report_generator.py:149:5: W0511: TODO: להוסיף טבלה נפרדת לנתוני מים (fixme)
+report_generator.py:157:5: W0511: TODO: להוסיף טבלה נפרדת לנתוני אימונים (fixme)
+report_generator.py:150:4: W0107: Unnecessary pass statement (unnecessary-pass)
+report_generator.py:145:19: W0613: Unused argument 'user_id' (unused-argument)
+report_generator.py:145:28: W0613: Unused argument 'date' (unused-argument)
+report_generator.py:145:34: W0613: Unused argument 'water_ml' (unused-argument)
+report_generator.py:158:4: W0107: Unnecessary pass statement (unnecessary-pass)
+report_generator.py:153:22: W0613: Unused argument 'user_id' (unused-argument)
+report_generator.py:153:31: W0613: Unused argument 'date' (unused-argument)
+report_generator.py:153:37: W0613: Unused argument 'exercise_type' (unused-argument)
+report_generator.py:153:52: W0613: Unused argument 'duration_minutes' (unused-argument)
+report_generator.py:153:70: W0613: Unused argument 'calories_burned' (unused-argument)
+report_generator.py:200:0: R0914: Too many local variables (16/15) (too-many-locals)
+report_generator.py:298:4: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+report_generator.py:291:0: R1710: Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
+report_generator.py:310:0: R0914: Too many local variables (17/15) (too-many-locals)
+report_generator.py:314:4: W0621: Redefining name 'datetime' from outer scope (line 11) (redefined-outer-name)
+report_generator.py:314:4: W0621: Redefining name 'timedelta' from outer scope (line 11) (redefined-outer-name)
+report_generator.py:314:4: W0404: Reimport 'datetime' (imported line 11) (reimported)
+report_generator.py:314:4: W0404: Reimport 'timedelta' (imported line 11) (reimported)
+report_generator.py:314:4: C0415: Import outside toplevel (datetime.datetime, datetime.timedelta) (import-outside-toplevel)
+report_generator.py:328:4: C0415: Import outside toplevel (re) (import-outside-toplevel)
+report_generator.py:11:0: C0411: standard import "datetime.datetime" should be placed before third party imports "matplotlib.pyplot", "matplotlib.dates", "numpy" (wrong-import-order)
+report_generator.py:12:0: C0411: standard import "os" should be placed before third party imports "matplotlib.pyplot", "matplotlib.dates", "numpy" (wrong-import-order)
+report_generator.py:9:0: W0611: Unused matplotlib.dates imported as mdates (unused-import)
+report_generator.py:10:0: W0611: Unused numpy imported as np (unused-import)
+report_generator.py:12:0: W0611: Unused import os (unused-import)
+************* Module setup_db
+setup_db.py:1:0: C0114: Missing module docstring (missing-module-docstring)
+************* Module utils
+utils.py:122:0: C0303: Trailing whitespace (trailing-whitespace)
+utils.py:125:0: C0303: Trailing whitespace (trailing-whitespace)
+utils.py:129:0: C0301: Line too long (136/100) (line-too-long)
+utils.py:132:0: C0303: Trailing whitespace (trailing-whitespace)
+utils.py:134:0: C0301: Line too long (119/100) (line-too-long)
+utils.py:135:0: C0303: Trailing whitespace (trailing-whitespace)
+utils.py:137:0: C0301: Line too long (116/100) (line-too-long)
+utils.py:138:0: C0303: Trailing whitespace (trailing-whitespace)
+utils.py:140:0: C0301: Line too long (106/100) (line-too-long)
+utils.py:141:0: C0303: Trailing whitespace (trailing-whitespace)
+utils.py:150:0: C0303: Trailing whitespace (trailing-whitespace)
+utils.py:165:0: C0301: Line too long (302/100) (line-too-long)
+utils.py:167:0: C0301: Line too long (120/100) (line-too-long)
+utils.py:168:0: C0301: Line too long (120/100) (line-too-long)
+utils.py:173:0: C0301: Line too long (116/100) (line-too-long)
+utils.py:176:0: C0301: Line too long (129/100) (line-too-long)
+utils.py:177:0: C0301: Line too long (108/100) (line-too-long)
+utils.py:21:5: W0511: TODO: לשפר נוסחה לפי צורך (fixme)
+utils.py:53:5: W0511: TODO: לשפר זיהוי תאריכים (fixme)
+utils.py:1:0: C0114: Missing module docstring (missing-module-docstring)
+utils.py:5:0: C0103: Constant name "_openai_client" doesn't conform to UPPER_CASE naming style (invalid-name)
+utils.py:10:4: W0603: Using the global statement (global-statement)
+utils.py:19:0: R0913: Too many arguments (6/5) (too-many-arguments)
+utils.py:19:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+utils.py:44:4: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+utils.py:67:15: W0718: Catching too general exception Exception (broad-exception-caught)
+utils.py:128:8: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+utils.py:120:4: W0612: Unused variable 'age' (unused-variable)
+utils.py:121:4: W0612: Unused variable 'gender' (unused-variable)
+************* Module yogev_bot_backup
+yogev_bot_backup.py:223:0: C0301: Line too long (302/100) (line-too-long)
+yogev_bot_backup.py:225:0: C0301: Line too long (120/100) (line-too-long)
+yogev_bot_backup.py:226:0: C0301: Line too long (120/100) (line-too-long)
+yogev_bot_backup.py:231:0: C0301: Line too long (116/100) (line-too-long)
+yogev_bot_backup.py:234:0: C0301: Line too long (129/100) (line-too-long)
+yogev_bot_backup.py:235:0: C0301: Line too long (108/100) (line-too-long)
+yogev_bot_backup.py:256:0: C0301: Line too long (104/100) (line-too-long)
+yogev_bot_backup.py:325:0: C0325: Unnecessary parens after 'not' keyword (superfluous-parens)
+yogev_bot_backup.py:347:0: C0325: Unnecessary parens after 'not' keyword (superfluous-parens)
+yogev_bot_backup.py:371:0: C0325: Unnecessary parens after 'not' keyword (superfluous-parens)
+yogev_bot_backup.py:594:0: C0301: Line too long (108/100) (line-too-long)
+yogev_bot_backup.py:595:0: C0301: Line too long (109/100) (line-too-long)
+yogev_bot_backup.py:719:0: C0301: Line too long (114/100) (line-too-long)
+yogev_bot_backup.py:720:0: C0301: Line too long (115/100) (line-too-long)
+yogev_bot_backup.py:773:0: C0301: Line too long (358/100) (line-too-long)
+yogev_bot_backup.py:774:0: C0301: Line too long (120/100) (line-too-long)
+yogev_bot_backup.py:775:0: C0301: Line too long (120/100) (line-too-long)
+yogev_bot_backup.py:780:0: C0301: Line too long (116/100) (line-too-long)
+yogev_bot_backup.py:892:0: C0301: Line too long (115/100) (line-too-long)
+yogev_bot_backup.py:934:0: C0301: Line too long (215/100) (line-too-long)
+yogev_bot_backup.py:961:0: C0301: Line too long (171/100) (line-too-long)
+yogev_bot_backup.py:1064:0: C0301: Line too long (143/100) (line-too-long)
+yogev_bot_backup.py:1537:0: C0301: Line too long (111/100) (line-too-long)
+yogev_bot_backup.py:1679:0: C0301: Line too long (134/100) (line-too-long)
+yogev_bot_backup.py:1680:0: C0301: Line too long (128/100) (line-too-long)
+yogev_bot_backup.py:1682:0: C0301: Line too long (167/100) (line-too-long)
+yogev_bot_backup.py:1684:0: C0301: Line too long (115/100) (line-too-long)
+yogev_bot_backup.py:1685:0: C0301: Line too long (356/100) (line-too-long)
+yogev_bot_backup.py:1686:0: C0301: Line too long (120/100) (line-too-long)
+yogev_bot_backup.py:1721:0: C0301: Line too long (133/100) (line-too-long)
+yogev_bot_backup.py:1722:0: C0301: Line too long (133/100) (line-too-long)
+yogev_bot_backup.py:1794:0: C0301: Line too long (140/100) (line-too-long)
+yogev_bot_backup.py:2084:0: C0301: Line too long (106/100) (line-too-long)
+yogev_bot_backup.py:2141:0: C0301: Line too long (106/100) (line-too-long)
+yogev_bot_backup.py:2286:0: C0301: Line too long (101/100) (line-too-long)
+yogev_bot_backup.py:2299:0: C0301: Line too long (119/100) (line-too-long)
+yogev_bot_backup.py:1:0: C0302: Too many lines in module (2322/1000) (too-many-lines)
+yogev_bot_backup.py:20:0: C0413: Import "import logging" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:21:0: C0413: Import "import asyncio" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:22:0: C0413: Import "import json" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:23:0: C0413: Import "import os" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:24:0: C0413: Import "import datetime" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:25:0: C0413: Import "import re" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:26:0: C0413: Import "from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:34:0: C0413: Import "from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:43:0: C0413: Import "from openai import AsyncOpenAI" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:44:0: C0413: Import "from apscheduler.schedulers.asyncio import AsyncIOScheduler" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:45:0: C0413: Import "from oauth2client.service_account import ServiceAccountCredentials" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:48:0: W0404: Reimport 'os' (imported line 23) (reimported)
+yogev_bot_backup.py:48:0: C0413: Import "import os" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:49:0: W0404: Reimport 'AsyncOpenAI' (imported line 43) (reimported)
+yogev_bot_backup.py:49:0: C0413: Import "from openai import AsyncOpenAI" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:169:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:177:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:189:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:195:4: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+yogev_bot_backup.py:203:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:208:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:253:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:277:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:294:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:320:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:342:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:366:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:395:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:444:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:454:19: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:484:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:491:15: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:512:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:551:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:624:8: W0101: Unreachable code (unreachable)
+yogev_bot_backup.py:551:0: R0912: Too many branches (18/12) (too-many-branches)
+yogev_bot_backup.py:564:12: W0612: Unused variable 'gender' (unused-variable)
+yogev_bot_backup.py:645:0: R0913: Too many arguments (6/5) (too-many-arguments)
+yogev_bot_backup.py:645:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+yogev_bot_backup.py:675:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:749:4: W0101: Unreachable code (unreachable)
+yogev_bot_backup.py:675:0: R0912: Too many branches (18/12) (too-many-branches)
+yogev_bot_backup.py:767:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:768:56: W0613: Unused argument 'new_menu' (unused-argument)
+yogev_bot_backup.py:824:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:844:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:850:8: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+yogev_bot_backup.py:871:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:882:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:882:0: R0914: Too many local variables (32/15) (too-many-locals)
+yogev_bot_backup.py:883:4: W0621: Redefining name 're' from outer scope (line 25) (redefined-outer-name)
+yogev_bot_backup.py:883:4: W0404: Reimport 're' (imported line 25) (reimported)
+yogev_bot_backup.py:883:4: C0415: Import outside toplevel (re) (import-outside-toplevel)
+yogev_bot_backup.py:994:15: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:882:0: R0915: Too many statements (54/50) (too-many-statements)
+yogev_bot_backup.py:1017:4: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+yogev_bot_backup.py:1051:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1051:0: R0914: Too many local variables (18/15) (too-many-locals)
+yogev_bot_backup.py:1058:8: W0621: Redefining name 'eaten' from outer scope (line 882) (redefined-outer-name)
+yogev_bot_backup.py:1097:15: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:1098:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+yogev_bot_backup.py:1132:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1155:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1178:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1193:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1196:4: W0621: Redefining name 'eaten' from outer scope (line 882) (redefined-outer-name)
+yogev_bot_backup.py:1281:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1288:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1304:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1370:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1387:15: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:1388:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+yogev_bot_backup.py:1393:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1412:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1443:0: R0914: Too many local variables (31/15) (too-many-locals)
+yogev_bot_backup.py:1639:12: W0621: Redefining name 're' from outer scope (line 25) (redefined-outer-name)
+yogev_bot_backup.py:1495:12: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+yogev_bot_backup.py:1535:12: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+yogev_bot_backup.py:1653:11: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:1639:12: W0404: Reimport 're' (imported line 25) (reimported)
+yogev_bot_backup.py:1639:12: C0415: Import outside toplevel (re) (import-outside-toplevel)
+yogev_bot_backup.py:1654:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+yogev_bot_backup.py:1443:0: R0912: Too many branches (20/12) (too-many-branches)
+yogev_bot_backup.py:1443:0: R0915: Too many statements (66/50) (too-many-statements)
+yogev_bot_backup.py:1573:4: W0612: Unused variable 'is_question' (unused-variable)
+yogev_bot_backup.py:1659:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1712:4: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+yogev_bot_backup.py:1674:8: W0612: Unused variable 'calorie_budget' (unused-variable)
+yogev_bot_backup.py:1705:4: W0612: Unused variable 'opt_track' (unused-variable)
+yogev_bot_backup.py:1753:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1802:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1803:4: W0621: Redefining name 're' from outer scope (line 25) (redefined-outer-name)
+yogev_bot_backup.py:1803:4: W0404: Reimport 're' (imported line 25) (reimported)
+yogev_bot_backup.py:1803:4: C0415: Import outside toplevel (re) (import-outside-toplevel)
+yogev_bot_backup.py:1808:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1817:0: W0404: Reimport 'ReplyKeyboardMarkup' (imported line 26) (reimported)
+yogev_bot_backup.py:1817:0: W0404: Reimport 'KeyboardButton' (imported line 26) (reimported)
+yogev_bot_backup.py:1817:0: C0413: Import "from telegram import ReplyKeyboardMarkup, KeyboardButton" should be placed at the top of the module (wrong-import-position)
+yogev_bot_backup.py:1822:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1839:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1890:0: C0116: Missing function or method docstring (missing-function-docstring)
+yogev_bot_backup.py:1903:43: W0613: Unused argument 'context' (unused-argument)
+yogev_bot_backup.py:1952:19: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:1943:16: C0415: Import outside toplevel (sqlite3) (import-outside-toplevel)
+yogev_bot_backup.py:1953:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+yogev_bot_backup.py:2003:15: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:1993:26: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+yogev_bot_backup.py:1998:16: W0702: No exception type(s) specified (bare-except)
+yogev_bot_backup.py:2004:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+yogev_bot_backup.py:1965:45: W0613: Unused argument 'context' (unused-argument)
+yogev_bot_backup.py:2016:0: W1404: Implicit string concatenation found in call (implicit-str-concat)
+yogev_bot_backup.py:2010:48: W0613: Unused argument 'context' (unused-argument)
+yogev_bot_backup.py:2059:0: W1404: Implicit string concatenation found in call (implicit-str-concat)
+yogev_bot_backup.py:2022:24: W0613: Unused argument 'context' (unused-argument)
+yogev_bot_backup.py:2114:15: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:2097:26: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+yogev_bot_backup.py:2102:16: W0702: No exception type(s) specified (bare-except)
+yogev_bot_backup.py:2115:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+yogev_bot_backup.py:2117:0: W1404: Implicit string concatenation found in call (implicit-str-concat)
+yogev_bot_backup.py:2171:15: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:2145:27: E0602: Undefined variable 'build_monthly_summary_text' (undefined-variable)
+yogev_bot_backup.py:2154:26: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+yogev_bot_backup.py:2159:16: W0702: No exception type(s) specified (bare-except)
+yogev_bot_backup.py:2172:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+yogev_bot_backup.py:2174:0: W1404: Implicit string concatenation found in call (implicit-str-concat)
+yogev_bot_backup.py:2120:45: W0613: Unused argument 'user_id' (unused-argument)
+yogev_bot_backup.py:2262:8: W0621: Redefining name 'AsyncIOScheduler' from outer scope (line 44) (redefined-outer-name)
+yogev_bot_backup.py:2262:8: W0404: Reimport 'AsyncIOScheduler' (imported line 44) (reimported)
+yogev_bot_backup.py:2262:8: C0415: Import outside toplevel (apscheduler.schedulers.asyncio.AsyncIOScheduler) (import-outside-toplevel)
+yogev_bot_backup.py:2264:8: R0914: Too many local variables (18/15) (too-many-locals)
+yogev_bot_backup.py:2302:27: W0718: Catching too general exception Exception (broad-exception-caught)
+yogev_bot_backup.py:2303:24: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+yogev_bot_backup.py:1890:0: R0915: Too many statements (153/50) (too-many-statements)
+yogev_bot_backup.py:20:0: C0411: standard import "logging" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:21:0: C0411: standard import "asyncio" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:22:0: C0411: standard import "json" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:23:0: C0411: standard import "os" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:24:0: C0411: standard import "datetime" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:25:0: C0411: standard import "re" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:26:0: C0411: third party import "telegram.Update" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:34:0: C0411: third party import "telegram.ext.Application" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:43:0: C0411: third party import "openai.AsyncOpenAI" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:44:0: C0411: third party import "apscheduler.schedulers.asyncio.AsyncIOScheduler" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:45:0: C0411: third party import "oauth2client.service_account.ServiceAccountCredentials" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:48:0: C0411: standard import "os" should be placed before third party imports "telegram.Update", "telegram.ext.Application", "openai.AsyncOpenAI", "apscheduler.schedulers.asyncio.AsyncIOScheduler", "oauth2client.service_account.ServiceAccountCredentials" and first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:49:0: C0411: third party import "openai.AsyncOpenAI" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:1817:0: C0411: third party import "telegram.ReplyKeyboardMarkup" should be placed before first party imports "nutrition_db.init_db", "report_generator.get_weekly_report"  (wrong-import-order)
+yogev_bot_backup.py:48:0: C0412: Imports from package os are not grouped (ungrouped-imports)
+yogev_bot_backup.py:49:0: C0412: Imports from package openai are not grouped (ungrouped-imports)
+yogev_bot_backup.py:1817:0: C0412: Imports from package telegram are not grouped (ungrouped-imports)
+yogev_bot_backup.py:6:0: W0611: Unused get_weekly_summary imported from nutrition_db (unused-import)
+yogev_bot_backup.py:44:0: W0611: Unused AsyncIOScheduler imported from apscheduler.schedulers.asyncio (unused-import)
+yogev_bot_backup.py:45:0: W0611: Unused ServiceAccountCredentials imported from oauth2client.service_account (unused-import)
+************* Module yogev_bot
+yogev_bot.py:17:0: C0304: Final newline missing (missing-final-newline)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1024:1117]
+==yogev_bot_backup:[1444:1548]
+    if not update.message or not update.message.text:
+        return
+
+    user_text = update.message.text.strip()
+
+    user_id = update.effective_user.id if update.effective_user else None
+    user = context.user_data if context.user_data else {}
+
+    # Identify historical data questions
+    historical_indicators = [
+        "אתמול",
+        "שלשום",
+        "אתמול",
+        "שלשום",
+        "לפני",
+        "יום",
+        "שבוע",
+        "חודש",
+        "צרכתי",
+        "אכלתי",
+        "שתיתי",
+        "היה לי",
+        "היתה לי",
+        "אכל",
+        "שתה",
+    ]
+
+    is_historical_query = any(
+        indicator in user_text for indicator in historical_indicators
+    )
+
+    if is_historical_query and user_id:
+        # Try to extract date from text
+        target_date = parse_date_from_text(user_text)
+
+        if target_date:
+            # Question about specific date
+            nutrition_data = get_nutrition_by_date(user_id, target_date)
+
+            if nutrition_data:
+                # Extract question type
+                if "קלוריות" in user_text or "צרכתי" in user_text:
+                    response = format_date_query_response(nutrition_data, "calories")
+                elif "אכלתי" in user_text or "אכל" in user_text:
+                    response = format_date_query_response(nutrition_data, "meals")
+                else:
+                    response = format_date_query_response(nutrition_data, "summary")
+
+                await update.message.reply_text(response, parse_mode="HTML")
+                return
+            else:
+                await update.message.reply_text(
+                    f"❌ לא נמצאו נתונים ל{target_date}.", parse_mode="HTML"
+                )
+                return
+
+        # Search for specific food
+        meal_keywords = [
+            "המבורגר",
+            "פיצה",
+            "סושי",
+            "פסטה",
+            "עוף",
+            "בשר",
+            "דג",
+            "סלט",
+            "תפוח",
+            "בננה",
+            "קולה",
+            "קפה",
+        ]
+        found_meal = None
+        for keyword in meal_keywords:
+            if keyword.lower() in user_text.lower():
+                found_meal = keyword
+                break
+
+        if found_meal:
+            last_occurrence = get_last_occurrence_of_meal(user_id, found_meal)
+            if last_occurrence:
+                meals_text = ", ".join(last_occurrence["meals"])
+                response = f"🍽️ הפעם האחרונה שאכלת {found_meal} הייתה ב{last_occurrence['date']}: {meals_text}"
+                await update.message.reply_text(response, parse_mode="HTML")
+                return
+            else:
+                await update.message.reply_text(
+                    f"❌ לא נמצאו רשומות של {found_meal} ב-30 הימים האחרונים.",
+                    parse_mode="HTML",
+                )
+                return
+
+    # Identify if it looks like an eating report or regular question
+    eating_indicators = [ (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[483:625]
+==yogev_bot_backup:[1306:1444]
+    if not update.message or not update.message.text:
+        return EDIT
+    choice = update.message.text.strip()
+    user_id = update.effective_user.id if update.effective_user else None
+    if choice == "כן, אשמח!":
+        context.user_data["water_reminder_opt_in"] = True
+        context.user_data["water_reminder_active"] = True
+        await update.message.reply_text(
+            get_gendered_text(
+                context,
+                "מעולה! אזכיר לך לשתות מים כל שעה וחצי עד שתסיים/י את היום.",
+                "מעולה! אזכיר לך לשתות מים כל שעה וחצי עד שתסיימי את היום.",
+            ),
+            parse_mode="HTML",
+        )
+        if user_id:
+            save_user(user_id, context.user_data)
+        asyncio.create_task(start_water_reminder_loop_with_buttons(update, context))
+    else:
+        context.user_data["water_reminder_opt_in"] = False
+        context.user_data["water_reminder_active"] = False
+        await update.message.reply_text(
+            get_gendered_text(
+                context,
+                "אין בעיה! אפשר להפעיל תזכורות מים בכל שלב.",
+                "אין בעיה! אפשר להפעיל תזכורות מים בכל שלב.",
+            ),
+            parse_mode="HTML",
+        )
+        if user_id:
+            save_user(user_id, context.user_data)
+    # אחרי תשובה על מים – שואלים מה תרצי לעשות
+    keyboard = [
+        [
+            KeyboardButton(
+                get_gendered_text(context, "לקבל תפריט יומי", "לקבל תפריט יומי")
+            ),
+            KeyboardButton(
+                get_gendered_text(
+                    context, "רק לעקוב אחרי הארוחות", "רק לעקוב אחרי הארוחות"
+                )
+            ),
+        ],
+        [
+            KeyboardButton(
+                get_gendered_text(
+                    context,
+                    "לקבל תפריט/ארוחה לפי מוצרים בבית",
+                    "לקבל תפריט/ארוחה לפי מוצרים בבית",
+                )
+            )
+        ],
+    ]
+    await update.message.reply_text(
+        get_gendered_text(context, "מה תרצה לעשות כעת?", "מה תרצי לעשות כעת?"),
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard, one_time_keyboard=True, resize_keyboard=True
+        ),
+        parse_mode="HTML",
+    )
+    return MENU
+
+
+async def start_water_reminder_loop_with_buttons(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+):
+    user_id = update.effective_user.id if update.effective_user else None
+    if context.user_data is None:
+        context.user_data = {}
+    while context.user_data.get("water_reminder_opt_in") and context.user_data.get(
+        "water_reminder_active"
+    ):
+        await asyncio.sleep(90 * 60)  # שעה וחצי
+        if not context.user_data.get(
+            "water_reminder_opt_in"
+        ) or not context.user_data.get("water_reminder_active"):
+            break
+        try:
+            if update.message:
+                await send_water_reminder(update, context)
+        except Exception as e:
+            logger.error(f"Water reminder error: {e}")
+        if user_id:
+            save_user(user_id, context.user_data)
+
+
+async def send_water_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [KeyboardButton("שתיתי, תודה")],
+        [KeyboardButton("תזכיר לי בעוד עשר דקות")],
+        [KeyboardButton("תפסיק להזכיר לי לשתות מים")],
+    ]
+    await update.message.reply_text(
+        get_gendered_text(
+            context,
+            "תזכורת: הגיע הזמן לשתות מים! 🥤",
+            "תזכורת: הגיע הזמן לשתות מים! 🥤",
+        ),
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard, one_time_keyboard=True, resize_keyboard=True
+        ),
+        parse_mode="HTML",
+    )
+
+
+async def remind_in_10_minutes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "בסדר! אזכיר לך לשתות מים בעוד 10 דקות.",
+        reply_markup=ReplyKeyboardRemove(),
+        parse_mode="HTML",
+    )
+    await asyncio.sleep(10 * 60)
+    await send_water_reminder(update, context)
+
+
+async def cancel_water_reminders(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """ביטול תזכורות מים"""
+    if context.user_data is None:
+        context.user_data = {}
+    context.user_data["water_reminder_opt_in"] = False
+    context.user_data["water_reminder_active"] = False
+    user_id = update.effective_user.id if update.effective_user else None
+    if user_id:
+        save_user(user_id, context.user_data)
+
+    await update.message.reply_text(
+        get_gendered_text(
+            context,
+            "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
+            "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
+        ),
+        reply_markup=ReplyKeyboardRemove(),
+        parse_mode="HTML",
+    )
+
+
+async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """מטפל בכל קלט טקסט חופשי - מזהה אם זה שאלה או דיווח אכילה""" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==main:[173:227]
+==yogev_bot_backup:[2204:2264]
+        },
+        fallbacks=[
+            CommandHandler("start", start),
+            CommandHandler("cancel", cancel),
+            CommandHandler("help", help_command),
+            MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input),
+        ],
+    )
+    application.add_handler(conv_handler)
+
+    # Water conversation handler
+    water_conv = ConversationHandler(
+        entry_points=[
+            CommandHandler("shititi", water_intake_start),
+            MessageHandler(filters.Regex("^שתיתי$"), water_intake_start),
+            MessageHandler(filters.Regex("^שתיתי, תודה$"), water_intake_start),
+        ],
+        states={
+            "WATER_AMOUNT": [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, water_intake_amount)
+            ]
+        },
+        fallbacks=[CommandHandler("cancel", cancel)],
+        allow_reentry=True,
+    )
+    application.add_handler(water_conv)
+
+    # Global handlers
+    application.add_handler(
+        MessageHandler(filters.Regex("^תזכיר לי בעוד עשר דקות$"), remind_in_10_minutes)
+    )
+    application.add_handler(
+        MessageHandler(
+            filters.Regex(
+                "^(תפסיק להזכיר לי לשתות מים|ביטול תזכורות מים|תפסיק תזכורות מים)$"
+            ),
+            cancel_water_reminders,
+        )
+    )
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input)
+    )
+
+    # Command handlers
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("cancel", cancel))
+    application.add_handler(CommandHandler("reset", reset_command))
+    application.add_handler(CommandHandler("report", report_command))
+    application.add_handler(CommandHandler("reports", reports_command))
+
+    # Callback query handler for reports
+    application.add_handler(CallbackQueryHandler(handle_reports_callback))
+
+    # Set up scheduler (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==main:[82:128]
+==yogev_bot_backup:[2265:2309]
+        current_time = now.strftime("%H:00")
+        if not os.path.exists(USERS_FILE):
+            return
+        with open(USERS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for user_id_str, user_data in data.items():
+            schedule_time = user_data.get("schedule_time")
+            if schedule_time == current_time:
+                try:
+                    chat_id = int(user_id_str)
+                    menu_text = await build_daily_menu(user_data)
+                    calorie_budget = user_data.get("calorie_budget", 1800)
+                    keyboard = [
+                        [KeyboardButton("להרכבת ארוחה לפי מה שיש בבית")],
+                        [KeyboardButton("מה אכלתי היום")],
+                        [KeyboardButton("📊 דוחות")],
+                        [KeyboardButton("סיימתי")],
+                    ]
+                    await application.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"<b>התקציב היומי שלך: {calorie_budget} קלוריות</b>\n\n{menu_text}",
+                        parse_mode="HTML",
+                        reply_markup=ReplyKeyboardMarkup(
+                            keyboard, resize_keyboard=True
+                        ),
+                    )
+                    weight = user_data.get("weight", 70)
+                    min_l = round(weight * 30 / 1000, 1)
+                    max_l = round(weight * 35 / 1000, 1)
+                    min_cups = round((weight * 30) / 240)
+                    max_cups = round((weight * 35) / 240)
+                    await application.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"<b>המלצת שתייה להיום:</b> {min_l}–{max_l} ליטר מים (כ-{min_cups}–{max_cups} כוסות)",
+                        parse_mode="HTML",
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"שגיאה בשליחת תפריט יומי אוטומטי ל-{user_id_str}: {e}"
+                    )
+
+    async def scheduler_tick():
+        await send_daily_menus_to_all_users(application)
+
+    # Simple scheduler without APScheduler for now
+    # TODO: Implement proper scheduler (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[791:1018]
+==yogev_bot_backup:[962:1178]
+                model="gpt-4o", messages=[{"role": "user", "content": calorie_prompt}]
+            )
+            gpt_str = (
+                calorie_response.choices[0].message.content.strip()
+                if calorie_response
+                and calorie_response.choices
+                and calorie_response.choices[0].message
+                and calorie_response.choices[0].message.content
+                else ""
+            )
+
+            # Extract calories
+            match = re.search(r"(\d+)\s*קק\'ל", gpt_str)
+            calories = int(match.group(1)) if match else 0
+            results.append({"desc": component, "calories": calories})
+            total_calories += calories
+            gpt_details.append(gpt_str)
+
+        user["eaten_today"].extend(results)
+        user["remaining_calories"] = user.get("calorie_budget", 0) - sum(
+            e["calories"] for e in user["eaten_today"]
+        )
+
+        # Build summary output
+        details_text = "\n".join(gpt_details)
+        summary = f"{details_text}\n<b>📊 סה\"כ לארוחה: {total_calories} קק'ל</b>"
+        await update.message.reply_text(summary, parse_mode="HTML")
+
+        # Show remaining calories
+        remaining = user["remaining_calories"]
+        msg = await update.message.reply_text(f"נשארו לך: {remaining} קלוריות להיום.")
+        try:
+            await context.bot.pin_chat_message(
+                chat_id=update.effective_chat.id, message_id=msg.message_id
+            )
+        except Exception:
+            pass
+
+        # Don't ask 'what did you eat today?' again. Only suggest 'finished'.
+        keyboard = [[KeyboardButton("סיימתי")]]
+        gender = user.get("gender", "זכר")
+        action_text = GENDERED_ACTION.get(gender, GENDERED_ACTION["אחר"])
+        await update.message.reply_text(
+            action_text,
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            parse_mode="HTML",
+        )
+        return DAILY
+
+
+async def handle_daily_choice(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    """Handle choices in daily menu."""
+    if not update.message or not update.message.text:
+        return DAILY
+
+    choice = update.message.text.strip()
+
+    if choice == "📊 דוחות":
+        # Show reports menu
+        keyboard = [
+            [InlineKeyboardButton("📅 שבוע אחרון", callback_data="report_weekly")],
+            [InlineKeyboardButton("📊 חודש אחרון", callback_data="report_monthly")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text(
+            "📊 <b>בחר/י סוג דוח:</b>", reply_markup=reply_markup, parse_mode="HTML"
+        )
+
+        # Return to normal keyboard
+        keyboard = [
+            [KeyboardButton("מה אכלתי היום")],
+            [KeyboardButton("📊 דוחות")],
+            [KeyboardButton("סיימתי")],
+        ]
+        await update.message.reply_text(
+            "בחר/י פעולה:",
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        )
+        return DAILY
+
+    elif choice == "סיימתי":
+        await send_summary(update, context)
+        return SCHEDULE
+
+    else:
+        # Handle eating report
+        return await eaten(update, context)
+
+
+async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send daily summary."""
+    user = context.user_data if context.user_data is not None else {}
+    if "eaten_today" in user and user["eaten_today"]:
+        eaten_lines = [
+            f"• <b>{clean_desc(e['desc'])}</b> (<b>{e['calories']}</b> קלוריות)"
+            for e in user["eaten_today"]
+        ]
+        eaten = "\n".join(eaten_lines)
+        total_eaten = sum(e["calories"] for e in user["eaten_today"])
+    else:
+        eaten = "לא דווח"
+        total_eaten = 0
+
+    remaining = user.get("calorie_budget", 0) - total_eaten
+    summary = f'<b>סיכום יומי:</b>\n{eaten}\n\n<b>סה"כ נאכל:</b> <b>{total_eaten}</b> קלוריות\n<b>נשארו:</b> <b>{remaining}</b> קלוריות להיום.'
+    summary = markdown_to_html(summary)
+    await update.message.reply_text(summary, parse_mode="HTML")
+
+    # Save to database
+    user_id = update.effective_user.id if update.effective_user else None
+    if user_id and total_eaten > 0:
+        try:
+            # Calculate macro averages (estimate)
+            meals_list = [clean_desc(e["desc"]) for e in user["eaten_today"]]
+
+            # Simple estimate of protein, fat, carbs (15%, 30%, 55% of calories)
+            estimated_protein = (total_eaten * 0.15) / 4  # 4 calories per gram protein
+            estimated_fat = (total_eaten * 0.30) / 9  # 9 calories per gram fat
+            estimated_carbs = (total_eaten * 0.55) / 4  # 4 calories per gram carbs
+
+            # Save to database
+            save_daily_entry(
+                user_id=user_id,
+                calories=total_eaten,
+                protein=estimated_protein,
+                fat=estimated_fat,
+                carbs=estimated_carbs,
+                meals_list=meals_list,
+                goal=user.get("goal", ""),
+            )
+
+            # Save confirmation message
+            await update.message.reply_text(
+                "✅ הנתונים נשמרו בהצלחה! אפשר לראות דוח שבועי עם /report",
+                parse_mode="HTML",
+            )
+
+        except Exception as e:
+            logging.error(f"שגיאה בשמירה לבסיס הנתונים: {e}")
+            await update.message.reply_text(
+                "⚠️ לא הצלחתי לשמור את הנתונים, אבל הסיכום נשאר.", parse_mode="HTML"
+            )
+
+    # Dynamic recommendation for tomorrow
+    learning = learning_logic(context)
+    await update.message.reply_text(
+        f"<b>המלצה למחר:</b>\n{learning}", parse_mode="HTML"
+    )
+
+    # Water recommendation
+    water = water_recommendation(context)
+    await update.message.reply_text(water, parse_mode="HTML")
+
+    # Reset meals for next day
+    user["eaten_today"] = []
+    user["remaining_calories"] = user.get("calorie_budget", 0)
+
+    # Ask about menu timing for tomorrow
+    times = [f"{h:02d}:00" for h in range(7, 13)]
+    keyboard = [[KeyboardButton(t)] for t in times]
+    await update.message.reply_text(
+        get_gendered_text(
+            context,
+            "מתי לשלוח לך את התפריט היומי למחר?",
+            "מתי לשלוח לך את התפריט היומי למחר?",
+        ),
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard, one_time_keyboard=True, resize_keyboard=True
+        ),
+        parse_mode="HTML",
+    )
+    return SCHEDULE
+
+
+async def schedule_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Schedule menu for next day."""
+    if not update.message or not update.message.text:
+        return SCHEDULE
+    time = update.message.text.strip()
+    if context.user_data is None:
+        context.user_data = {}
+    context.user_data["schedule_time"] = time
+    user_id = update.effective_user.id if update.effective_user else None
+    if user_id:
+        save_user(user_id, context.user_data)
+    await update.message.reply_text(
+        get_gendered_text(
+            context,
+            f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
+            f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
+        ),
+        reply_markup=ReplyKeyboardRemove(),
+        parse_mode="HTML",
+    )
+    return ConversationHandler.END
+
+
+async def check_dessert_permission(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    """Check if dessert is allowed based on remaining calories."""
+    user = context.user_data
+    rem = user.get("remaining_calories", user.get("calorie_budget", 0))
+    msg = get_gendered_text(
+        context,
+        (
+            f"נותרו לך {rem} קלוריות. אפשר קינוח! תתפנק 🙂"
+            if rem > 150
+            else "לא מומלץ קינוח כרגע. נשארו מעט קלוריות."
+        ),
+        (
+            f"נותרו לך {rem} קלוריות. אפשר קינוח! תתפנקי 🙂"
+            if rem > 150
+            else "לא מומלץ קינוח כרגע. נשארו מעט קלוריות."
+        ),
+    )
+    await update.message.reply_text(msg, parse_mode="HTML")
+    return DAILY
+
+
+async def after_questionnaire(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    """Handle post-questionnaire flow.""" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[724:761]
+==yogev_bot_backup:[899:935]
+        question_starts = (
+            "האם",
+            "אפשר",
+            "מותר",
+            "כמה",
+            "מה",
+            "איך",
+            "מדוע",
+            "למה",
+            "היכן",
+            "איפה",
+            "מתי",
+            "מי",
+        )
+        is_question = eaten_text.endswith("?") or any(
+            eaten_text.strip().startswith(q) for q in question_starts
+        )
+        if is_question:
+            # שלח את כל הטקסט ל-GPT כשאלה
+            user = context.user_data if context.user_data is not None else {}
+            calorie_budget = user.get("calorie_budget", 0)
+            total_eaten = sum(e["calories"] for e in user.get("eaten_today", []))
+            remaining = calorie_budget - total_eaten
+            diet = ", ".join(user.get("diet", []))
+            allergies = ", ".join(user.get("allergies", []))
+            eaten_list = ", ".join(
+                clean_desc(e["desc"]) for e in user.get("eaten_today", [])
+            )
+            prompt = (
+                f"המשתמש/ת שואל/ת: {eaten_text}\n"
+                f"העדפות תזונה: {diet}\n"
+                f"אלרגיות: {allergies}\n"
+                f"מה שנאכל היום: {eaten_list}\n"
+                f"תקציב קלורי יומי: {calorie_budget}, נשארו: {remaining} קלוריות\n"
+                f"ענה/י תשובה תזונתית אמיתית, בהתחשב בכל הנתונים, כולל תקציב, העדפות, אלרגיות, מטרות, ומה שכבר נאכל. הצג המלצה מגדרית, מסודרת, ב-HTML בלבד, עם בולד, רשימות, כותרות, והסבר קצר. אל תשתמש/י ב-Markdown."
+            ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1525:1575]
+==yogev_bot_backup:[2097:2144]
+                )
+                # מחיקת הקובץ הזמני
+                try:
+                    os.remove(chart_path)
+                except:
+                    pass
+
+            # כפתור חזרה
+            keyboard = [
+                [InlineKeyboardButton("🔙 חזרה לדוחות", callback_data="reports_main")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.message.reply_text(
+                "בחר/י פעולה נוספת:", reply_markup=reply_markup
+            )
+
+        except Exception as e:
+            logging.error(f"שגיאה ביצירת דוח שבועי: {e}")
+            await query.edit_message_text(
+                "❌ לא הצלחתי ליצור דוח שבועי הפעם.\n" "נסה/י שוב מאוחר יותר."
+            )
+
+    async def generate_monthly_report(query, user_id):
+        """יצירת דוח חודשי"""
+        try:
+            # קבלת נתונים חודשיים
+            monthly_data = []
+            # report_text += build_monthly_summary_text(monthly_data)  # פונקציה לא קיימת - הסר
+
+            if not monthly_data:
+                await query.edit_message_text(
+                    "📊 <b>דוח חודשי</b>\n\n"
+                    "אין עדיין נתונים לחודש האחרון.\n"
+                    "התחל/י לדווח על הארוחות שלך!",
+                    parse_mode="HTML",
+                )
+                return
+
+            # בדיקה אם הדוח חלקי
+            days_found = len(monthly_data)
+            days_expected = 30
+            partial_note = ""
+            if days_found < days_expected:
+                partial_note = f"\n⚠️ <b>דוח חלקי – נמצאו רק {days_found} ימים מתוך {days_expected}</b>\n"
+
+            # בניית טקסט הדוח
+            report_text = f"📊 <b>דוח חודשי</b>{partial_note}\n" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1117:1189]
+==yogev_bot_backup:[1549:1621]
+        "שתיתי",
+        "אכלתי",
+        "שתיתי",
+        "אכל",
+        "שתה",
+        "אכלה",
+        "שתתה",
+    ]
+    question_indicators = [
+        "?",
+        "כמה",
+        "האם",
+        "אפשר",
+        "מותר",
+        "איך",
+        "מה",
+        "מתי",
+        "איפה",
+        "למה",
+        "איזה",
+    ]
+
+    is_eating_report = any(indicator in user_text for indicator in eating_indicators)
+    is_question = any(
+        indicator in user_text for indicator in question_indicators
+    ) or user_text.endswith("?")
+
+    # בניית פרומפט ל-GPT
+    calorie_budget = user.get("calorie_budget", 1800)
+    total_eaten = sum(e["calories"] for e in user.get("eaten_today", []))
+    remaining = calorie_budget - total_eaten
+    diet = ", ".join(user.get("diet", []))
+    allergies = ", ".join(user.get("allergies", []))
+    eaten_today = ", ".join(
+        [clean_desc(e["desc"]) for e in user.get("eaten_today", [])]
+    )
+
+    if is_eating_report:
+        # זה נראה כמו דיווח אכילה - GPT יחשוב קלוריות ויוסיף
+        prompt = f"""המשתמש/ת כתב/ה: "{user_text}"
+
+זה נראה כמו דיווח אכילה. אנא:
+1. זהה את המאכל/ים
+2. חשב/י קלוריות מדויקות (במיוחד למשקאות - קולה, מיץ וכו')
+3. הוסף/י את זה למה שנאכל היום
+4. הצג/י סיכום: מה נוסף, כמה קלוריות, סה"כ היום, כמה נשארו
+
+מידע על המשתמש/ת:
+- תקציב יומי: {calorie_budget} קלוריות
+- נאכל היום: {eaten_today}
+- נשארו: {remaining} קלוריות
+- העדפות תזונה: {diet}
+- אלרגיות: {allergies}
+
+הצג תשובה בעברית, עם HTML בלבד (<b>, <i>), בלי Markdown. אל תמציא ערכים - אם אינך בטוח, ציין זאת."""
+    else:
+        # זה נראה כמו שאלה - GPT יענה על השאלה
+        prompt = f"""המשתמש/ת שואל/ת: "{user_text}"
+
+ענה/י על השאלה בהקשר תזונתי. אם השאלה על קלוריות או תזונה - תן/י תשובה מדויקת.
+אם השאלה כללית - תן/י תשובה מקצועית ומועילה.
+
+מידע על המשתמש/ת (אם רלוונטי):
+- תקציב יומי: {calorie_budget} קלוריות
+- נאכל היום: {eaten_today}
+- נשארו: {remaining} קלוריות
+- העדפות תזונה: {diet}
+- אלרגיות: {allergies}
+
+הצג תשובה בעברית, עם HTML בלבד (<b>, <i>), בלי Markdown. אל תמציא ערכים - אם אינך בטוח, ציין זאת."""
+
+    try: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==utils:[150:179]
+==yogev_bot_backup:[208:237]
+    diet_str = ", ".join(user.get("diet", []))
+    eaten_today = ""
+    if context and hasattr(context, "user_data"):
+        eaten_today = "\n".join(
+            [
+                (
+                    strip_html_tags(e["desc"])
+                    if isinstance(e, dict)
+                    else strip_html_tags(e)
+                )
+                for e in context.user_data.get("eaten_today", [])
+            ]
+        )
+    prompt = (
+        f"המשתמש/ת: {user.get('name','')}, גיל: {user.get('age','')}, מגדר: {user.get('gender','')}, גובה: {user.get('height','')}, משקל: {user.get('weight','')}, מטרה: {user.get('goal','')}, רמת פעילות: {user.get('activity','')}, העדפות תזונה: {diet_str}, אלרגיות: {user.get('allergies') or 'אין'}.\n"
+        f"המשתמש/ת כבר אכל/ה היום: {eaten_today}.\n"
+        "בנה לי תפריט יומי מאוזן ובריא, ישראלי, פשוט, עם 5–6 ארוחות (בוקר, ביניים, צהריים, ביניים, ערב, קינוח רשות). \n"
+        "השתמש בעברית יומיומית, פשוטה וברורה בלבד. אל תשתמש במילים לא שגרתיות, תיאורים פיוטיים, או מנות לא הגיוניות. \n"
+        "הצג דוגמאות אמיתיות בלבד, כמו: חביתה, גבינה, יוגורט, עוף, אורז, ירקות, פירות, אגוזים. \n"
+        "הימנע מתרגום מילולי מאנגלית, אל תשתמש במנות מוזרות או מומצאות. \n"
+        "הקפד על מגדר נכון, סדר ארוחות, כמויות סבירות, והימנע מחזרות. \n"
+        "בכל ארוחה עיקרית יהיה חלבון, בכל יום לפחות 2–3 מנות ירק, 1–2 מנות פרי, ודגנים מלאים. \n"
+        "אחרי כל ארוחה (בוקר, ביניים, צהריים, ערב, קינוח), כתוב בסוגריים הערכה של קלוריות, חלבון, פחמימות, שומן. \n"
+        "אם אינך בטוח – אל תמציא. \n"
+        f"הנחיה מגדרית: כתוב את כל ההנחיות בלשון {user.get('gender','זכר')}.\n"
+        "אל תמליץ/י, אל תציע/י, ואל תכלול/י מאכלים, מוצרים או מרכיבים שאינם מופיעים בהעדפות התזונה שלי, גם לא כהמלצה או דוגמה.\n"
+        "אם כבר אכלתי היום עוף או חלבון, אל תמליץ/י לי שוב על עוף או חלבון, אלא אם זה הכרחי לתפריט מאוזן.\n"
+        # אין עיצוב בפרומפט ל-GPT!
+    ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[683:718]
+==yogev_bot_backup:[824:857]
+    keyboard = [
+        [KeyboardButton("מה אכלתי")],
+        [KeyboardButton("סיימתי")],
+        [KeyboardButton("עריכה")],
+    ]
+    user = context.user_data if context.user_data is not None else {}
+    gender = user.get("gender", "male")
+    action_text = (
+        GENDERED_ACTION["female"] if gender == "female" else GENDERED_ACTION["male"]
+    )
+    if update.message:
+        await update.message.reply_text(
+            action_text,
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            parse_mode="HTML",
+        )
+    return DAILY
+
+
+async def daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle daily menu requests."""
+    await update.message.reply_text("רגע, בונה עבורך תפריט...")
+    if update.message and update.message.text:
+        if not update.message or not update.message.text:
+            return DAILY
+        choice = update.message.text.strip()
+        if choice == "סיימתי":
+            await send_summary(update, context)
+            return SCHEDULE
+        else:
+            return await eaten(update, context)
+
+
+async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle food intake reporting.""" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[762:790]
+==yogev_bot_backup:[936:961]
+                model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+            )
+            answer = (
+                response.choices[0].message.content.strip()
+                if response
+                and response.choices
+                and response.choices[0].message
+                and response.choices[0].message.content
+                else ""
+            )
+            await update.message.reply_text(answer, parse_mode="HTML")
+            return DAILY
+        # --- דיווח אכילה רגיל ---
+        if context.user_data is None:
+            context.user_data = {}
+        if "eaten_today" not in context.user_data:
+            context.user_data["eaten_today"] = []
+        user = context.user_data
+        # --- פיצול רכיבים ---
+        meal_components = [eaten_text]  # שמור את הטקסט המקורי כרכיב יחיד
+        results = []
+        total_calories = 0
+        gpt_details = []
+        for component in meal_components:
+            calorie_prompt = f"כמה קלוריות יש ב: {component}? כתוב רק את שם המאכל, מספר הקלוריות, ואם אפשר – אייקון מתאים. אל תוסיף טקסט נוסף. דוגמה: ביצת עין – 95 קק'ל 🍳" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[276:342]
+==yogev_bot_backup:[447:512]
+        value = update.message.text.strip()
+        if value == "לא ידוע":
+            context.user_data["body_fat"] = "לא ידוע"
+        else:
+            try:
+                context.user_data["body_fat"] = float(value)
+            except Exception:
+                await update.message.reply_text(
+                    'אנא הזן ערך מספרי או בחר "לא ידוע".', parse_mode="HTML"
+                )
+                return BODY_FAT
+        # אם המטרה היא ירידה באחוזי שומן, שאל יעד
+        if (
+            context.user_data.get("goal") == "לרדת באחוזי שומן"
+            and "body_fat_target" not in context.user_data
+        ):
+            await update.message.reply_text(
+                "לאיזה אחוז שומן תרצה/י להגיע?", parse_mode="HTML"
+            )
+            return BODY_FAT_TARGET
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY
+
+
+async def get_body_fat_target(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    if update.message and update.message.text:
+        value = update.message.text.strip()
+        try:
+            context.user_data["body_fat_target"] = float(value)
+        except Exception:
+            await update.message.reply_text(
+                "אנא הזן ערך מספרי ליעד אחוזי שומן.", parse_mode="HTML"
+            )
+            return BODY_FAT_TARGET
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY
+
+
+async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==config:[27:52]
+==yogev_bot_backup:[92:116]
+GENDER_OPTIONS = ["זכר", "נקבה", "אחר"]
+GOAL_OPTIONS = [
+    "ירידה במשקל",
+    "חיטוב",
+    "שמירה",
+    "עלייה במסת שריר",
+    "עלייה כללית",
+    "שיפור ספורט",
+    "פשוט תזונה בריאה",
+    "לרדת באחוזי שומן",
+]
+# רמות פעילות עם ניסוח מגדרי
+ACTIVITY_OPTIONS_MALE = [
+    "לא מתאמן",
+    "מעט (2-3 אימונים בשבוע)",
+    "הרבה (4-5 אימונים בשבוע)",
+    "כל יום",
+]
+ACTIVITY_OPTIONS_FEMALE = [
+    "לא מתאמנת",
+    "מעט (2-3 אימונים בשבוע)",
+    "הרבה (4-5 אימונים בשבוע)",
+    "כל יום",
+] (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[200:228]
+==yogev_bot_backup:[369:396]
+        weight = update.message.text.strip()
+        if not weight.isdigit() or not (20 <= int(weight) <= 300):
+            await update.message.reply_text(
+                get_gendered_text(
+                    context,
+                    'אנא הזן משקל תקין בק"ג (20-300).',
+                    'אנא הזיני משקל תקין בק"ג (20-300).',
+                ),
+                parse_mode="HTML",
+            )
+            return WEIGHT
+        context.user_data["weight"] = int(weight)
+        keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה המטרה התזונתית שלך?", "מה המטרה התזונתית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return GOAL
+
+
+async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """שואל את המשתמש למטרה וממשיך לשאלת אחוזי שומן או פעילות גופנית."""
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==config:[4:27]
+==yogev_bot_backup:[60:84]
+USERS_FILE = "calorico_users.json"
+
+# --- מצבי שיחה (ConversationHandler) ---
+(
+    NAME,
+    GENDER,
+    AGE,
+    HEIGHT,
+    WEIGHT,
+    GOAL,
+    BODY_FAT,
+    ACTIVITY,
+    DIET,
+    ALLERGIES,
+    MENU,
+    DAILY,
+    EATEN,
+    SUMMARY,
+    SCHEDULE,
+    EDIT,
+    BODY_FAT_TARGET,
+) = range(17)
+
+# --- טקסטי פעולה מגדריים (לכפתורים/הודעות) --- (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[177:200]
+==yogev_bot_backup:[345:367]
+        height = update.message.text.strip()
+        if not height.isdigit() or not (80 <= int(height) <= 250):
+            await update.message.reply_text(
+                get_gendered_text(
+                    context,
+                    'אנא הזן גובה תקין בס"מ (80-250).',
+                    'אנא הזיני גובה תקין בס"מ (80-250).',
+                ),
+                parse_mode="HTML",
+            )
+            return HEIGHT
+        context.user_data["height"] = int(height)
+        await update.message.reply_text(
+            get_gendered_text(context, 'מה המשקל שלך בק"ג?', 'מה המשקל שלך בק"ג?'),
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+        return WEIGHT
+
+
+async def get_weight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==config:[7:27]
+==handlers:[61:81]
+(
+    NAME,
+    GENDER,
+    AGE,
+    HEIGHT,
+    WEIGHT,
+    GOAL,
+    BODY_FAT,
+    ACTIVITY,
+    DIET,
+    ALLERGIES,
+    MENU,
+    DAILY,
+    EATEN,
+    SUMMARY,
+    SCHEDULE,
+    EDIT,
+    BODY_FAT_TARGET,
+) = range(17)
+ (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[156:177]
+==yogev_bot_backup:[323:343]
+        age = update.message.text.strip()
+        if not age.isdigit() or not (5 <= int(age) <= 120):
+            await update.message.reply_text(
+                get_gendered_text(
+                    context, "אנא הזן גיל תקין (5-120).", "אנא הזיני גיל תקין (5-120)."
+                ),
+                parse_mode="HTML",
+            )
+            return AGE
+        context.user_data["age"] = int(age)
+        await update.message.reply_text(
+            get_gendered_text(context, 'מה הגובה שלך בס"מ?', 'מה הגובה שלך בס"מ?'),
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+        return HEIGHT
+
+
+async def get_height(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """שואל את המשתמש לגובהו וממשיך לשאלת משקל."""
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[90:104]
+==yogev_bot_backup:[254:268]
+    welcome_message = (
+        f"שלום {user_first_name}! אני <b>קלוריקו</b> – הבוט שיעזור לך לשמור על תזונה, מעקב והתמדה 🙌\n\n"
+        "<b>הנה מה שאני יודע לעשות:</b>\n"
+        "✅ התאמה אישית של תפריט יומי – לפי הגובה, משקל, גיל, מטרה ותזונה שלך\n"
+        "📊 דוחות תזונתיים – שבועי וחודשי\n"
+        "💧 תזכורות חכמות לשתיית מים\n"
+        '🍽 רישום יומי של "מה אכלתי היום" או "מה אכלתי אתמול"\n'
+        "🔥 מעקב קלוריות יומי, ממוצע לארוחה וליום\n"
+        "📅 ניתוח מגמות – צריכת חלבון, שומן ופחמימות\n"
+        "🏋️ חיבור לאימונים שדיווחת עליהם\n"
+        "📝 אפשרות לעדכן בכל שלב את המשקל, המטרה, התזונה או רמת הפעילות שלך\n"
+        "⏰ תפריט יומי שנשלח אליך אוטומטית בשעה שתבחר\n\n"
+        "<b>בוא/י נתחיל בהרשמה קצרה:</b>"
+    ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1582:1599]
+==yogev_bot_backup:[2097:2114]
+            )
+            # מחיקת הקובץ הזמני
+            try:
+                os.remove(chart_path)
+            except:
+                pass
+
+        # כפתור חזרה
+        keyboard = [
+            [InlineKeyboardButton("🔙 חזרה לדוחות", callback_data="reports_main")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.message.reply_text(
+            "בחר/י פעולה נוספת:", reply_markup=reply_markup
+        )
+
+    except Exception as e: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1525:1541]
+==yogev_bot_backup:[2154:2171]
+                )
+                # מחיקת הקובץ הזמני
+                try:
+                    os.remove(chart_path)
+                except:
+                    pass
+
+            # כפתור חזרה
+            keyboard = [
+                [InlineKeyboardButton("🔙 חזרה לדוחות", callback_data="reports_main")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.message.reply_text(
+                "בחר/י פעולה נוספת:", reply_markup=reply_markup
+            )
+
+        except Exception as e: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1339:1355]
+==yogev_bot_backup:[807:820]
+        parse_mode="HTML",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+    )
+
+    # Daily water recommendation in liters
+    weight = user.get("weight", 70)
+    min_l = round(weight * 30 / 1000, 1)
+    max_l = round(weight * 35 / 1000, 1)
+    min_cups = round((weight * 30) / 240)
+    max_cups = round((weight * 35) / 240)
+    await update.message.reply_text(
+        f"<b>המלצת שתייה להיום:</b> {min_l}–{max_l} ליטר מים (כ-{min_cups}–{max_cups} כוסות)",
+        parse_mode="HTML",
+    )
+
+    # Additional gendered message (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[459:483]
+==yogev_bot_backup:[1283:1300]
+    await ask_water_reminder_opt_in(update, context)
+    return EDIT
+
+
+async def ask_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [[KeyboardButton("כן, אשמח!"), KeyboardButton("לא, תודה")]]
+    await update.message.reply_text(
+        get_gendered_text(
+            context,
+            "האם תרצה לקבל תזכורת לשתות מים כל שעה וחצי?",
+            "האם תרצי לקבל תזכורת לשתות מים כל שעה וחצי?",
+        ),
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard, one_time_keyboard=True, resize_keyboard=True
+        ),
+        parse_mode="HTML",
+    ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[115:131]
+==yogev_bot_backup:[280:295]
+        name = update.message.text.strip()
+        context.user_data["name"] = name
+        keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
+        await update.message.reply_text(
+            get_gendered_text(context, "מה המגדר שלך?", "מה המגדר שלך?"),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return GENDER
+
+
+async def get_gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1254:1266]
+==utils:[178:190]
+        )
+        response = await _openai_client.chat.completions.create(
+            model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+        )
+        menu_text = (
+            response.choices[0].message.content.strip()
+            if response
+            and response.choices
+            and response.choices[0].message
+            and response.choices[0].message.content
+            else ""
+        ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==utils:[180:191]
+==yogev_bot_backup:[238:253]
+        model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+    )
+    menu_text = (
+        response.choices[0].message.content.strip()
+        if response
+        and response.choices
+        and response.choices[0].message
+        and response.choices[0].message.content
+        else ""
+    )
+    return menu_text
+
+
+# --- Conversation Handlers ---
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE): (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[625:683]
+==yogev_bot_backup:[1823:1890]
+    keyboard = [
+        [KeyboardButton('כוס אחת (240 מ"ל)'), KeyboardButton('שתי כוסות (480 מ"ל)')],
+        [KeyboardButton('בקבוק קטן (500 מ"ל)'), KeyboardButton("בקבוק גדול (1 ליטר)")],
+        [KeyboardButton("אחר")],
+    ]
+    await update.message.reply_text(
+        get_gendered_text(context, "כמה מים שתית?", "כמה מים שתית?"),
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard, one_time_keyboard=True, resize_keyboard=True
+        ),
+        parse_mode="HTML",
+    )
+    return "WATER_AMOUNT"
+
+
+async def water_intake_amount(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    # Parse amount and update user data
+    amount_map = {
+        'כוס אחת (240 מ"ל)': 240,
+        'שתי כוסות (480 מ"ל)': 480,
+        'בקבוק קטן (500 מ"ל)': 500,
+        "בקבוק גדול (1 ליטר)": 1000,
+    }
+    if context.user_data is None:
+        context.user_data = {}
+    if "water_today" not in context.user_data:
+        context.user_data["water_today"] = 0
+    amount_text = update.message.text.strip()
+    if amount_text in amount_map:
+        amount = amount_map[amount_text]
+    elif amount_text.isdigit():
+        amount = int(amount_text)
+    else:
+        # If 'אחר', ask for manual input
+        await update.message.reply_text(
+            'הזן כמות במ"ל (למשל: 300):',
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+        return "WATER_AMOUNT"
+    context.user_data["water_today"] += amount
+    # Log to Google Sheets
+    # log_to_sheet(
+    #     {
+    #         "username": update.effective_user.username if update.effective_user else "",
+    #         "user_id": update.effective_user.id if update.effective_user else "",
+    #         "text": f'שתה מים: {amount} מ"ל',
+    #         "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    #         "event_type": "שתייה",
+    #     }
+    # )
+    await update.message.reply_text(
+        get_gendered_text(
+            context,
+            f'כל הכבוד! שתית {amount} מ"ל מים. סה"כ היום: {context.user_data["water_today"]} מ"ל',
+            f'כל הכבוד! שתית {amount} מ"ל מים. סה"כ היום: {context.user_data["water_today"]} מ"ל',
+        ),
+        reply_markup=ReplyKeyboardRemove(),
+        parse_mode="HTML",
+    )
+    return ConversationHandler.END
+
+
+# --- Main ---
+def main(): (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[324:342]
+==yogev_bot_backup:[427:444]
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY
+
+
+# TODO: להמשיך להעביר את כל שאר ה-handlers מהקובץ המקורי, כולל free text, דוחות, מים, תפריט וכו'.
+ (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[295:316]
+==yogev_bot_backup:[427:445]
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY
+
+
+async def get_body_fat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[257:276]
+==yogev_bot_backup:[495:513]
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY
+
+
+async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[257:277]
+==yogev_bot_backup:[467:488]
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY
+
+
+async def get_body_fat_target(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    if update.message and update.message.text:
+        value = update.message.text.strip() (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[131:156]
+==yogev_bot_backup:[297:321]
+        gender = update.message.text.strip()
+        if gender not in GENDER_OPTIONS:
+            keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
+            await update.message.reply_text(
+                get_gendered_text(
+                    context, "בחר מגדר מהתפריט למטה:", "בחרי מגדר מהתפריט למטה:"
+                ),
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+            return GENDER
+        context.user_data["gender"] = gender
+        await update.message.reply_text(
+            get_gendered_text(context, "בן כמה אתה?", "בת כמה את?"),
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+        return AGE
+
+
+async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==utils:[180:190]
+==yogev_bot_backup:[784:794]
+        model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+    )
+    menu_text = (
+        response.choices[0].message.content.strip()
+        if response
+        and response.choices
+        and response.choices[0].message
+        and response.choices[0].message.content
+        else ""
+    ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[228:276]
+==yogev_bot_backup:[398:445]
+        goal = update.message.text.strip()
+        if goal not in GOAL_OPTIONS:
+            keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
+            await update.message.reply_text(
+                get_gendered_text(
+                    context, "בחר מטרה מהתפריט למטה:", "בחרי מטרה מהתפריט למטה:"
+                ),
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+            return GOAL
+        context.user_data["goal"] = goal
+        if goal == "לרדת באחוזי שומן":
+            keyboard = [[KeyboardButton(str(i))] for i in range(10, 41, 2)]
+            keyboard.append([KeyboardButton("לא ידוע")])
+            await update.message.reply_text(
+                get_gendered_text(
+                    context,
+                    'מה אחוזי השומן שלך? (אם לא ידוע, בחר "לא ידוע")',
+                    'מה אחוזי השומן שלך? (אם לא ידוע, בחרי "לא ידוע")',
+                ),
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+            return BODY_FAT
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY
+
+
+async def get_body_fat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1575:1603]
+==yogev_bot_backup:[2147:2176]
+            await query.edit_message_text(report_text, parse_mode="HTML")
+
+            # יצירת ושליחת גרף
+            chart_path = plot_calories(monthly_data)
+            if chart_path and os.path.exists(chart_path):
+                await query.message.reply_photo(
+                    photo=open(chart_path, "rb"), caption="📈 גרף צריכת קלוריות חודשי"
+                )
+                # מחיקת הקובץ הזמני
+                try:
+                    os.remove(chart_path)
+                except:
+                    pass
+
+            # כפתור חזרה
+            keyboard = [
+                [InlineKeyboardButton("🔙 חזרה לדוחות", callback_data="reports_main")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.message.reply_text(
+                "בחר/י פעולה נוספת:", reply_markup=reply_markup
+            )
+
+        except Exception as e:
+            logging.error(f"שגיאה ביצירת דוח חודשי: {e}")
+            await query.edit_message_text(
+                "❌ לא הצלחתי ליצור דוח חודשי הפעם.\n" "נסה/י שוב מאוחר יותר."
+            )
+ (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==utils:[166:174]
+==yogev_bot_backup:[773:781]
+        "בנה לי תפריט יומי מאוזן ובריא, ישראלי, פשוט, עם 5–6 ארוחות (בוקר, ביניים, צהריים, ביניים, ערב, קינוח רשות). \n"
+        "השתמש בעברית יומיומית, פשוטה וברורה בלבד. אל תשתמש במילים לא שגרתיות, תיאורים פיוטיים, או מנות לא הגיוניות. \n"
+        "הצג דוגמאות אמיתיות בלבד, כמו: חביתה, גבינה, יוגורט, עוף, אורז, ירקות, פירות, אגוזים. \n"
+        "הימנע מתרגום מילולי מאנגלית, אל תשתמש במנות מוזרות או מומצאות. \n"
+        "הקפד על מגדר נכון, סדר ארוחות, כמויות סבירות, והימנע מחזרות. \n"
+        "בכל ארוחה עיקרית יהיה חלבון, בכל יום לפחות 2–3 מנות ירק, 1–2 מנות פרי, ודגנים מלאים. \n"
+        "אחרי כל ארוחה (בוקר, ביניים, צהריים, ערב, קינוח), כתוב בסוגריים הערכה של קלוריות, חלבון, פחמימות, שומן. \n"
+        "אם אינך בטוח – אל תמציא. \n" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1474:1487]
+==yogev_bot_backup:[1018:1029]
+    keyboard = [
+        [InlineKeyboardButton("📅 שבוע אחרון", callback_data="report_weekly")],
+        [InlineKeyboardButton("📊 חודש אחרון", callback_data="report_monthly")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_text(
+        "📊 <b>בחר/י סוג דוח:</b>", reply_markup=reply_markup, parse_mode="HTML"
+    )
+
+
+async def handle_reports_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle reports menu callbacks.""" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==db:[70:78]
+==yogev_bot_backup:[177:189]
+        if not os.path.exists(USERS_FILE):
+            data = {}
+        else:
+            with open(USERS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        data[str(user_id)] = user_data
+        with open(USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1256:1376]
+==yogev_bot_backup:[1688:1804]
+            model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+        )
+        menu_text = (
+            response.choices[0].message.content.strip()
+            if response
+            and response.choices
+            and response.choices[0].message
+            and response.choices[0].message.content
+            else ""
+        )
+        user["menu"] = menu_text
+        # Don't add this meal to eaten_today or calculate calories
+        await show_menu_with_keyboard(update, context, menu_text)
+        return MENU
+
+    choice = update.message.text.strip()
+    opt_menu = get_gendered_text(context, "לקבל תפריט יומי", "לקבל תפריט יומי")
+    opt_track = get_gendered_text(
+        context, "רק לעקוב אחרי הארוחות", "רק לעקוב אחרי הארוחות"
+    )
+    opt_products = get_gendered_text(
+        context, "לקבל תפריט/ארוחה לפי מוצרים בבית", "לקבל תפריט/ארוחה לפי מוצרים בבית"
+    )
+    user = context.user_data
+
+    if choice == opt_menu:
+        menu = await build_daily_menu(user, context)
+        user["menu"] = menu
+        await show_menu_with_keyboard(update, context, menu)
+        return EATEN
+    elif choice == opt_products:
+        await update.message.reply_text(
+            get_gendered_text(
+                context,
+                'כתוב כאן את רשימת המוצרים שיש לך בבית (לדוג׳: ביצים, גבינה, עגבנייה, טונה, פסטה, חלווה, סלמון, גמבה, מלפפון וכו").',
+                'כתבי כאן את רשימת המוצרים שיש לך בבית (לדוג׳: ביצים, גבינה, עגבנייה, טונה, פסטה, חלווה, סלמון, גמבה, מלפפון וכו").',
+            ),
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+        context.user_data["awaiting_products"] = True
+        return MENU
+    else:
+        await update.message.reply_text(
+            get_gendered_text(
+                context,
+                f"תקציב הקלוריות היומי שלך: {user['calorie_budget']} קלוריות.",
+                f"תקציב הקלוריות היומי שלך: {user['calorie_budget']} קלוריות.",
+            ),
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+        # Don't show 'finished' button in first question
+        await update.message.reply_text(
+            get_gendered_text(
+                context,
+                "מה אכלת היום? כתוב בקצרה (לדוג׳: חביתה, סלט, קוטג׳ 5%).",
+                "מה אכלת היום? כתבי בקצרה (לדוג׳: חביתה, סלט, קוטג׳ 5%).",
+            ),
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+        return DAILY
+
+
+async def show_menu_with_keyboard(update, context, menu_text=None):
+    """Show daily menu with unified keyboard and budget."""
+    user = context.user_data
+    calorie_budget = user.get("calorie_budget", 1800)
+    # Daily reset
+    user["eaten_today"] = []
+    user["remaining_calories"] = calorie_budget
+    if menu_text is None:
+        menu_text = user.get("menu", "")
+    msg = f"<b>התקציב היומי שלך: {calorie_budget} קלוריות</b>\n\n{menu_text}"
+    keyboard = [
+        [KeyboardButton("להרכבת ארוחה לפי מה שיש בבית")],
+        [KeyboardButton("מה אכלתי היום")],
+        [KeyboardButton("📊 דוחות")],
+        [KeyboardButton("סיימתי")],
+    ]
+    await update.message.reply_text(
+        msg,
+        parse_mode="HTML",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+    )
+
+    # Daily water recommendation in liters
+    weight = user.get("weight", 70)
+    min_l = round(weight * 30 / 1000, 1)
+    max_l = round(weight * 35 / 1000, 1)
+    min_cups = round((weight * 30) / 240)
+    max_cups = round((weight * 35) / 240)
+    await update.message.reply_text(
+        f"<b>המלצת שתייה להיום:</b> {min_l}–{max_l} ליטר מים (כ-{min_cups}–{max_cups} כוסות)",
+        parse_mode="HTML",
+    )
+
+    # Additional gendered message
+    await update.message.reply_text(
+        get_gendered_text(
+            context,
+            "אני כאן אם תרצה להתייעץ אם אפשר לאכול נניח תפוח, או אם תרצה לכתוב לי מה אכלת היום",
+            "אני כאן אם תרצי להתייעץ אם אפשר לאכול נניח תפוח, או אם תרצי לכתוב לי מה אכלת היום",
+        ),
+        parse_mode="HTML",
+    )
+
+    # New day opening message + what did you eat today button
+    await update.message.reply_text(
+        "יום חדש התחיל! אפשר להתחיל לדווח מה אכלת היום. (הפרד/י בין מאכלים באמצעות פסיק – לדוגמה: ביצת עין, סלט ירקות, פרוסת לחם עם גבינה)",
+        reply_markup=ReplyKeyboardMarkup(
+            [[KeyboardButton("מה אכלתי היום")]], resize_keyboard=True
+        ),
+        parse_mode="HTML",
+    )
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show help information.""" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1256:1268]
+==yogev_bot_backup:[784:795]
+            model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+        )
+        menu_text = (
+            response.choices[0].message.content.strip()
+            if response
+            and response.choices
+            and response.choices[0].message
+            and response.choices[0].message.content
+            else ""
+        )
+        user["menu"] = menu_text
+        # Don't add this meal to eaten_today or calculate calories (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1256:1266]
+==yogev_bot_backup:[238:248]
+        model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+    )
+    menu_text = (
+        response.choices[0].message.content.strip()
+        if response
+        and response.choices
+        and response.choices[0].message
+        and response.choices[0].message.content
+        else ""
+    ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1190:1255]
+==yogev_bot_backup:[1622:1687]
+            model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+        )
+        gpt_response = (
+            response.choices[0].message.content.strip()
+            if response
+            and response.choices
+            and response.choices[0].message
+            and response.choices[0].message.content
+            else "לא הצלחתי לעבד את הבקשה."
+        )
+
+        await update.message.reply_text(gpt_response, parse_mode="HTML")
+
+        # אם זה היה דיווח אכילה, עדכן את הנתונים
+        if is_eating_report:
+            # נסה לחלץ קלוריות מהתשובה של GPT
+            import re
+
+            calorie_match = re.search(r"(\d+)\s*קלוריות?", gpt_response)
+            if calorie_match:
+                calories = int(calorie_match.group(1))
+                if "eaten_today" not in user:
+                    user["eaten_today"] = []
+                user["eaten_today"].append({"desc": user_text, "calories": calories})
+                user["remaining_calories"] = remaining - calories
+
+                # שמירה
+                if user_id:
+                    save_user(user_id, user)
+
+    except Exception as e:
+        logging.error(f"שגיאה בטיפול בקלט חופשי: {e}")
+        await update.message.reply_text("❌ לא הצלחתי לעבד את הבקשה. נסה/י שוב.")
+
+
+# --- עדכון menu_decision: הסרת כפתור סיימתי מהשאלה הראשונה ---
+async def menu_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("רגע, בונה עבורך תפריט...")
+    if not update.message or not update.message.text:
+        return MENU
+    # אם נלחץ כפתור 'להרכבת ארוחה לפי מה שיש בבית' – בקשת פירוט
+    if update.message.text.strip() == "להרכבת ארוחה לפי מה שיש בבית":
+        await update.message.reply_text(
+            "מה יש בבית? להזין עם פסיקים.", parse_mode="HTML"
+        )
+        context.user_data["awaiting_products"] = True
+        return MENU
+    if context.user_data.get("awaiting_products"):
+        products_text = update.message.text.strip()
+        context.user_data["awaiting_products"] = False
+        user = context.user_data
+        calorie_budget = user.get("calorie_budget", 1800)
+        diet_str = ", ".join(user.get("diet", []))
+        prompt = (
+            f"יש לי בבית: {products_text}.\n"
+            f"העדפות תזונה: {diet_str}.\n"
+            f"אל תמליץ/י, אל תציע/י, ואל תכלול/י מאכלים, מוצרים או מרכיבים שאינם מופיעים בהעדפות התזונה שלי, גם לא כהמלצה או דוגמה.\n"
+            f"תציע לי מתכון/ים טעימים, בריאים, פשוטים, שמבוססים על מוצר מרכזי מתוך הרשימה (אם יש), ותשתמש בכל מה שיש לי בבית.\n"
+            f"אם צריך מוצרים שאין לי – תכתוב אותם בסוף ברשימת קניות.\n"
+            f"עבור כל רכיב עיקרי במתכון, כתוב גם את כמות הקלוריות, החלבון, הפחמימות והשומן (לדוג׳: 2 ביצים – 140 קלוריות, 12 גרם חלבון, 0 גרם פחמימות, 10 גרם שומן).\n"
+            f"אפשר להניח שיש לי גם שמן זית, שמן קנולה, בצל, גזר, גבינה לבנה, מלח, פלפל.\n"
+            f"אל תמציא מנות מוזרות. כתוב בעברית יומיומית, פשוטה וברורה בלבד, בלי תרגום מילולי, בלי מילים מוזרות.\n"
+            f"הצג את כל הערכים התזונתיים בצורה מסודרת, עם בולד, ורשימה ממוספרת. בסוף הארוחה, כתוב סיכום: קלוריות, חלבון, פחמימות, שומן. ואז כתוב כמה קלוריות יישארו לי מהתקציב היומי אם אוכל את הארוחה הזו. אם זו הארוחה הראשונה היום, תן המלצה כללית (למשל: היום כדאי לשלב בשר טחון לארוחת צהריים). אם זו לא הארוחה הראשונה, תן המלצה דינמית לפי מה שנאכל עד כה.\n"
+            "השתמש/י בתגיות HTML בלבד (למשל <b>, <i>, <u>) להדגשה, ולא בכוכביות או סימנים אחרים. אל תשתמש/י ב-Markdown."
+        ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1259:1266]
+==yogev_bot_backup:[939:946]
+            response.choices[0].message.content.strip()
+            if response
+            and response.choices
+            and response.choices[0].message
+            and response.choices[0].message.content
+            else ""
+        ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[348:355]
+==yogev_bot_backup:[515:523]
+        activity = update.message.text.strip()
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        if activity not in options:
+            keyboard = [[KeyboardButton(opt)] for opt in options]
+            # הודעה מגדרית ברורה
+            await update.message.reply_text(
+                get_gendered_text( (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[765:772]
+==utils:[183:190]
+                response.choices[0].message.content.strip()
+                if response
+                and response.choices
+                and response.choices[0].message
+                and response.choices[0].message.content
+                else ""
+            ) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==nutrition_db:[86:92]
+==utils:[59:65]
+    match = re.search(r"(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})", text)
+    if match:
+        day, month, year = map(int, match.groups())
+        if year < 100:
+            year += 2000
+        try: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1450:1456]
+==yogev_bot_backup:[1993:2000]
+                )
+                # מחיקת הקובץ הזמני
+                try:
+                    os.remove(chart_path)
+                except:
+                    pass
+            else: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1331:1338]
+==yogev_bot_backup:[799:806]
+        keyboard = [
+            [KeyboardButton("להרכבת ארוחה לפי מה שיש בבית")],
+            [KeyboardButton("מה אכלתי היום")],
+            [KeyboardButton("📊 דוחות")],
+            [KeyboardButton("סיימתי")],
+        ]
+        await update.message.reply_text( (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1180:1188]
+==yogev_bot_backup:[1597:1604]
+- תקציב יומי: {calorie_budget} קלוריות
+- נאכל היום: {eaten_today}
+- נשארו: {remaining} קלוריות
+- העדפות תזונה: {diet}
+- אלרגיות: {allergies}
+
+הצג תשובה בעברית, עם HTML בלבד (<b>, <i>), בלי Markdown. אל תמציא ערכים - אם אינך בטוח, ציין זאת.""" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1165:1172]
+==yogev_bot_backup:[1612:1620]
+- תקציב יומי: {calorie_budget} קלוריות
+- נאכל היום: {eaten_today}
+- נשארו: {remaining} קלוריות
+- העדפות תזונה: {diet}
+- אלרגיות: {allergies}
+
+הצג תשובה בעברית, עם HTML בלבד (<b>, <i>), בלי Markdown. אל תמציא ערכים - אם אינך בטוח, ציין זאת."""
+ (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[833:845]
+==yogev_bot_backup:[835:844]
+        await update.message.reply_text(
+            action_text,
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            parse_mode="HTML",
+        )
+    return DAILY
+
+
+async def daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[694:704]
+==yogev_bot_backup:[999:1011]
+        await update.message.reply_text(
+            action_text,
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            parse_mode="HTML",
+        )
+        return DAILY
+
+
+async def handle_daily_choice(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    """טיפול בבחירות בתפריט היומי""" (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[976:982]
+==yogev_bot_backup:[1427:1434]
+    user_id = update.effective_user.id if update.effective_user else None
+    if user_id:
+        save_user(user_id, context.user_data)
+
+    await update.message.reply_text(
+        get_gendered_text(
+            context, (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[608:615]
+==yogev_bot_backup:[1138:1144]
+    user_id = update.effective_user.id if update.effective_user else None
+    if user_id:
+        save_user(user_id, context.user_data)
+    await update.message.reply_text(
+        get_gendered_text(
+            context, (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[322:342]
+==yogev_bot_backup:[465:486]
+            )
+            return BODY_FAT_TARGET
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY
+
+
+async def get_body_fat_target(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[293:316]
+==yogev_bot_backup:[493:513]
+            )
+            return BODY_FAT_TARGET
+        gender = context.user_data.get("gender", "זכר")
+        options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
+        keyboard = [[KeyboardButton(opt)] for opt in options]
+        await asyncio.sleep(2)
+        await update.message.reply_text(
+            get_gendered_text(
+                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
+            ),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard, one_time_keyboard=True, resize_keyboard=True
+            ),
+            parse_mode="HTML",
+        )
+        return ACTIVITY
+
+
+async def get_body_fat_target(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    """שואל את המשתמש ליעד אחוזי שומן וממשיך לשאלת פעילות גופנית."""
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[105:115]
+==yogev_bot_backup:[268:278]
+        await update.message.reply_text(
+            welcome_message, reply_markup=ReplyKeyboardRemove(), parse_mode="HTML"
+        )
+        await get_name(update, context)
+    return NAME
+
+
+async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """שואל את המשתמש לשמו וממשיך לשאלת מגדר."""
+    if update.message and update.message.text: (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1331:1337]
+==main:[94:100]
+    keyboard = [
+        [KeyboardButton("להרכבת ארוחה לפי מה שיש בבית")],
+        [KeyboardButton("מה אכלתי היום")],
+        [KeyboardButton("📊 דוחות")],
+        [KeyboardButton("סיימתי")],
+    ] (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==utils:[74:84]
+==yogev_bot_backup:[872:884]
+    text = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", text)
+    text = re.sub(r"\*(.*?)\*", r"<b>\1</b>", text)
+    # נטוי: __טקסט__ או _טקסט_ => <i>טקסט</i>
+    text = re.sub(r"__(.*?)__", r"<i>\1</i>", text)
+    text = re.sub(r"_(.*?)_", r"<i>\1</i>", text)
+    return text
+
+
+# --- עדכון eaten ---
+async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    import re
+ (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==utils:[43:53]
+==yogev_bot_backup:[194:203]
+    if gender == "נקבה":
+        return female_text
+    elif gender == "אחר" and other_text is not None:
+        return other_text
+    return male_text
+
+
+# Utility: ניקוי תגיות HTML מהטקסט (לשימוש לפני שליחה ל-GPT)
+def strip_html_tags(text): (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1344:1349]
+==yogev_bot_backup:[1179:1184]
+    weight = user.get("weight", 70)
+    min_l = round(weight * 30 / 1000, 1)
+    max_l = round(weight * 35 / 1000, 1)
+    min_cups = round((weight * 30) / 240)
+    max_cups = round((weight * 35) / 240) (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[765:770]
+==yogev_bot_backup:[1625:1630]
+            response.choices[0].message.content.strip()
+            if response
+            and response.choices
+            and response.choices[0].message
+            and response.choices[0].message.content (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==handlers:[1193:1198]
+==utils:[183:188]
+            response.choices[0].message.content.strip()
+            if response
+            and response.choices
+            and response.choices[0].message
+            and response.choices[0].message.content (duplicate-code)
+yogev_bot.py:1:0: R0801: Similar lines in 2 files
+==db:[86:91]
+==yogev_bot_backup:[169:177]
+        if not os.path.exists(USERS_FILE):
+            return None
+        with open(USERS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get(str(user_id)) (duplicate-code)
+
+------------------------------------------------------------------
+Your code has been rated at 7.57/10 (previous run: 7.57/10, +0.00)
+

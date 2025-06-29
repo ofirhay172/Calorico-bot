@@ -61,12 +61,14 @@ from utils import (
     build_main_keyboard,
     parse_date_from_text,
 )
-from nutrition_db import (
+from report_generator import (
+    get_weekly_report, 
+    build_weekly_summary_text, 
+    plot_calories,
     get_nutrition_by_date,
     get_last_occurrence_of_meal,
     format_date_query_response,
 )
-from report_generator import get_weekly_report, build_weekly_summary_text, plot_calories
 
 # TODO: להוסיף את כל ה-handlers מהקובץ המקורי, כולל שאלון, תפריט, דוחות, free text, מים וכו'.
 # כל handler צריך לכלול docstring קצרה.
@@ -98,6 +100,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             welcome_message, reply_markup=ReplyKeyboardRemove(), parse_mode="HTML"
         )
+        
+        # Add 5 second delay
+        await asyncio.sleep(5)
+        
+        # Add additional message
+        await update.message.reply_text(
+            "אשמח להכיר אותך קצת 😊",
+            parse_mode="HTML"
+        )
+        
+        # Add another 5 second delay
+        await asyncio.sleep(5)
+        
         await get_name(update, context)
     return NAME
 
@@ -109,7 +124,7 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         context.user_data["name"] = name
         keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
         await update.message.reply_text(
-            get_gendered_text(context, "מה המגדר שלך?", "מה המגדר שלך?"),
+            "מה המגדר שלך?",
             reply_markup=ReplyKeyboardMarkup(
                 keyboard, one_time_keyboard=True, resize_keyboard=True
             ),
@@ -125,9 +140,7 @@ async def get_gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if gender not in GENDER_OPTIONS:
             keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
             await update.message.reply_text(
-                get_gendered_text(
-                    context, "בחר מגדר מהתפריט למטה:", "בחרי מגדר מהתפריט למטה:"
-                ),
+                "בחר/י מגדר מהתפריט למטה:",
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -135,8 +148,9 @@ async def get_gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
             return GENDER
         context.user_data["gender"] = gender
+        gender_text = "בת כמה את?" if gender == "נקבה" else "בן כמה אתה?"
         await update.message.reply_text(
-            get_gendered_text(context, "בן כמה אתה?", "בת כמה את?"),
+            gender_text,
             reply_markup=ReplyKeyboardRemove(),
             parse_mode="HTML",
         )
@@ -148,16 +162,16 @@ async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message and update.message.text:
         age = update.message.text.strip()
         if not age.isdigit() or not (5 <= int(age) <= 120):
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            error_text = "אנא הזיני גיל תקין (5-120)." if gender == "נקבה" else "אנא הזן גיל תקין (5-120)."
             await update.message.reply_text(
-                get_gendered_text(
-                    context, "אנא הזן גיל תקין (5-120).", "אנא הזיני גיל תקין (5-120)."
-                ),
+                error_text,
                 parse_mode="HTML",
             )
             return AGE
         context.user_data["age"] = int(age)
         await update.message.reply_text(
-            get_gendered_text(context, 'מה הגובה שלך בס"מ?', 'מה הגובה שלך בס"מ?'),
+            'מה הגובה שלך בס"מ?',
             reply_markup=ReplyKeyboardRemove(),
             parse_mode="HTML",
         )
@@ -169,18 +183,16 @@ async def get_height(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message and update.message.text:
         height = update.message.text.strip()
         if not height.isdigit() or not (80 <= int(height) <= 250):
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            error_text = 'אנא הזיני גובה תקין בס"מ (80-250).' if gender == "נקבה" else 'אנא הזן גובה תקין בס"מ (80-250).'
             await update.message.reply_text(
-                get_gendered_text(
-                    context,
-                    'אנא הזן גובה תקין בס"מ (80-250).',
-                    'אנא הזיני גובה תקין בס"מ (80-250).',
-                ),
+                error_text,
                 parse_mode="HTML",
             )
             return HEIGHT
         context.user_data["height"] = int(height)
         await update.message.reply_text(
-            get_gendered_text(context, 'מה המשקל שלך בק"ג?', 'מה המשקל שלך בק"ג?'),
+            'מה המשקל שלך בק"ג?',
             reply_markup=ReplyKeyboardRemove(),
             parse_mode="HTML",
         )
@@ -192,21 +204,17 @@ async def get_weight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message and update.message.text:
         weight = update.message.text.strip()
         if not weight.isdigit() or not (20 <= int(weight) <= 300):
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            error_text = 'אנא הזיני משקל תקין בק"ג (20-300).' if gender == "נקבה" else 'אנא הזן משקל תקין בק"ג (20-300).'
             await update.message.reply_text(
-                get_gendered_text(
-                    context,
-                    'אנא הזן משקל תקין בק"ג (20-300).',
-                    'אנא הזיני משקל תקין בק"ג (20-300).',
-                ),
+                error_text,
                 parse_mode="HTML",
             )
             return WEIGHT
         context.user_data["weight"] = int(weight)
         keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
         await update.message.reply_text(
-            get_gendered_text(
-                context, "מה המטרה התזונתית שלך?", "מה המטרה התזונתית שלך?"
-            ),
+            "מה המטרה התזונתית שלך?",
             reply_markup=ReplyKeyboardMarkup(
                 keyboard, one_time_keyboard=True, resize_keyboard=True
             ),
@@ -221,10 +229,10 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         goal = update.message.text.strip()
         if goal not in GOAL_OPTIONS:
             keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            error_text = "בחרי מטרה מהתפריט למטה:" if gender == "נקבה" else "בחר מטרה מהתפריט למטה:"
             await update.message.reply_text(
-                get_gendered_text(
-                    context, "בחר מטרה מהתפריט למטה:", "בחרי מטרה מהתפריט למטה:"
-                ),
+                error_text,
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -238,7 +246,7 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             await update.message.reply_text(
                 get_gendered_text(
                     context,
-                    'מה אחוזי השומן שלך? (אם לא ידוע, בחר "לא ידוע")',
+                    'מה אחוזי השומן שלך? (אם לא ידוע, בחר/י "לא ידוע")',
                     'מה אחוזי השומן שלך? (אם לא ידוע, בחרי "לא ידוע")',
                 ),
                 reply_markup=ReplyKeyboardMarkup(
@@ -252,9 +260,7 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         keyboard = [[KeyboardButton(opt)] for opt in options]
         await asyncio.sleep(2)
         await update.message.reply_text(
-            get_gendered_text(
-                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
-            ),
+            "מה רמת הפעילות הגופנית שלך?",
             reply_markup=ReplyKeyboardMarkup(
                 keyboard, one_time_keyboard=True, resize_keyboard=True
             ),
@@ -319,9 +325,7 @@ async def get_body_fat_target(
         keyboard = [[KeyboardButton(opt)] for opt in options]
         await asyncio.sleep(2)
         await update.message.reply_text(
-            get_gendered_text(
-                context, "מה רמת הפעילות הגופנית שלך?", "מה רמת הפעילות הגופנית שלך?"
-            ),
+            "מה רמת הפעילות הגופנית שלך?",
             reply_markup=ReplyKeyboardMarkup(
                 keyboard, one_time_keyboard=True, resize_keyboard=True
             ),
@@ -343,10 +347,10 @@ async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         options = ACTIVITY_OPTIONS_MALE if gender == "זכר" else ACTIVITY_OPTIONS_FEMALE
         if activity not in options:
             keyboard = [[KeyboardButton(opt)] for opt in options]
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+            error_text = "בחרי רמת פעילות מהתפריט למטה:" if gender == "נקבה" else "בחר רמת פעילות מהתפריט למטה:"
             await update.message.reply_text(
-                get_gendered_text(
-                    context, "בחר רמת פעילות מהתפריט למטה:", "בחרי רמת פעילות מהתפריט למטה:"
-                ),
+                error_text,
                 reply_markup=ReplyKeyboardMarkup(
                     keyboard, one_time_keyboard=True, resize_keyboard=True
                 ),
@@ -354,12 +358,10 @@ async def get_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             )
             return ACTIVITY
         context.user_data["activity"] = activity
+        gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+        diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)" if gender == "נקבה" else "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
         await update.message.reply_text(
-            get_gendered_text(
-                context,
-                "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)",
-                "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
-            ),
+            diet_text,
             reply_markup=ReplyKeyboardRemove(),
             parse_mode="HTML",
         )
@@ -404,11 +406,7 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         context.user_data["calorie_budget"] = calorie_budget
         
         await update.message.reply_text(
-            get_gendered_text(
-                context,
-                "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
-                "האם יש לך אלרגיות למזון? (אם לא, כתבי 'אין')",
-            ),
+            "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode="HTML",
         )
@@ -456,12 +454,10 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def ask_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Ask user if they want water reminders."""
     keyboard = [[KeyboardButton("כן, אשמח!"), KeyboardButton("לא, תודה")]]
+    gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+    reminder_text = "האם תרצי לקבל תזכורת לשתות מים כל שעה וחצי?" if gender == "נקבה" else "האם תרצה לקבל תזכורת לשתות מים כל שעה וחצי?"
     await update.message.reply_text(
-        get_gendered_text(
-            context,
-            "האם תרצה לקבל תזכורת לשתות מים כל שעה וחצי?",
-            "האם תרצי לקבל תזכורת לשתות מים כל שעה וחצי?",
-        ),
+        reminder_text,
         reply_markup=ReplyKeyboardMarkup(
             keyboard, one_time_keyboard=True, resize_keyboard=True
         ),
@@ -508,27 +504,17 @@ async def set_water_reminder_opt_in(
     # After water answer - ask what they want to do
     keyboard = [
         [
-            KeyboardButton(
-                get_gendered_text(context, "לקבל תפריט יומי", "לקבל תפריט יומי")
-            ),
-            KeyboardButton(
-                get_gendered_text(
-                    context, "רק לעקוב אחרי הארוחות", "רק לעקוב אחרי הארוחות"
-                )
-            ),
+            KeyboardButton("לקבל תפריט יומי"),
+            KeyboardButton("רק לעקוב אחרי הארוחות"),
         ],
         [
-            KeyboardButton(
-                get_gendered_text(
-                    context,
-                    "לקבל תפריט/ארוחה לפי מוצרים בבית",
-                    "לקבל תפריט/ארוחה לפי מוצרים בבית",
-                )
-            )
+            KeyboardButton("לקבל תפריט/ארוחה לפי מוצרים בבית")
         ],
     ]
+    gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+    action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
     await update.message.reply_text(
-        get_gendered_text(context, "מה תרצה לעשות כעת?", "מה תרצי לעשות כעת?"),
+        action_text,
         reply_markup=ReplyKeyboardMarkup(
             keyboard, one_time_keyboard=True, resize_keyboard=True
         ),
@@ -621,7 +607,7 @@ async def water_intake_start(update: Update, context: ContextTypes.DEFAULT_TYPE)
         [KeyboardButton("אחר")],
     ]
     await update.message.reply_text(
-        get_gendered_text(context, "כמה מים שתית?", "כמה מים שתית?"),
+        "כמה מים שתית?",
         reply_markup=ReplyKeyboardMarkup(
             keyboard, one_time_keyboard=True, resize_keyboard=True
         ),
@@ -660,11 +646,7 @@ async def water_intake_amount(
     context.user_data["water_today"] += amount
     
     await update.message.reply_text(
-        get_gendered_text(
-            context,
-            f'כל הכבוד! שתית {amount} מ"ל מים. סה"כ היום: {context.user_data["water_today"]} מ"ל',
-            f'כל הכבוד! שתית {amount} מ"ל מים. סה"כ היום: {context.user_data["water_today"]} מ"ל',
-        ),
+        f'כל הכבוד! שתית {amount} מ"ל מים. סה"כ היום: {context.user_data["water_today"]} מ"ל',
         reply_markup=ReplyKeyboardRemove(),
         parse_mode="HTML",
     )
@@ -1234,13 +1216,9 @@ async def menu_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         return MENU
     
     choice = update.message.text.strip()
-    opt_menu = get_gendered_text(context, "לקבל תפריט יומי", "לקבל תפריט יומי")
-    opt_track = get_gendered_text(
-        context, "רק לעקוב אחרי הארוחות", "רק לעקוב אחרי הארוחות"
-    )
-    opt_products = get_gendered_text(
-        context, "לקבל תפריט/ארוחה לפי מוצרים בבית", "לקבל תפריט/ארוחה לפי מוצרים בבית"
-    )
+    opt_menu = "לקבל תפריט יומי"
+    opt_track = "רק לעקוב אחרי הארוחות"
+    opt_products = "לקבל תפריט/ארוחה לפי מוצרים בבית"
     user = context.user_data
     
     if choice == opt_menu:
@@ -1249,6 +1227,7 @@ async def menu_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         await show_menu_with_keyboard(update, context, menu)
         return EATEN
     elif choice == opt_products:
+        gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
         await update.message.reply_text(
             get_gendered_text(
                 context,
@@ -1312,12 +1291,10 @@ async def show_menu_with_keyboard(update, context, menu_text=None):
     )
     
     # Additional gendered message
+    gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
+    additional_text = "אני כאן אם תרצי להתייעץ אם אפשר לאכול נניח תפוח, או אם תרצי לכתוב לי מה אכלת היום" if gender == "נקבה" else "אני כאן אם תרצה להתייעץ אם אפשר לאכול נניח תפוח, או אם תרצה לכתוב לי מה אכלת היום"
     await update.message.reply_text(
-        get_gendered_text(
-            context,
-            "אני כאן אם תרצה להתייעץ אם אפשר לאכול נניח תפוח, או אם תרצה לכתוב לי מה אכלת היום",
-            "אני כאן אם תרצי להתייעץ אם אפשר לאכול נניח תפוח, או אם תרצי לכתוב לי מה אכלת היום",
-        ),
+        additional_text,
         parse_mode="HTML",
     )
     

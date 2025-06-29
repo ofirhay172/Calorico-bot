@@ -246,15 +246,11 @@ async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         context.user_data["age"] = age
         
         # מעבר לשאלה הבאה
-        gender_keyboard = [
-            [KeyboardButton("זכר"), KeyboardButton("נקבה")],
-            [KeyboardButton("אחר")]
-        ]
         await update.message.reply_text(
-            "מה המגדר שלך?",
-            reply_markup=ReplyKeyboardMarkup(gender_keyboard, resize_keyboard=True)
+            "מה הגובה שלך בס\"מ?",
+            reply_markup=ReplyKeyboardRemove()
         )
-        return GENDER
+        return HEIGHT
     
     # אם אין הודעה, הצג את השאלה
     if update.message:

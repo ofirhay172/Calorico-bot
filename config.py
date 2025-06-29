@@ -209,7 +209,7 @@ GENDERED_ACTION = {
 }
 
 # Water reminder options
-WATER_REMINDER_OPT_IN = ["כן", "לא"]
+WATER_REMINDER_OPTIONS = ["כן", "לא"]
 
 USERS_FILE = "users.json"
 DB_NAME = "nutrition.db"

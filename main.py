@@ -48,6 +48,8 @@ from config import (
     WATER_REMINDER_OPT_IN,
     MENU,
     NAME,
+    USERS_FILE,
+    DB_NAME,
 )
 from handlers import (
     start,
@@ -107,7 +109,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # File paths
-USERS_FILE = "users.json"
 DAILY_MENUS_FILE = "daily_menus.json"
 
 
@@ -160,62 +161,26 @@ def main():
             HEIGHT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_height)],
             WEIGHT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_weight)],
             GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_goal)],
-            BODY_FAT_CURRENT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_current)
-            ],
-            BODY_FAT_TARGET_GOAL: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_target_goal)
-            ],
+            BODY_FAT_CURRENT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_current)],
+            BODY_FAT_TARGET_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_target_goal)],
             ACTIVITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity)],
-            ACTIVITY_TYPE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_type)
-            ],
-            ACTIVITY_FREQUENCY: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_frequency)
-            ],
-            ACTIVITY_DURATION: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_duration)
-            ],
-            TRAINING_TIME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_training_time)
-            ],
-            CARDIO_GOAL: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_cardio_goal)
-            ],
-            STRENGTH_GOAL: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_strength_goal)
-            ],
-            SUPPLEMENTS: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_supplements)
-            ],
-            SUPPLEMENT_TYPES: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_supplement_types)
-            ],
-            LIMITATIONS: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_limitations)
-            ],
-            MIXED_ACTIVITIES: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_activities)
-            ],
-            MIXED_FREQUENCY: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_frequency)
-            ],
-            MIXED_DURATION: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_duration)
-            ],
-            MIXED_MENU_ADAPTATION: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_menu_adaptation)
-            ],
+            ACTIVITY_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_type)],
+            ACTIVITY_FREQUENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_frequency)],
+            ACTIVITY_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_duration)],
+            TRAINING_TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_training_time)],
+            CARDIO_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_cardio_goal)],
+            STRENGTH_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_strength_goal)],
+            SUPPLEMENTS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_supplements)],
+            SUPPLEMENT_TYPES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_supplement_types)],
+            LIMITATIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_limitations)],
+            MIXED_ACTIVITIES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_activities)],
+            MIXED_FREQUENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_frequency)],
+            MIXED_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_duration)],
+            MIXED_MENU_ADAPTATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_mixed_menu_adaptation)],
             DIET: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_diet)],
-            ALLERGIES: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies)
-            ],
-            ALLERGIES_ADDITIONAL: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies_additional)
-            ],
-            WATER_REMINDER_OPT_IN: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)
-            ],
+            ALLERGIES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies)],
+            ALLERGIES_ADDITIONAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_allergies_additional)],
+            WATER_REMINDER_OPT_IN: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)],
         },
         fallbacks=[CommandHandler("help", help_command)],
     )

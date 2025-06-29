@@ -1209,7 +1209,7 @@ async def set_water_reminder_opt_in(
         ),
         parse_mode="HTML",
     )
-    return MENU
+    return ConversationHandler.END
 
 
 async def start_water_reminder_loop_with_buttons(

@@ -16,8 +16,10 @@ from telegram import (
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
     Update,
+    InlineKeyboardMarkup,
 )
 from telegram.ext import ContextTypes, ConversationHandler
+import telegram
 
 
 from config import (
@@ -2836,4 +2838,19 @@ def gendered_text(text_male: str, text_female: str, context: ContextTypes.DEFAUL
         return text_male
     else:
         return "אנא בחר מגדר לפני המשך השאלון."
+
+
+async def safe_edit_message_text(query, text, reply_markup=None, parse_mode=None):
+    """עורכת טקסט של הודעה ומסירה קודם מקלדת אינליין אם קיימת."""
+    if query.message and query.message.reply_markup and isinstance(query.message.reply_markup, InlineKeyboardMarkup):
+        try:
+            await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup([]))
+        except telegram.error.BadRequest as e:
+            logging.warning(f"Could not edit markup before text edit: {e}")
+    kwargs = {"text": text}
+    if reply_markup is not None:
+        kwargs["reply_markup"] = reply_markup
+    if parse_mode is not None:
+        kwargs["parse_mode"] = parse_mode
+    await query.edit_message_text(**kwargs)
 

@@ -285,39 +285,67 @@ def validate_numeric_input(text: str, min_val: float, max_val: float, field_name
 
 
 def build_user_prompt_for_gpt(user_data: dict) -> str:
-    """בונה פרומפט מותאם אישית עבור GPT."""
-    diet_str = ", ".join(user_data.get("diet", [])) if user_data.get("diet") else "אין העדפות מיוחדות"
-    allergies_str = ", ".join(user_data.get("allergies", [])) if user_data.get("allergies") else "אין"
-    
-    return f"""
-    בנה תפריט יומי מותאם אישית עבור המשתמש/ת:
-    - שם: {user_data.get('name', 'לא צוין')}
-    - מגדר: {user_data.get('gender', 'לא צוין')}
-    - גיל: {user_data.get('age', 'לא צוין')}
-    - גובה: {user_data.get('height', 'לא צוין')} ס\"מ
-    - משקל: {user_data.get('weight', 'לא צוין')} ק\"ג
-    - מטרה: {user_data.get('goal', 'לא צוין')}
-    - תקציב קלורי יומי: {user_data.get('calorie_budget', 1800)}
-    - העדפות תזונה: {diet_str}
-    - אלרגיות: {allergies_str}
-    - סוג פעילות: {user_data.get('activity_type', 'לא צוין')}
-    - תדירות פעילות: {user_data.get('activity_frequency', 'לא צוין')}
-    - משך פעילות: {user_data.get('activity_duration', 'לא צוין')}
-    
-    התפריט צריך לכלול:
-    - ארוחת בוקר (~25%)
-    - ארוחת צהריים (~35%)
-    - ארוחת ערב (~30%)
-    - 2-3 נשנושים (~10%)
+    """בונה פרומפט מותאם אישית עבור GPT לפי הנוסח החדש."""
+    gender = user_data.get('gender', 'לא צוין')
+    age = user_data.get('age', 'לא צוין')
+    height = user_data.get('height', 'לא צוין')
+    weight = user_data.get('weight', 'לא צוין')
+    goal = user_data.get('goal', 'לא צוין')
+    activity_level = user_data.get('activity_type', user_data.get('activity', 'לא צוין'))
+    diet_preferences = ", ".join(user_data.get('diet', [])) if user_data.get('diet') else "אין העדפות מיוחדות"
+    allergies = ", ".join(user_data.get('allergies', [])) if user_data.get('allergies') else "אין"
+    daily_calories = user_data.get('calorie_budget', 1800)
 
-    הפק תפריט ב-HTML ברור, עם כותרות, רשימות ואחוז קלוריות לכל חלק.
-    השתמש בעברית יומיומית ופשוטה בלבד.
-    
-    הנחיות חשובות:
-    - השתמש רק במרכיבים קיימים ונפוצים. אל תמציא מאכלים. אל תכלול פריטים דמיוניים או ניסוחים לא תקניים.
-    - דוגמה לארוחה תקינה: "2 פרוסות לחם מלא, גבינה לבנה 5%, עגבנייה, מלפפון, ביצה קשה".
-    - אל תשתמש בשם המשתמש או /start בברכה.
-    """
+    return f"""
+צור תפריט יומי מותאם אישית עבור משתמש לפי הנתונים הבאים:
+
+מגדר: {gender}
+
+גיל: {age}
+
+גובה: {height} ס"מ
+
+משקל: {weight} ק"ג
+
+מטרה תזונתית: {goal}
+
+רמת פעילות גופנית: {activity_level}
+
+העדפות תזונתיות: {diet_preferences} (למשל: צמחוני, טבעוני, כשר)
+
+אלרגיות: {allergies} (אם קיימות)
+
+תקציב קלוריות יומי מחושב: {daily_calories} קלוריות
+
+⚠️ כלול רק מזונות קיימים, פשוטים ונפוצים. אל תמציא שמות.
+⚠️ הימנע ממנות לא ברורות כמו "חצי גרידת פטל" או "חטיפי מלף".
+⚠️ אין להשתמש בתגיות HTML.
+
+🍽 פורמט התפריט:
+
+חלק את התפריט לפי: ארוחת בוקר (~25%), צהריים (~35%), ערב (~30%), נשנושים (~10%).
+
+עבור כל חלק ציין את שם הארוחה, סך הקלוריות, ופרטים של כל פריט עם הקלוריות שלו.
+
+דוגמה רצויה:
+
+תפריט יומי מותאם אישית:
+
+🍳 ארוחת בוקר (~25%, כ-450 קלוריות)
+- 2 פרוסות לחם מלא (160 קלוריות)
+- ביצה קשה (78 קלוריות)
+- גבינה לבנה 5% (100 קלוריות)
+- מלפפון חתוך (12 קלוריות)
+- כוס תה ירוק (0 קלוריות)
+
+🥗 ארוחת צהריים (~35%, כ-630 קלוריות)
+- מנת חזה עוף (220 קלוריות)
+- כוס אורז מלא (210 קלוריות)
+- סלט ירקות עם כף שמן זית (120 קלוריות)
+- כוס מים (0 קלוריות)
+
+וכו'...
+"""
 
 async def call_gpt(prompt: str) -> str:
     """קורא ל-GPT API ומחזיר תשובה."""

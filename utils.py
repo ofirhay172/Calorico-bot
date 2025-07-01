@@ -296,7 +296,7 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
     allergies = ", ".join(user_data.get('allergies', [])) if user_data.get('allergies') else "אין"
     daily_calories = user_data.get('calorie_budget', 1800)
 
-    return f"""
+    prompt = f"""
 צור תפריט יומי מותאם אישית עבור משתמש לפי הנתונים הבאים:
 
 מגדר: {gender}
@@ -317,9 +317,7 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
 
 תקציב קלוריות יומי מחושב: {daily_calories} קלוריות
 
-⚠️ כלול רק מזונות קיימים, פשוטים ונפוצים. אל תמציא שמות.
-⚠️ הימנע ממנות לא ברורות כמו "חצי גרידת פטל" או "חטיפי מלף".
-⚠️ אין להשתמש בתגיות HTML.
+⚠️ חשוב: כל הכמויות, הקלוריות והמנות חייבות להיות מבוססות על ערכים תזונתיים אמיתיים בלבד, ולא להמציא ערכים או כמויות לא הגיוניות. אל תמציא מאכלים או ערכים!
 
 🍽 פורמט התפריט:
 
@@ -346,6 +344,9 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
 
 וכו'...
 """
+
+    return prompt
+
 
 async def call_gpt(prompt: str) -> str:
     """קורא ל-GPT API ומחזיר תשובה."""

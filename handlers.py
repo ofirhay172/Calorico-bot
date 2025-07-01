@@ -2497,7 +2497,7 @@ async def generate_personalized_menu(
             if name:
                 greeting = f"שלום, {name}! הנה התפריט שלך להיום:"
             else:
-                greeting = "הנה התפריט שלך להיום:"
+                greeting = "שלום, חבר/ה! הנה התפריט שלך להיום:"
             menu_text = f"{greeting}\n\n{response}"
             # שליחת התפריט למשתמש
             try:
@@ -2527,6 +2527,17 @@ async def generate_personalized_menu(
                 )
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
+
+        # שלח הודעה עם תקציב קלוריות יומי לפני התפריט
+        calorie_budget = user_data.get('calorie_budget', 0)
+        if calorie_budget and update.message:
+            try:
+                calorie_msg = f"תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות"
+                calorie_message = await update.message.reply_text(calorie_msg, parse_mode=None)
+                # הצמד את ההודעה לראש השיחה
+                await update.message.pin()
+            except Exception as e:
+                logger.error(f"Error sending or pinning calorie budget message: {e}")
 
     except Exception as e:
         logger.error("Error generating personalized menu: %s", e)

@@ -231,7 +231,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info("Bot started by user %s", user.id)
 
     # איפוס מלא של context.user_data
-    context.user_data = {}
+    if context.user_data is not None:
+        context.user_data.clear()
+    else:
+        context.user_data = {}
     
     # המשתמש חדש - הצג פתיח מדויק
     user_name = user.first_name or user.username or "חבר/ה"

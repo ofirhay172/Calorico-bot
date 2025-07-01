@@ -47,7 +47,6 @@ from config import (
     MIXED_MENU_ADAPTATION,
     DIET,
     ALLERGIES,
-    ALLERGIES_ADDITIONAL,
     WATER_REMINDER_OPT_IN,
     WATER_REMINDER_OPTIONS,
     DAILY,
@@ -150,14 +149,22 @@ ALLERGY_OPTIONS = [
 
 
 def build_allergy_keyboard(selected):
-    """בונה מקלדת אלרגיות עם סימון בחירות."""
+    """בונה inline keyboard לבחירת אלרגיות מרובות עם טוגל וכפתור סיום."""
     keyboard = []
     for opt in ALLERGY_OPTIONS:
-        label = opt
-        if opt in selected and opt != "אין":
-            label += " ❌"
-        keyboard.append([KeyboardButton(label)])
-    return keyboard
+        if opt == "אין":
+            # כפתור "אין" תמיד למעלה, בודד
+            text = "אין אלרגיות" + (" ✅" if opt in selected else "")
+            callback_data = "allergy_none"
+            keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
+        else:
+            # כפתור טוגל לכל אלרגיה
+            text = opt + (" ❌" if opt in selected else "")
+            callback_data = f"allergy_toggle_{opt}"
+            keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
+    # כפתור "סיימתי" בסוף
+    keyboard.append([InlineKeyboardButton("סיימתי", callback_data="allergy_done")])
+    return InlineKeyboardMarkup(keyboard)
 
 
 def build_diet_keyboard(selected_options):
@@ -1530,113 +1537,67 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """שואל את המשתמש על אלרגיות עם inline keyboard בלבד."""
     if context.user_data is None:
         context.user_data = {}
-    if not update.message or not hasattr(update.message, 'text') or update.message.text is None:
+    if "allergies" not in context.user_data:
+        context.user_data["allergies"] = []
+    selected = context.user_data["allergies"]
+
+    query = update.callback_query
+    if not query:
+        # שלב ראשון - שלח מקלדת
+        keyboard = build_allergy_keyboard(selected)
+        try:
+            await update.message.reply_text(
+                "האם יש לך אלרגיות למזון? בחר/י את כל מה שרלוונטי:",
+                reply_markup=keyboard,
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return ALLERGIES
-    text = update.message.text.strip()
-    detected_allergies = extract_allergens_from_text(text)
-    if detected_allergies:
+
+    await query.answer()
+    data = query.data
+    if data == "allergy_done":
+        # סיום בחירה
         user_id = update.effective_user.id if update.effective_user and hasattr(update.effective_user, 'id') else None
-        if user_id:
-            save_user_allergies_data(user_id, detected_allergies)
-        context.user_data["allergies"] = detected_allergies
-        allergies_text = ", ".join(detected_allergies)
-        if update.message:
-            try:
-                await update.message.reply_text(
-                    f"זיהיתי את האלרגיות הבאות: {allergies_text}\n\n"
-                    "אם יש אלרגיות נוספות שלא זוהו, אנא כתוב אותן.",
-                    reply_markup=ReplyKeyboardMarkup(
-                        [["אין אלרגיות נוספות"]], resize_keyboard=True
-                    ),
-                )
-            except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
-        return ALLERGIES_ADDITIONAL
-    else:
-        if any(word in text.lower() for word in ["אין", "לא", "ללא", "אפס", "כלום"]):
-            context.user_data["allergies"] = []
-            user_id = update.effective_user.id if update.effective_user and hasattr(update.effective_user, 'id') else None
-            if user_id:
-                save_user_allergies_data(user_id, [])
-            if update.message:
-                try:
-                    await update.message.reply_text(
-                        "מעולה! אין אלרגיות.\n\n" "עכשיו בואו נמשיך לשאלה הבאה...",
-                        reply_markup=ReplyKeyboardRemove(),
-                    )
-                except Exception as e:
-                    logger.error(f"Telegram API error in reply_text: {e}")
-            return await ask_water_reminder_opt_in(update, context)
-        else:
-            if update.message:
-                try:
-                    await update.message.reply_text(
-                        "לא זיהיתי אלרגנים ספציפיים בטקסט שלך.\n\n"
-                        "אנא כתוב את האלרגיות שלך בצורה ברורה, למשל:\n"
-                        "• חלב, בוטנים\n"
-                        "• גלוטן, ביצים\n"
-                        "• אין אלרגיות\n\n"
-                        "או כתוב 'אין' אם אין לך אלרגיות.",
-                        reply_markup=ReplyKeyboardMarkup(
-                            [["אין אלרגיות"]], resize_keyboard=True
-                        ),
-                    )
-                except Exception as e:
-                    logger.error(f"Telegram API error in reply_text: {e}")
-            return ALLERGIES
-
-
-async def get_allergies_additional(
-        update: Update,
-        context: ContextTypes.DEFAULT_TYPE):
-    if context.user_data is None:
-        context.user_data = {}
-    if not update.message or not hasattr(update.message, 'text') or update.message.text is None:
-        return ALLERGIES_ADDITIONAL
-    text = update.message.text.strip()
-    if "אין" in text.lower():
-        if update.message:
-            try:
-                await update.message.reply_text(
-                    "מעולה! עכשיו בואו נמשיך לשאלה הבאה...", reply_markup=ReplyKeyboardRemove()
-                )
-            except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+        if user_id is not None:
+            save_user_allergies_data(user_id, selected)
+        context.user_data["allergies"] = selected
+        allergies_text = ", ".join(selected) if selected else "אין"
+        try:
+            await query.edit_message_text(
+                f"האלרגיות שלך: {allergies_text}\n\nעכשיו נמשיך לשאלה הבאה...",
+                reply_markup=None,
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in edit_message_text: {e}")
         return await ask_water_reminder_opt_in(update, context)
-    else:
-        additional_allergies = extract_allergens_from_text(text)
-        if additional_allergies:
-            current_allergies = context.user_data.get("allergies", [])
-            all_allergies = list(set(current_allergies + additional_allergies))
-            user_id = update.effective_user.id if update.effective_user and hasattr(update.effective_user, 'id') else None
-            if user_id:
-                save_user_allergies_data(user_id, all_allergies)
-            context.user_data["allergies"] = all_allergies
-            allergies_text = ", ".join(all_allergies)
-            if update.message:
-                try:
-                    await update.message.reply_text(
-                        f'סה"כ האלרגיות שלך: {allergies_text}\n\n'
-                        "עכשיו בואו נמשיך לשאלה הבאה...",
-                        reply_markup=ReplyKeyboardRemove(),
-                    )
-                except Exception as e:
-                    logger.error(f"Telegram API error in reply_text: {e}")
-            return await ask_water_reminder_opt_in(update, context)
+    elif data == "allergy_none":
+        # בחר "אין אלרגיות" - אפס הכל
+        selected.clear()
+        selected.append("אין")
+    elif data.startswith("allergy_toggle_"):
+        allergy = data.replace("allergy_toggle_", "")
+        if allergy in selected:
+            selected.remove(allergy)
         else:
-            if update.message:
-                try:
-                    await update.message.reply_text(
-                        "לא זיהיתי אלרגיות נוספות. אם אין עוד אלרגיות, כתוב 'אין'.",
-                        reply_markup=ReplyKeyboardMarkup(
-                            [["אין אלרגיות נוספות"]], resize_keyboard=True
-                        ),
-                    )
-                except Exception as e:
-                    logger.error(f"Telegram API error in reply_text: {e}")
-            return ALLERGIES_ADDITIONAL
+            if "אין" in selected:
+                selected.remove("אין")
+            selected.append(allergy)
+    # עדכן מקלדת
+    keyboard = build_allergy_keyboard(selected)
+    try:
+        await query.edit_message_reply_markup(reply_markup=keyboard)
+    except Exception as e:
+        logger.error(f"Telegram API error in edit_message_reply_markup: {e}")
+    return ALLERGIES
+
+
+
 
 
 async def ask_water_reminder_opt_in(

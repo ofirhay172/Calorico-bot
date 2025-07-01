@@ -66,12 +66,6 @@ from config import (
     ACTIVITY_TYPES_MULTI,
     ACTIVITY_TYPES_SELECTION,
 )
-from db import (
-    save_daily_entry,
-    save_user_allergies_data,
-    save_food_entry,
-    NutritionDB,
-)
 from utils import (
     clean_desc,
     calculate_bmr,

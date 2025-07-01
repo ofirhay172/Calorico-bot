@@ -13,8 +13,8 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Any, Tuple
 import os
 
-# Import from nutrition_db instead of db
-from nutrition_db import get_weekly_summary, get_nutrition_by_date as db_get_nutrition_by_date
+# Import from db instead of nutrition_db (since nutrition_db was deleted)
+from db import get_weekly_summary
 
 logger = logging.getLogger(__name__)
 
@@ -231,34 +231,37 @@ def build_monthly_summary_text(data: List[Dict[str, Any]]) -> str:
         return "שגיאה בעיבוד הנתונים."
 
 
-def get_nutrition_by_date(
-        user_id: int, target_date: str) -> Optional[Dict[str, Any]]:
-    """מחזירה נתוני תזונה לתאריך ספציפי."""
+def get_nutrition_by_date(user_id: int, target_date: str) -> dict | None:
+    """מחזירה נתוני תזונה לתאריך ספציפי מה-DB הכללי."""
     try:
-        # שימוש בפונקציה מ-nutrition_db
-        row = db_get_nutrition_by_date(user_id, target_date)
-
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT date, calories, protein, fat, carbs, meals, goal
+            FROM nutrition_logs
+            WHERE user_id = ? AND date = ?
+            """,
+            (user_id, target_date),
+        )
+        row = cursor.fetchone()
+        conn.close()
         if not row:
             return None
-
-        if len(row) >= 6:
-            date_str, calories, protein, fat, carbs, meals_json = row
-            goal = row[6] if len(row) > 6 else ""
+        if len(row) >= 7:
+            date_str, calories, protein, fat, carbs, meals_json, goal = row
         else:
-            # אם חסרים שדות, נמלא ברירות מחדל
             date_str = row[0] if len(row) > 0 else target_date
             calories = row[1] if len(row) > 1 else 0
             protein = row[2] if len(row) > 2 else 0.0
             fat = row[3] if len(row) > 3 else 0.0
             carbs = row[4] if len(row) > 4 else 0.0
             meals_json = row[5] if len(row) > 5 else "[]"
-            goal = ""
-
+            goal = row[6] if len(row) > 6 else ""
         try:
             meals = json.loads(meals_json) if meals_json else []
-        except (json.JSONDecodeError, TypeError):
+        except (Exception,):
             meals = []
-
         return {
             "date": date_str,
             "calories": calories or 0,

@@ -2545,9 +2545,10 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
         # נסה להסתיר את המקלדת אם יש אחת
         try:
             if query.message.reply_markup:
-                await query.edit_message_reply_markup(reply_markup=None)
-        except telegram.error.BadRequest as e:
-            logging.warning(f"Failed to edit message: {e}")
+                try:
+                    await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup([]))
+                except telegram.error.BadRequest as e:
+                    logging.warning(f"Could not edit markup: {e}")
         except Exception as e:
             logging.warning(f"Unexpected error hiding keyboard: {e}")
         # המשך לשאלות הספציפיות לכל סוג פעילות

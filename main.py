@@ -132,7 +132,7 @@ async def daily_menu_scheduler(context):
                     user_id = int(user_id_str)
                     await context.bot.send_message(
                         chat_id=user_id,
-                        text="🍽️ התפריט היומי שלך מוכן! לחץ/י על 'לקבלת תפריט יומי מותאם אישית'",
+                        text="🍽️ התפריט היומי שלך מוכן! לחץ על 'לקבלת תפריט יומי מותאם אישית'",
                         reply_markup=build_main_keyboard(),
                     )
                     logger.info("Sent daily menu to user %s", user_id_str)

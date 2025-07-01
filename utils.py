@@ -190,7 +190,9 @@ def water_recommendation(context) -> str:
 def learning_logic(context) -> str:
     """מחזיר הודעה לימודית לפי נתוני המשתמש."""
     if not context or not hasattr(context, 'user_data') or not context.user_data:
-        return "💡 <b>טיפ כללי:</b> שמור/י על תזונה מאוזנת, שתה/י הרבה מים, והתאמן/י באופן קבוע."
+        return get_gendered_text(context, 
+            "💡 <b>טיפ כללי:</b> שמור על תזונה מאוזנת, שתה הרבה מים, והתאמן באופן קבוע.",
+            "💡 <b>טיפ כללי:</b> שמרי על תזונה מאוזנת, שתי הרבה מים, והתאמני באופן קבוע.")
 
     goal = context.user_data.get("goal", "")
     weight = context.user_data.get("weight", 70)
@@ -201,22 +203,44 @@ def learning_logic(context) -> str:
     
     if "ירידה" in goal:
         if bmi > 25:
-            tips.append("התמקד/י בגירעון קלורי של 300-500 קלוריות ליום")
-        tips.append("התאמן/י לפחות 3 פעמים בשבוע")
-        tips.append("שמור/י על צריכת חלבון גבוהה (1.6-2.2 גרם לק\"ג)")
+            tips.append(get_gendered_text(context, 
+                "התמקד בגירעון קלורי של 300-500 קלוריות ליום",
+                "התמקדי בגירעון קלורי של 300-500 קלוריות ליום"))
+        tips.append(get_gendered_text(context, 
+            "התאמן לפחות 3 פעמים בשבוע",
+            "התאמני לפחות 3 פעמים בשבוע"))
+        tips.append(get_gendered_text(context, 
+            "שמור על צריכת חלבון גבוהה (1.6-2.2 גרם לק\"ג)",
+            "שמרי על צריכת חלבון גבוהה (1.6-2.2 גרם לק\"ג)"))
     
     elif "עלייה" in goal or "בניית שריר" in goal:
-        tips.append("צרוך/י עודף קלורי של 200-300 קלוריות ליום")
-        tips.append("התאמן/י כוח 3-4 פעמים בשבוע")
-        tips.append("צרוך/י 1.6-2.2 גרם חלבון לק\"ג משקל")
+        tips.append(get_gendered_text(context, 
+            "צרוך עודף קלורי של 200-300 קלוריות ליום",
+            "צרכי עודף קלורי של 200-300 קלוריות ליום"))
+        tips.append(get_gendered_text(context, 
+            "התאמן כוח 3-4 פעמים בשבוע",
+            "התאמני כוח 3-4 פעמים בשבוע"))
+        tips.append(get_gendered_text(context, 
+            "צרוך 1.6-2.2 גרם חלבון לק\"ג משקל",
+            "צרכי 1.6-2.2 גרם חלבון לק\"ג משקל"))
     
     else:  # שמירה על משקל
-        tips.append("שמור/י על איזון קלורי")
-        tips.append("התאמן/י באופן קבוע")
-        tips.append("שמור/י על תזונה מגוונת")
+        tips.append(get_gendered_text(context, 
+            "שמור על איזון קלורי",
+            "שמרי על איזון קלורי"))
+        tips.append(get_gendered_text(context, 
+            "התאמן באופן קבוע",
+            "התאמני באופן קבוע"))
+        tips.append(get_gendered_text(context, 
+            "שמור על תזונה מגוונת",
+            "שמרי על תזונה מגוונת"))
 
     if not tips:
-        tips = ["שמור/י על תזונה מאוזנת", "שתה/י הרבה מים", "התאמן/י באופן קבוע"]
+        tips = [
+            get_gendered_text(context, "שמור על תזונה מאוזנת", "שמרי על תזונה מאוזנת"),
+            get_gendered_text(context, "שתה הרבה מים", "שתי הרבה מים"),
+            get_gendered_text(context, "התאמן באופן קבוע", "התאמני באופן קבוע")
+        ]
 
     tip_text = " • ".join(tips)
     return f"💡 <b>טיפ מותאם אישית:</b> {tip_text}"
@@ -296,7 +320,9 @@ async def call_gpt(prompt: str) -> str:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             logger.error("OpenAI API key not found")
-            return "לא הצלחתי ליצור קשר עם שירות ה-AI. אנא נסה/י שוב מאוחר יותר."
+            return get_gendered_text(None, 
+                "לא הצלחתי ליצור קשר עם שירות ה-AI. אנא נסה שוב מאוחר יותר.",
+                "לא הצלחתי ליצור קשר עם שירות ה-AI. אנא נסי שוב מאוחר יותר.")
         
         client = openai.AsyncOpenAI(api_key=api_key)
         response = await client.chat.completions.create(
@@ -308,20 +334,30 @@ async def call_gpt(prompt: str) -> str:
         
         if response and response.choices and response.choices[0].message:
             content = response.choices[0].message.content
-            return content.strip() if content else "לא קיבלתי תשובה מ-AI. אנא נסה/י שוב."
+            return content.strip() if content else get_gendered_text(None, 
+                "לא קיבלתי תשובה מ-AI. אנא נסה שוב.",
+                "לא קיבלתי תשובה מ-AI. אנא נסי שוב.")
         else:
             logger.error("Empty response from OpenAI")
-            return "לא קיבלתי תשובה מ-AI. אנא נסה/י שוב."
+            return get_gendered_text(None, 
+                "לא קיבלתי תשובה מ-AI. אנא נסה שוב.",
+                "לא קיבלתי תשובה מ-AI. אנא נסי שוב.")
             
     except openai.AuthenticationError:
         logger.error("OpenAI authentication failed")
-        return "שגיאה באימות עם שירות ה-AI. אנא פנה/י למנהל המערכת."
+        return "שגיאה באימות עם שירות ה-AI. אנא פנה למנהל המערכת."
     except openai.RateLimitError:
         logger.error("OpenAI rate limit exceeded")
-        return "שירות ה-AI עמוס כרגע. אנא נסה/י שוב בעוד כמה דקות."
+        return get_gendered_text(None, 
+            "שירות ה-AI עמוס כרגע. אנא נסה שוב בעוד כמה דקות.",
+            "שירות ה-AI עמוס כרגע. אנא נסי שוב בעוד כמה דקות.")
     except openai.APIError as e:
         logger.error(f"OpenAI API error: {e}")
-        return "שגיאה בשירות ה-AI. אנא נסה/י שוב מאוחר יותר."
+        return get_gendered_text(None, 
+            "שגיאה בשירות ה-AI. אנא נסה שוב מאוחר יותר.",
+            "שגיאה בשירות ה-AI. אנא נסי שוב מאוחר יותר.")
     except Exception as e:
         logger.error(f"Unexpected error in call_gpt: {e}")
-        return "אירעה שגיאה לא צפויה. אנא נסה/י שוב."
+        return get_gendered_text(None, 
+            "אירעה שגיאה לא צפויה. אנא נסה שוב.",
+            "אירעה שגיאה לא צפויה. אנא נסי שוב.")

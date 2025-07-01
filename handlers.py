@@ -671,13 +671,20 @@ async def get_activity(
                 context.user_data = {}
             gender = context.user_data.get("gender", "זכר")
             if gender == "נקבה":
-                error_text = "האם את עושה פעילות גופנית? (בחרי כן או לא מהתפריט למטה)"
+                error_text = gendered_text(
+                    "האם אתה עושה פעילות גופנית? (בחר כן או לא מהתפריט למטה)",
+                    "האם את עושה פעילות גופנית? (בחרי כן או לא מהתפריט למטה)",
+                    context)
             elif gender == "זכר":
-                error_text = "האם אתה עושה פעילות גופנית? (בחר כן או לא מהתפריט למטה)"
+                error_text = gendered_text(
+                    "האם אתה עושה פעילות גופנית? (בחר כן או לא מהתפריט למטה)",
+                    "האם את עושה פעילות גופנית? (בחרי כן או לא מהתפריט למטה)",
+                    context)
             else:
-                error_text = (
-                    "האם את/ה עושה פעילות גופנית? (בחר/י כן או לא מהתפריט למטה)"
-                )
+                error_text = gendered_text(
+                    "האם אתה עושה פעילות גופנית? (בחר כן או לא מהתפריט למטה)",
+                    "האם את עושה פעילות גופנית? (בחרי כן או לא מהתפריט למטה)",
+                    context)
             try:
                 await update.message.reply_text(
                     error_text,
@@ -704,11 +711,20 @@ async def get_activity(
             keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
             gender = context.user_data.get("gender", "זכר")
             if gender == "נקבה":
-                diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+                diet_text = gendered_text(
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    context)
             elif gender == "זכר":
-                diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+                diet_text = gendered_text(
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    context)
             else:
-                diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+                diet_text = gendered_text(
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    context)
             try:
                 await update.message.reply_text(
                     diet_text,
@@ -724,11 +740,20 @@ async def get_activity(
         keyboard = build_activity_types_keyboard()
         gender = context.user_data.get("gender", "זכר")
         if gender == "נקבה":
-            activity_text = "איזה סוגי פעילות את עושה? (בחרי כל מה שמתאים)"
+            activity_text = gendered_text(
+                "איזה סוגי פעילות אתה עושה? (בחרי כל מה שמתאים)",
+                "איזה סוגי פעילות את עושה? (בחרי כל מה שמתאים)",
+                context)
         elif gender == "זכר":
-            activity_text = "איזה סוגי פעילות אתה עושה? (בחר כל מה שמתאים)"
+            activity_text = gendered_text(
+                "איזה סוגי פעילות אתה עושה? (בחרי כל מה שמתאים)",
+                "איזה סוגי פעילות את עושה? (בחרי כל מה שמתאים)",
+                context)
         else:
-            activity_text = "איזה סוגי פעילות את/ה עושה? (בחר/י כל מה שמתאים)"
+            activity_text = gendered_text(
+                "איזה סוגי פעילות אתה עושה? (בחרי כל מה שמתאים)",
+                "איזה סוגי פעילות את עושה? (בחרי כל מה שמתאים)",
+                context)
         
         try:
             await update.message.reply_text(
@@ -746,11 +771,20 @@ async def get_activity(
             context.user_data = {}
         gender = context.user_data.get("gender", "זכר")
         if gender == "נקבה":
-            activity_text = "האם את עושה פעילות גופנית? (בחרי כן או לא)"
+            activity_text = gendered_text(
+                "האם את עושה פעילות גופנית? (בחרי כן או לא)",
+                "האם את עושה פעילות גופנית? (בחרי כן או לא)",
+                context)
         elif gender == "זכר":
-            activity_text = "האם אתה עושה פעילות גופנית? (בחר כן או לא)"
+            activity_text = gendered_text(
+                "האם אתה עושה פעילות גופנית? (בחרי כן או לא)",
+                "האם את עושה פעילות גופנית? (בחרי כן או לא)",
+                context)
         else:
-            activity_text = "האם את/ה עושה פעילות גופנית? (בחר/י כן או לא)"
+            activity_text = gendered_text(
+                "האם אתה עושה פעילות גופנית? (בחרי כן או לא)",
+                "האם את עושה פעילות גופנית? (בחרי כן או לא)",
+                context)
         try:
             await update.message.reply_text(
                 activity_text,
@@ -797,11 +831,20 @@ async def get_activity_type(update: Update,
             keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
             gender = context.user_data.get("gender", "זכר")
             if gender == "נקבה":
-                diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+                diet_text = gendered_text(
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    context)
             elif gender == "זכר":
-                diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+                diet_text = gendered_text(
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    context)
             else:
-                diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+                diet_text = gendered_text(
+                    "מה העדפות התזונה שלך? (בחר כל מה שמתאים)",
+                    "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)",
+                    context)
             try:
                 await update.message.reply_text(
                     diet_text,
@@ -824,7 +867,7 @@ async def get_activity_type(update: Update,
             elif gender == "זכר":
                 frequency_text = "כמה פעמים בשבוע אתה מבצע את הפעילות?"
             else:
-                frequency_text = "כמה פעמים בשבוע את/ה מבצע/ת את הפעילות?"
+                frequency_text = gendered_text("כמה פעמים בשבוע אתה מבצע את הפעילות?", "כמה פעמים בשבוע את מבצעת את הפעילות?", context)
             try:
                 await update.message.reply_text(
                     frequency_text,
@@ -847,7 +890,7 @@ async def get_activity_type(update: Update,
             elif gender == "זכר":
                 frequency_text = "כמה פעמים בשבוע אתה מתאמן?"
             else:
-                frequency_text = "כמה פעמים בשבוע את/ה מתאמן/ת?"
+                frequency_text = gendered_text("כמה פעמים בשבוע אתה מתאמן?", "כמה פעמים בשבוע את מתאמנת?", context)
             try:
                 await update.message.reply_text(
                     frequency_text,
@@ -870,7 +913,7 @@ async def get_activity_type(update: Update,
             elif gender == "זכר":
                 frequency_text = "כמה פעמים בשבוע אתה מתאמן?"
             else:
-                frequency_text = "כמה פעמים בשבוע את/ה מתאמן/ת?"
+                frequency_text = gendered_text("כמה פעמים בשבוע אתה מתאמן?", "כמה פעמים בשבוע את מתאמנת?", context)
             try:
                 await update.message.reply_text(
                     frequency_text,
@@ -897,8 +940,10 @@ async def get_activity_type(update: Update,
                     "אילו סוגי אימונים אתה מבצע במהלך השבוע? (בחר כל מה שמתאים)"
                 )
             else:
-                mixed_text = (
-                    "אילו סוגי אימונים את/ה מבצע/ת במהלך השבוע? (בחר/י כל מה שמתאים)"
+                mixed_text = gendered_text(
+                    "אילו סוגי אימונים אתה מבצע במהלך השבוע? (בחר כל מה שמתאים)",
+                    "אילו סוגי אימונים את מבצעת במהלך השבוע? (בחרי כל מה שמתאים)",
+                    context
                 )
             try:
                 await update.message.reply_text(
@@ -927,7 +972,7 @@ async def get_activity_frequency(
                         for opt in ACTIVITY_FREQUENCY_OPTIONS]
             try:
                 await update.message.reply_text(
-                    "בחר/י תדירות מהתפריט למטה:",
+                    gendered_text("בחר תדירות מהתפריט למטה:", "בחרי תדירות מהתפריט למטה:", context),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -955,7 +1000,7 @@ async def get_activity_duration(
                         for opt in ACTIVITY_DURATION_OPTIONS]
             try:
                 await update.message.reply_text(
-                    "בחר/י משך מהתפריט למטה:",
+                    gendered_text("בחר משך מהתפריט למטה:", "בחרי משך מהתפריט למטה:", context),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -989,7 +1034,7 @@ async def get_activity_duration(
             keyboard = [[KeyboardButton(opt)] for opt in TRAINING_TIME_OPTIONS]
             try:
                 await update.message.reply_text(
-                    "באיזה שעה בדרך כלל את/ה מתאמן/ת?",
+                    gendered_text("באיזה שעה בדרך כלל את/ה מתאמן/ת?", "באיזה שעה בדרך כלל את מתאמנת?", context),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -1027,7 +1072,7 @@ async def get_training_time(update: Update,
             keyboard = [[KeyboardButton(opt)] for opt in TRAINING_TIME_OPTIONS]
             try:
                 await update.message.reply_text(
-                    "בחר/י שעה מהתפריט למטה:",
+                    gendered_text("בחר שעה מהתפריט למטה:", "בחרי שעה מהתפריט למטה:", context),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -1067,7 +1112,7 @@ async def get_cardio_goal(
             keyboard = [[KeyboardButton(opt)] for opt in CARDIO_GOAL_OPTIONS]
             try:
                 await update.message.reply_text(
-                    "בחר/י מטרה מהתפריט למטה:",
+                    gendered_text(context, "בחר מטרה מהתפריט למטה:", "בחרי מטרה מהתפריט למטה:"),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -1095,7 +1140,7 @@ async def get_strength_goal(update: Update,
             keyboard = [[KeyboardButton(opt)] for opt in STRENGTH_GOAL_OPTIONS]
             try:
                 await update.message.reply_text(
-                    "בחר/י מטרה מהתפריט למטה:",
+                    gendered_text(context, "בחר מטרה מהתפריט למטה:", "בחרי מטרה מהתפריט למטה:"),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -1124,7 +1169,7 @@ async def get_supplements(
             keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
             try:
                 await update.message.reply_text(
-                    "בחר/י כן או לא:",
+                    gendered_text(context, "בחר כן או לא:", "בחרי כן או לא:"),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -1213,7 +1258,7 @@ async def get_mixed_activities(
                 if update.message:
                     try:
                         await update.message.reply_text(
-                            "אנא בחר/י לפחות סוג פעילות אחד לפני ההמשך.",
+                            gendered_text(context, "אנא בחר לפחות סוג פעילות אחד לפני ההמשך.", "אנא בחרי לפחות סוג פעילות אחד לפני ההמשך."),
                             reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
                         )
                     except Exception as e:
@@ -1233,7 +1278,7 @@ async def get_mixed_activities(
     if update.message:
         try:
             await update.message.reply_text(
-                "בחר/י את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):",
+                gendered_text(context, "בחר את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):", "בחרי את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):"),
                 reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
             )
         except Exception as e:
@@ -1322,7 +1367,7 @@ async def get_mixed_menu_adaptation(
             keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
             try:
                 await update.message.reply_text(
-                    "בחר/י כן או לא:",
+                    gendered_text(context, "בחר כן או לא:", "בחרי כן או לא:"),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -1441,11 +1486,20 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             
             # Use gender-specific text
             if gender == "נקבה":
-                diet_text_msg = "מה העדפות התזונה שלך? (לחצי על אפשרות כדי לבחור או לבטל בחירה)"
+                diet_text_msg = gendered_text(
+                    "מה העדפות התזונה שלך? (לחצי על אפשרות כדי לבחור או לבטל בחירה)",
+                    "מה העדפות התזונה שלך? (לחצי על אפשרות כדי לבחור או לבטל בחירה)",
+                    context)
             elif gender == "זכר":
-                diet_text_msg = "מה העדפות התזונה שלך? (לחץ על אפשרות כדי לבחור או לבטל בחירה)"
+                diet_text_msg = gendered_text(
+                    "מה העדפות התזונה שלך? (לחץ על אפשרות כדי לבחור או לבטל בחירה)",
+                    "מה העדפות התזונה שלך? (לחץ על אפשרות כדי לבחור או לבטל בחירה)",
+                    context)
             else:
-                diet_text_msg = "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור או לבטל בחירה)"
+                diet_text_msg = gendered_text(
+                    "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור או לבטל בחירה)",
+                    "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור או לבטל בחירה)",
+                    context)
                 
             try:
                 await update.message.reply_text(
@@ -1461,7 +1515,7 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = build_diet_keyboard(selected_options)
     try:
         await update.message.reply_text(
-            "אנא בחר/י אפשרות מהתפריט למטה או לחץ/י על 'סיימתי בחירת העדפות'",
+            gendered_text(context, "אנא בחר אפשרות מהתפריט למטה או לחץ על 'סיימתי בחירת העדפות'", "אנא בחרי אפשרות מהתפריט למטה או לחצי על 'סיימתי בחירת העדפות'"),
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             parse_mode="HTML",
         )
@@ -1619,7 +1673,7 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
         if update.message:
             try:
                 await update.message.reply_text(
-                    get_gendered_text(
+                    gendered_text(
                         context,
                         "מעולה! אזכיר לך לשתות מים כל שעה וחצי עד שתסיים את היום.",
                         "מעולה! אזכיר לך לשתות מים כל שעה וחצי עד שתסיימי את היום.",
@@ -1637,7 +1691,7 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
         if update.message:
             try:
                 await update.message.reply_text(
-                    get_gendered_text(
+                    gendered_text(
                         context,
                         "אין בעיה! אפשר להפעיל תזכורות מים בכל שלב.",
                         "אין בעיה! אפשר להפעיל תזכורות מים בכל שלב.",
@@ -1703,7 +1757,7 @@ async def send_water_reminder(
     if update.message:
         try:
             await update.message.reply_text(
-                get_gendered_text(
+                gendered_text(
                     context,
                     "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
                     "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
@@ -1727,7 +1781,7 @@ async def remind_in_10_minutes(
     if update.message:
         try:
             await update.message.reply_text(
-                get_gendered_text(
+                gendered_text(
                     context,
                     "זכור לשתות מים! 💧",
                     "זכרי לשתות מים! 💧",
@@ -1750,7 +1804,7 @@ async def cancel_water_reminders(
     if update.message:
         try:
             await update.message.reply_text(
-                get_gendered_text(
+                gendered_text(
                     context,
                     "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
                     "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
@@ -2009,7 +2063,7 @@ async def handle_daily_choice(
         if update.message:
             try:
                 await update.message.reply_text(
-                    "📊 <b>בחר/י סוג דוח:</b>", reply_markup=reply_markup, parse_mode="HTML"
+                    gendered_text(context, "📊 <b>בחר סוג דוח:</b>", "📊 <b>בחרי סוג דוח:</b>"), reply_markup=reply_markup, parse_mode="HTML"
                 )
             except Exception as e:
                 logger.error(f"Telegram API error in reply_text: {e}")
@@ -2023,7 +2077,7 @@ async def handle_daily_choice(
         if update.message:
             try:
                 await update.message.reply_text(
-                    "בחר/י פעולה:",
+                    gendered_text(context, "בחר פעולה:", "בחרי פעולה:"),
                     reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
                 )
             except Exception as e:
@@ -2097,7 +2151,7 @@ async def schedule_menu(
     if update.message:
         try:
             await update.message.reply_text(
-                get_gendered_text(
+                gendered_text(
                     context,
                     f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
                     f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
@@ -2325,7 +2379,7 @@ async def handle_food_report(
         else:
             try:
                 await update.message.reply_text(
-                    "לא הצלחתי להבין את הדיווח. נסה/י לכתוב מה אכלת בפירוט.",
+                    gendered_text(context, "לא הצלחתי להבין את הדיווח. נסה לכתוב מה אכלת בפירוט.", "לא הצלחתי להבין את הדיווח. נסי לכתוב מה אכלת בפירוט."),
                     parse_mode="HTML",
                 )
             except Exception as e:
@@ -2334,7 +2388,7 @@ async def handle_food_report(
         logger.error(f"Error processing food report: {e}")
         try:
             await update.message.reply_text(
-                "לא הצלחתי להבין את הדיווח. נסה/י לכתוב מה אכלת בפירוט.",
+                gendered_text(context, "לא הצלחתי להבין את הדיווח. נסה לכתוב מה אכלת בפירוט.", "לא הצלחתי להבין את הדיווח. נסי לכתוב מה אכלת בפירוט."),
                 parse_mode="HTML",
             )
         except Exception as e:
@@ -2410,7 +2464,7 @@ async def generate_personalized_menu(
         else:
             try:
                 await update.message.reply_text(
-                    "אירעה תקלה בבניית התפריט 😔 נסה/י שוב בעוד רגע.",
+                    gendered_text(context, "אירעה תקלה בבניית התפריט 😔 נסה שוב בעוד רגע.", "אירעה תקלה בבניית התפריט 😔 נסי שוב בעוד רגע."),
                     parse_mode="HTML"
                 )
             except Exception as e:
@@ -2420,7 +2474,7 @@ async def generate_personalized_menu(
         logger.error(f"Error generating personalized menu: {e}")
         try:
             await update.message.reply_text(
-                "אירעה תקלה בבניית התפריט 😔 נסה/י שוב בעוד רגע.",
+                gendered_text(context, "אירעה תקלה בבניית התפריט 😔 נסה שוב בעוד רגע.", "אירעה תקלה בבניית התפריט 😔 נסי שוב בעוד רגע."),
                 parse_mode="HTML"
             )
         except Exception as e:
@@ -2479,7 +2533,7 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
             keyboard = build_activity_types_keyboard(selected_types)
             try:
                 await query.edit_message_text(
-                    "בחר/י לפחות סוג פעילות אחד:",
+                    gendered_text(context, "בחר לפחות סוג פעילות אחד:", "בחרי לפחות סוג פעילות אחד:"),
                     reply_markup=keyboard
                 )
             except Exception as e:
@@ -2761,4 +2815,17 @@ async def continue_to_next_activity(update: Update, context: ContextTypes.DEFAUL
     context.user_data["current_activity"] = next_activity
     
     return await route_to_activity_questions(update, context, next_activity)
+
+
+def gendered_text(text_male: str, text_female: str, context: ContextTypes.DEFAULT_TYPE) -> str:
+    """מחזירה טקסט מגדרי לפי context.user_data['gender']. אם אין מגדר – מחזירה הודעת עצירה."""
+    gender = None
+    if hasattr(context, 'user_data') and context.user_data:
+        gender = context.user_data.get('gender')
+    if gender == "נקבה":
+        return text_female
+    elif gender == "זכר":
+        return text_male
+    else:
+        return "אנא בחר מגדר לפני המשך השאלון."
 

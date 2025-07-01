@@ -10,6 +10,7 @@ import re
 import logging
 from datetime import date, datetime
 from typing import List, Optional, Tuple, Any
+from utils import get_gendered_text
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +186,7 @@ def format_date_query_response(
         response += f"🍞 פחמימות: {(carbs or 0):.1f}g\n\n"
 
         if meals_list:
-            response += "<b>מה אכלת:</b>\n"
+            response += get_gendered_text(None, "<b>מה אכלת:</b>", "<b>מה אכלת:</b>") + "\n"
             for meal in meals_list:
                 if isinstance(meal, dict):
                     meal_desc = meal.get('desc', '')

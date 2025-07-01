@@ -48,15 +48,7 @@ from config import (
     DIET,
     ALLERGIES,
     WATER_REMINDER_OPT_IN,
-    WATER_REMINDER_OPTIONS,
-    DAILY,
-    EATEN,
-    MENU,
-    SCHEDULE,
-    SUMMARY,
-    EDIT,
-    BODY_FAT,
-    BODY_FAT_TARGET,
+    DIET_OPTIONS,
     GENDER_OPTIONS,
     GOAL_OPTIONS,
     ACTIVITY_YES_NO_OPTIONS,
@@ -67,13 +59,10 @@ from config import (
     CARDIO_GOAL_OPTIONS,
     STRENGTH_GOAL_OPTIONS,
     SUPPLEMENT_OPTIONS,
-    DIET_OPTIONS,
     MIXED_ACTIVITY_OPTIONS,
     MIXED_FREQUENCY_OPTIONS,
     MIXED_DURATION_OPTIONS,
     ALLERGY_OPTIONS,
-    SYSTEM_BUTTONS,
-    GENDERED_ACTION,
     ACTIVITY_TYPES_MULTI,
     ACTIVITY_TYPES_SELECTION,
 )
@@ -85,15 +74,8 @@ from db import (
 )
 from utils import (
     clean_desc,
-    clean_meal_text,
-    get_gendered_text,
-    markdown_to_html,
     calculate_bmr,
-    water_recommendation,
-    learning_logic,
-    extract_openai_response_content,
     build_main_keyboard,
-    extract_allergens_from_text,
     build_user_prompt_for_gpt,
     call_gpt,
 )
@@ -265,7 +247,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="HTML",
         )
     except Exception as e:
-        logger.error(f"Telegram API error in reply_text: {e}")
+        logger.error("Telegram API error in reply_text: %s", e)
     return await get_name(update, context)
 
 
@@ -281,7 +263,7 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return NAME
 
         if context.user_data is None:
@@ -304,7 +286,7 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return GENDER
 
     # This is when called from start function - ask for name
@@ -317,7 +299,7 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return NAME
 
 
@@ -345,7 +327,7 @@ async def get_gender(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return GENDER
 
         if context.user_data is None:
@@ -366,7 +348,7 @@ async def get_gender(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return AGE
 
     logger.error("get_gender called without text")
@@ -387,7 +369,7 @@ async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return AGE
 
         if context.user_data is None:
@@ -408,7 +390,7 @@ async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return HEIGHT
 
     if context.user_data is None:
@@ -423,7 +405,7 @@ async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return AGE
 
 
@@ -443,7 +425,7 @@ async def get_height(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return HEIGHT
 
         if context.user_data is None:
@@ -464,7 +446,7 @@ async def get_height(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return WEIGHT
 
     if context.user_data is None:
@@ -479,7 +461,7 @@ async def get_height(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return HEIGHT
 
 
@@ -499,7 +481,7 @@ async def get_weight(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return WEIGHT
 
         if context.user_data is None:
@@ -523,7 +505,7 @@ async def get_weight(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return GOAL
 
     if context.user_data is None:
@@ -538,7 +520,7 @@ async def get_weight(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return WEIGHT
 
 
@@ -571,7 +553,7 @@ async def get_body_fat_current(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return BODY_FAT_CURRENT
 
         if context.user_data is None:
@@ -593,7 +575,7 @@ async def get_body_fat_current(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return BODY_FAT_TARGET_GOAL
     else:
         gender = context.user_data.get(
@@ -607,7 +589,7 @@ async def get_body_fat_current(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
         return BODY_FAT_CURRENT
 
 
@@ -627,7 +609,7 @@ async def get_body_fat_target_goal(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return BODY_FAT_TARGET_GOAL
 
         current_fat = context.user_data.get("body_fat_current", 0) if context.user_data else 0
@@ -639,7 +621,7 @@ async def get_body_fat_target_goal(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return BODY_FAT_TARGET_GOAL
 
         if context.user_data is None:
@@ -666,7 +648,7 @@ async def get_body_fat_target_goal(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
         return BODY_FAT_TARGET_GOAL
 
 
@@ -706,7 +688,7 @@ async def get_activity(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return ACTIVITY
         
         if context.user_data is None:
@@ -746,7 +728,7 @@ async def get_activity(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return DIET
         # אם כן - הצג תפריט בחירת סוגי פעילות
         keyboard = build_activity_types_keyboard()
@@ -774,7 +756,7 @@ async def get_activity(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return ACTIVITY_TYPES_SELECTION
     # אם אין הודעה, הצג את השאלה
     if update.message:
@@ -806,7 +788,7 @@ async def get_activity(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return ACTIVITY
 
 
@@ -830,7 +812,7 @@ async def get_activity_type(update: Update,
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return ACTIVITY_TYPE
 
         if context.user_data is None:
@@ -866,7 +848,7 @@ async def get_activity_type(update: Update,
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return DIET
 
         elif activity_type == "הליכה מהירה / ריצה קלה":
@@ -889,7 +871,7 @@ async def get_activity_type(update: Update,
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return ACTIVITY_FREQUENCY
 
         elif activity_type in ["אימוני כוח", "אימוני HIIT / קרוספיט"]:
@@ -912,7 +894,7 @@ async def get_activity_type(update: Update,
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return ACTIVITY_FREQUENCY
 
         elif activity_type == "יוגה / פילאטיס":
@@ -935,7 +917,7 @@ async def get_activity_type(update: Update,
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return ACTIVITY_FREQUENCY
 
         elif activity_type == "שילוב של כמה סוגים":
@@ -966,7 +948,7 @@ async def get_activity_type(update: Update,
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return MIXED_ACTIVITIES
 
         return DIET
@@ -991,7 +973,7 @@ async def get_activity_frequency(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return ACTIVITY_FREQUENCY
 
         context.user_data["activity_frequency"] = frequency
@@ -1019,7 +1001,7 @@ async def get_activity_duration(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return ACTIVITY_DURATION
 
         context.user_data["activity_duration"] = duration
@@ -1038,7 +1020,7 @@ async def get_activity_duration(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return CARDIO_GOAL
 
         elif activity_type in ["אימוני כוח", "אימוני HIIT / קרוספיט"]:
@@ -1053,7 +1035,7 @@ async def get_activity_duration(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return TRAINING_TIME
 
         elif activity_type == "יוגה / פילאטיס":
@@ -1068,7 +1050,7 @@ async def get_activity_duration(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return DIET  # Continue to diet questions
 
         return DIET
@@ -1091,7 +1073,7 @@ async def get_training_time(update: Update,
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return TRAINING_TIME
 
         if context.user_data is None:
@@ -1109,7 +1091,7 @@ async def get_training_time(update: Update,
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return STRENGTH_GOAL
     return TRAINING_TIME
 
@@ -1131,7 +1113,7 @@ async def get_cardio_goal(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return CARDIO_GOAL
 
         if context.user_data is None:
@@ -1159,7 +1141,7 @@ async def get_strength_goal(update: Update,
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return STRENGTH_GOAL
 
         if context.user_data is None:
@@ -1188,7 +1170,7 @@ async def get_supplements(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return SUPPLEMENTS
 
         if context.user_data is None:
@@ -1207,7 +1189,7 @@ async def get_supplements(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return SUPPLEMENT_TYPES
         else:
             # Continue to next activity or diet
@@ -1274,7 +1256,7 @@ async def get_mixed_activities(
                             reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
                         )
                     except Exception as e:
-                        logger.error(f"Telegram API error in reply_text: {e}")
+                        logger.error("Telegram API error in reply_text: %s", e)
                 return MIXED_ACTIVITIES
             context.user_data["mixed_activities"] = list(selected)
             del context.user_data["mixed_activities_selected"]
@@ -1294,7 +1276,7 @@ async def get_mixed_activities(
                 reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return MIXED_ACTIVITIES
 
 
@@ -1315,7 +1297,7 @@ async def get_mixed_frequency(
                         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
                     )
                 except Exception as e:
-                    logger.error(f"Telegram API error in reply_text: {e}")
+                    logger.error("Telegram API error in reply_text: %s", e)
             return MIXED_DURATION
     keyboard = [[KeyboardButton(opt)] for opt in MIXED_FREQUENCY_OPTIONS]
     if update.message:
@@ -1325,7 +1307,7 @@ async def get_mixed_frequency(
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return MIXED_FREQUENCY
 
 
@@ -1352,7 +1334,7 @@ async def get_mixed_duration(
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return MIXED_DURATION
 
 
@@ -1386,7 +1368,7 @@ async def get_mixed_menu_adaptation(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return MIXED_MENU_ADAPTATION
         context.user_data["menu_adaptation"] = choice == "כן"
         keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
@@ -1406,7 +1388,7 @@ async def get_mixed_menu_adaptation(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return DIET
     return ConversationHandler.END
 
@@ -1444,7 +1426,7 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             await update.message.reply_text(
                 "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
                 reply_markup=ReplyKeyboardRemove(),
@@ -1476,7 +1458,7 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             await update.message.reply_text(
                 "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
                 reply_markup=ReplyKeyboardRemove(),
@@ -1520,7 +1502,7 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             return DIET
             
     # If no valid option was selected, show error
@@ -1532,7 +1514,7 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             parse_mode="HTML",
         )
     except Exception as e:
-        logger.error(f"Telegram API error in reply_text: {e}")
+        logger.error("Telegram API error in reply_text: %s", e)
     return DIET
 
 
@@ -1555,49 +1537,52 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return ALLERGIES
 
+    # טיפול בלחיצות על כפתורים
     await query.answer()
-    data = query.data
-    if data == "allergy_done":
-        # סיום בחירה
-        user_id = update.effective_user.id if update.effective_user and hasattr(update.effective_user, 'id') else None
-        if user_id is not None:
-            save_user_allergies_data(user_id, selected)
-        context.user_data["allergies"] = selected
-        allergies_text = ", ".join(selected) if selected else "אין"
+    
+    if query.data == "allergy_none":
+        # המשתמש לחץ על "אין אלרגיות" - סיים מיד את השלב
+        context.user_data["allergies"] = []
         try:
             await query.edit_message_text(
-                f"האלרגיות שלך: {allergies_text}\n\nעכשיו נמשיך לשאלה הבאה...",
-                reply_markup=None,
-                parse_mode="HTML",
+                "מעולה! עכשיו בואו נמשיך לשאלה הבאה...",
+                reply_markup=InlineKeyboardMarkup([])
             )
         except Exception as e:
-            logger.error(f"Telegram API error in edit_message_text: {e}")
+            logger.error("Telegram API error in edit_message_text: %s", e)
         return await ask_water_reminder_opt_in(update, context)
-    elif data == "allergy_none":
-        # בחר "אין אלרגיות" - אפס הכל
-        selected.clear()
-        selected.append("אין")
-    elif data.startswith("allergy_toggle_"):
-        allergy = data.replace("allergy_toggle_", "")
+    
+    elif query.data == "allergy_done":
+        # המשתמש לחץ על "סיימתי" - המשך לשלב הבא
+        try:
+            await query.edit_message_text(
+                "מעולה! עכשיו בואו נמשיך לשאלה הבאה...",
+                reply_markup=InlineKeyboardMarkup([])
+            )
+        except Exception as e:
+            logger.error("Telegram API error in edit_message_text: %s", e)
+        return await ask_water_reminder_opt_in(update, context)
+    
+    elif query.data.startswith("allergy_toggle_"):
+        # טוגל אלרגיה
+        allergy = query.data.replace("allergy_toggle_", "")
         if allergy in selected:
             selected.remove(allergy)
         else:
-            if "אין" in selected:
-                selected.remove("אין")
             selected.append(allergy)
-    # עדכן מקלדת
-    keyboard = build_allergy_keyboard(selected)
-    try:
-        await query.edit_message_reply_markup(reply_markup=keyboard)
-    except Exception as e:
-        logger.error(f"Telegram API error in edit_message_reply_markup: {e}")
+        context.user_data["allergies"] = selected
+        
+        # עדכן את המקלדת
+        keyboard = build_allergy_keyboard(selected)
+        try:
+            await query.edit_message_reply_markup(reply_markup=keyboard)
+        except Exception as e:
+            logger.error("Telegram API error in edit_message_reply_markup: %s", e)
+    
     return ALLERGIES
-
-
-
 
 
 async def ask_water_reminder_opt_in(
@@ -1622,7 +1607,7 @@ async def ask_water_reminder_opt_in(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return WATER_REMINDER_OPT_IN
 
 
@@ -1647,7 +1632,7 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
         if user_id:
             save_user(user_id, context.user_data)
         asyncio.create_task(start_water_reminder_loop_with_buttons(update, context))
@@ -1665,7 +1650,7 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
         if user_id:
             save_user(user_id, context.user_data)
 
@@ -1686,7 +1671,7 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return ConversationHandler.END
 
 
@@ -1707,7 +1692,7 @@ async def start_water_reminder_loop_with_buttons(
             if update.message:
                 await send_water_reminder(update, context)
         except Exception as e:
-            logger.error(f"Water reminder error: {e}")
+            logger.error("Water reminder error: %s", e)
         if user_id:
             save_user(user_id, context.user_data)
 
@@ -1732,7 +1717,7 @@ async def send_water_reminder(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
 
 
 async def remind_in_10_minutes(
@@ -1755,7 +1740,7 @@ async def remind_in_10_minutes(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
 
 
 async def cancel_water_reminders(
@@ -1779,7 +1764,7 @@ async def cancel_water_reminders(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
 
 
 async def water_intake_start(update: Update,
@@ -1799,7 +1784,7 @@ async def water_intake_start(update: Update,
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return WATER_REMINDER_OPT_IN
 
 
@@ -1832,7 +1817,7 @@ async def water_intake_amount(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
         return WATER_REMINDER_OPT_IN
     context.user_data["water_today"] += amount
     if update.message:
@@ -1843,7 +1828,7 @@ async def water_intake_amount(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return ConversationHandler.END
 
 
@@ -1866,7 +1851,7 @@ async def show_daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return DAILY
 
 
@@ -1879,7 +1864,7 @@ async def daily_menu(
         try:
             await update.message.reply_text("רגע, בונה עבורך תפריט...")
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     if update.message and update.message.text:
         choice = update.message.text.strip()
         if choice == "סיימתי":
@@ -1910,7 +1895,7 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     prompt, reply_markup=ReplyKeyboardRemove(), parse_mode="HTML"
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
         user["eaten_prompted"] = True
         return EATEN
     
@@ -1966,14 +1951,14 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                         if user_id:
                             save_user(user_id, user)
                 except Exception as e:
-                    logger.error(f"Error processing food input: {e}")
+                    logger.error("Error processing food input: %s", e)
                     try:
                         await update.message.reply_text(
                             "תודה על הדיווח! עיבדתי את המידע.",
                             parse_mode="HTML",
                         )
                     except Exception as e:
-                        logger.error(f"Telegram API error in reply_text: {e}")
+                        logger.error("Telegram API error in reply_text: %s", e)
             else:
                 try:
                     await update.message.reply_text(
@@ -1981,17 +1966,17 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                         parse_mode="HTML",
                     )
                 except Exception as e:
-                    logger.error(f"Telegram API error in reply_text: {e}")
+                    logger.error("Telegram API error in reply_text: %s", e)
                 
         except Exception as e:
-            logger.error(f"Error processing food input: {e}")
+            logger.error("Error processing food input: %s", e)
             try:
                 await update.message.reply_text(
                     "תודה על הדיווח! עיבדתי את המידע.",
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
     
     return EATEN
 
@@ -2016,7 +2001,7 @@ async def handle_daily_choice(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
         return EATEN
     elif choice == "מה אכלתי היום":
         return await eaten(update, context)
@@ -2032,7 +2017,7 @@ async def handle_daily_choice(
                     gendered_text(context, "📊 <b>בחר סוג דוח:</b>", "📊 <b>בחרי סוג דוח:</b>"), reply_markup=reply_markup, parse_mode="HTML"
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
         keyboard = [
             [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
             [KeyboardButton("מה אכלתי היום")],
@@ -2047,7 +2032,7 @@ async def handle_daily_choice(
                     reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
         return MENU
     elif choice == "תזכורות על שתיית מים":
         await water_intake_start(update, context)
@@ -2080,7 +2065,7 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             await update.message.reply_text(summary, parse_mode="HTML")
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     user_id = update.effective_user.id if update.effective_user else None
     if user_id and total_eaten > 0:
         try:
@@ -2099,7 +2084,7 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             save_food_entry(user_id, {"meals": meals_list, "total_calories": total_eaten})
         except Exception as e:
-            logger.error(f"Error saving daily entry: {e}")
+            logger.error("Error saving daily entry: %s", e)
 
 
 async def schedule_menu(
@@ -2126,7 +2111,7 @@ async def schedule_menu(
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return ConversationHandler.END
 
 
@@ -2257,7 +2242,7 @@ async def handle_free_text_input(
                 reply_markup=build_main_keyboard(),
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return ConversationHandler.END
 
     elif text_type == "food_list":
@@ -2274,7 +2259,7 @@ async def handle_free_text_input(
                 reply_markup=build_main_keyboard(),
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
         return ConversationHandler.END
 
 
@@ -2334,14 +2319,14 @@ async def handle_food_report(
                     if user_id:
                         save_user(user_id, user)
             except Exception as e:
-                logger.error(f"Error processing food input: {e}")
+                logger.error("Error processing food input: %s", e)
                 try:
                     await update.message.reply_text(
                         "תודה על הדיווח! עיבדתי את המידע.",
                         parse_mode="HTML",
                     )
                 except Exception as e:
-                    logger.error(f"Telegram API error in reply_text: {e}")
+                    logger.error("Telegram API error in reply_text: %s", e)
         else:
             try:
                 await update.message.reply_text(
@@ -2349,16 +2334,16 @@ async def handle_food_report(
                     parse_mode="HTML",
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
     except Exception as e:
-        logger.error(f"Error processing food report: {e}")
+        logger.error("Error processing food report: %s", e)
         try:
             await update.message.reply_text(
                 gendered_text(context, "לא הצלחתי להבין את הדיווח. נסה לכתוב מה אכלת בפירוט.", "לא הצלחתי להבין את הדיווח. נסי לכתוב מה אכלת בפירוט."),
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
     return ConversationHandler.END
 
 
@@ -2386,7 +2371,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             await update.message.reply_text(help_text, parse_mode="HTML")
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
 
 
 async def generate_personalized_menu(
@@ -2398,7 +2383,11 @@ async def generate_personalized_menu(
         return
 
     try:
-        await update.message.reply_text("בונה עבורך תפריט מותאם אישית... ⏳")
+        # שלח הודעת המתנה מיד
+        try:
+            await update.message.reply_text("מכין לך את התפריט היומי... רגע... ⏳")
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
 
         # בניית פרומפט מותאם אישית
         prompt = build_user_prompt_for_gpt(user_data)
@@ -2407,8 +2396,19 @@ async def generate_personalized_menu(
         response = await call_gpt(prompt)
 
         if response:
-            # סינון תגיות לא נתמכות
-            response = re.sub(r'<\/?(doctype|html|body|head|div|span|p|br|hr)[^>]*>', '', response, flags=re.IGNORECASE)
+            # המר HTML לטקסט פשוט
+            import re
+            # הסר תגיות HTML
+            response = re.sub(r'<[^>]+>', '', response)
+            # החלף תגיות כותרת בטקסט פשוט
+            response = re.sub(r'<h[1-6][^>]*>(.*?)</h[1-6]>', r'\1\n', response, flags=re.IGNORECASE)
+            # החלף תגיות רשימה
+            response = re.sub(r'<li[^>]*>(.*?)</li>', r'• \1', response, flags=re.IGNORECASE)
+            response = re.sub(r'<ul[^>]*>|</ul>|<ol[^>]*>|</ol>', '\n', response, flags=re.IGNORECASE)
+            # נקה רווחים כפולים
+            response = re.sub(r'\n\s*\n', '\n\n', response)
+            response = response.strip()
+            
             # שליחת התפריט למשתמש
             try:
                 await update.message.reply_text(
@@ -2417,7 +2417,7 @@ async def generate_personalized_menu(
                     disable_web_page_preview=True
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
             # שמירה למסד נתונים
             user_id = update.effective_user.id if update.effective_user else None
             if user_id:
@@ -2426,25 +2426,25 @@ async def generate_personalized_menu(
                     user_data["last_menu_date"] = date.today().isoformat()
                     save_user(user_id, user_data)
                 except Exception as db_error:
-                    logger.error(f"Error saving menu to database: {db_error}")
+                    logger.error("Error saving menu to database: %s", db_error)
         else:
             try:
                 await update.message.reply_text(
-                    gendered_text(context, "אירעה תקלה בבניית התפריט 😔 נסה שוב בעוד רגע.", "אירעה תקלה בבניית התפריט 😔 נסי שוב בעוד רגע."),
+                    gendered_text("אירעה תקלה בבניית התפריט 😔 נסה שוב בעוד רגע.", "אירעה תקלה בבניית התפריט 😔 נסי שוב בעוד רגע.", context),
                     parse_mode="HTML"
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in reply_text: {e}")
+                logger.error("Telegram API error in reply_text: %s", e)
 
     except Exception as e:
-        logger.error(f"Error generating personalized menu: {e}")
+        logger.error("Error generating personalized menu: %s", e)
         try:
             await update.message.reply_text(
-                gendered_text(context, "אירעה תקלה בבניית התפריט 😔 נסה שוב בעוד רגע.", "אירעה תקלה בבניית התפריט 😔 נסי שוב בעוד רגע."),
+                gendered_text("אירעה תקלה בבניית התפריט 😔 נסה שוב בעוד רגע.", "אירעה תקלה בבניית התפריט 😔 נסי שוב בעוד רגע.", context),
                 parse_mode="HTML"
             )
         except Exception as e:
-            logger.error(f"Telegram API error in reply_text: {e}")
+            logger.error("Telegram API error in reply_text: %s", e)
 
 
 def build_activity_types_keyboard(selected_types: list = None) -> InlineKeyboardMarkup:
@@ -2454,10 +2454,10 @@ def build_activity_types_keyboard(selected_types: list = None) -> InlineKeyboard
     
     keyboard = []
     for activity in ACTIVITY_TYPES_MULTI:
-        # הסר אימוג'י מהטקסט לצורך השוואה
-        activity_clean = activity.split(' ')[0]  # לוקח רק את הטקסט לפני האימוג'י
+        # השתמש בטקסט המלא של הפעילות ב-callback_data
+        activity_clean = activity.replace(" ", "_").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
         
-        if activity_clean in selected_types:
+        if activity in selected_types:
             # אם נבחר - הצג עם ❌
             text = f"{activity} ❌"
             callback_data = f"activity_remove_{activity_clean}"
@@ -2503,7 +2503,7 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
                     reply_markup=keyboard
                 )
             except Exception as e:
-                logger.error(f"Telegram API error in edit_message_text: {e}")
+                logger.error("Telegram API error in edit_message_text: %s", e)
             return ACTIVITY_TYPES_SELECTION
         # נסה להסתיר את המקלדת אם יש אחת
         try:
@@ -2511,32 +2511,42 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
                 try:
                     await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup([]))
                 except telegram.error.BadRequest as e:
-                    logging.warning(f"Could not edit markup: {e}")
+                    logging.warning("Could not edit markup: %s", e)
         except Exception as e:
-            logging.warning(f"Unexpected error hiding keyboard: {e}")
+            logging.warning("Unexpected error hiding keyboard: %s", e)
         # המשך לשאלות הספציפיות לכל סוג פעילות
         return await process_activity_types(update, context)
     
     elif query.data.startswith("activity_add_"):
         # הוסף סוג פעילות
-        activity_type = query.data.replace("activity_add_", "")
-        if activity_type not in selected_types:
-            selected_types.append(activity_type)
-            context.user_data["activity_types"] = selected_types
+        activity_clean = query.data.replace("activity_add_", "")
+        # מצא את הפעילות המלאה לפי הטקסט הנקי
+        for activity in ACTIVITY_TYPES_MULTI:
+            activity_clean_check = activity.replace(" ", "_").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
+            if activity_clean_check == activity_clean:
+                if activity not in selected_types:
+                    selected_types.append(activity)
+                    context.user_data["activity_types"] = selected_types
+                break
     
     elif query.data.startswith("activity_remove_"):
         # הסר סוג פעילות
-        activity_type = query.data.replace("activity_remove_", "")
-        if activity_type in selected_types:
-            selected_types.remove(activity_type)
-            context.user_data["activity_types"] = selected_types
+        activity_clean = query.data.replace("activity_remove_", "")
+        # מצא את הפעילות המלאה לפי הטקסט הנקי
+        for activity in ACTIVITY_TYPES_MULTI:
+            activity_clean_check = activity.replace(" ", "_").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
+            if activity_clean_check == activity_clean:
+                if activity in selected_types:
+                    selected_types.remove(activity)
+                    context.user_data["activity_types"] = selected_types
+                break
     
     # עדכן את התפריט
     keyboard = build_activity_types_keyboard(selected_types)
     try:
         await query.edit_message_reply_markup(reply_markup=keyboard)
     except Exception as e:
-        logger.error(f"Telegram API error in edit_message_reply_markup: {e}")
+        logger.error("Telegram API error in edit_message_reply_markup: %s", e)
     
     return ACTIVITY_TYPES_SELECTION
 
@@ -2568,7 +2578,7 @@ async def process_activity_types(update: Update, context: ContextTypes.DEFAULT_T
                     parse_mode="HTML",
                 )
         except Exception as e:
-            logger.error(f"Telegram API error in process_activity_types: {e}")
+            logger.error("Telegram API error in process_activity_types: %s", e)
         
         return DIET
     
@@ -2612,7 +2622,7 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
                     parse_mode="HTML",
                 )
         except Exception as e:
-            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+            logger.error("Telegram API error in route_to_activity_questions: %s", e)
         return ACTIVITY_FREQUENCY
     
     elif activity_type == "אימוני כוח":
@@ -2636,7 +2646,7 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
                     parse_mode="HTML",
                 )
         except Exception as e:
-            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+            logger.error("Telegram API error in route_to_activity_questions: %s", e)
         return TRAINING_TIME
     
     elif activity_type in ["הליכה", "אופניים", "שחייה"]:
@@ -2668,7 +2678,7 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
                     parse_mode="HTML",
                 )
         except Exception as e:
-            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+            logger.error("Telegram API error in route_to_activity_questions: %s", e)
         return ACTIVITY_FREQUENCY
     
     elif activity_type in ["יוגה", "פילאטיס"]:
@@ -2700,7 +2710,7 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
                     parse_mode="HTML",
                 )
         except Exception as e:
-            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+            logger.error("Telegram API error in route_to_activity_questions: %s", e)
         return DIET
     
     else:  # "אחר"
@@ -2732,7 +2742,7 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
                     parse_mode="HTML",
                 )
         except Exception as e:
-            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+            logger.error("Telegram API error in route_to_activity_questions: %s", e)
         return DIET
 
 
@@ -2777,7 +2787,7 @@ async def continue_to_next_activity(update: Update, context: ContextTypes.DEFAUL
                     parse_mode="HTML",
                 )
         except Exception as e:
-            logger.error(f"Telegram API error in continue_to_next_activity: {e}")
+            logger.error("Telegram API error in continue_to_next_activity: %s", e)
         
         return DIET
     
@@ -2789,7 +2799,7 @@ async def continue_to_next_activity(update: Update, context: ContextTypes.DEFAUL
 
 
 def gendered_text(text_male: str, text_female: str, context: ContextTypes.DEFAULT_TYPE) -> str:
-    """מחזירה טקסט מגדרי לפי context.user_data['gender']. אם אין מגדר – מחזירה הודעת עצירה."""
+    """מחזירה טקסט מגדרי לפי context.user_data['gender']. אם אין מגדר – מחזירה טקסט ניטרלי."""
     gender = None
     if hasattr(context, 'user_data') and context.user_data:
         gender = context.user_data.get('gender')
@@ -2798,7 +2808,8 @@ def gendered_text(text_male: str, text_female: str, context: ContextTypes.DEFAUL
     elif gender == "זכר":
         return text_male
     else:
-        return "אנא בחר מגדר לפני המשך השאלון."
+        # אם אין מגדר, החזר טקסט ניטרלי שמתאים לשני המגדרים
+        return text_male.replace("אתה", "את/ה").replace("עושה", "עושה/ת").replace("מתאמן", "מתאמן/ת").replace("מבצע", "מבצע/ת").replace("בחר", "בחר/י")
 
 
 async def safe_edit_message_text(query, text, reply_markup=None, parse_mode=None):
@@ -2807,7 +2818,7 @@ async def safe_edit_message_text(query, text, reply_markup=None, parse_mode=None
         try:
             await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup([]))
         except telegram.error.BadRequest as e:
-            logging.warning(f"Could not edit markup before text edit: {e}")
+            logging.warning("Could not edit markup before text edit: %s", e)
     kwargs = {"text": text}
     if reply_markup is not None:
         kwargs["reply_markup"] = reply_markup

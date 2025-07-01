@@ -21,6 +21,7 @@ from telegram import (
 from telegram.ext import ContextTypes, ConversationHandler
 import telegram
 
+from db import NutritionDB
 
 from config import (
     NAME,

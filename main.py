@@ -96,7 +96,6 @@ from handlers import (
     check_dessert_permission,
     after_questionnaire,
     handle_free_text_input,
-    handle_food_report,
     help_command,
     generate_personalized_menu,
     show_daily_menu,

@@ -6,7 +6,7 @@ and user interactions."""
 
 import asyncio
 import logging
-from datetime import date
+from datetime import date, datetime
 import re
 
 from telegram import (
@@ -2378,131 +2378,169 @@ def classify_text_input(text: str) -> str:
 async def handle_free_text_input(
         update: Update,
         context: ContextTypes.DEFAULT_TYPE):
-    """מטפל בטקסט חופשי ומסווג אותו."""
-    text = update.message.text.strip() if update.message.text else ""
-    main_menu_buttons = [
-        "לקבלת תפריט יומי מותאם אישית",
-        "מה אכלתי היום",
-        "בניית ארוחה לפי מה שיש לי בבית",
-        "קבלת דוח",
-        "תזכורות על שתיית מים",
-    ]
-    if text in main_menu_buttons:
-        return await handle_daily_choice(update, context)
-
-    text_type = classify_text_input(text)
-
-    if text_type == "question":
-        # טיפול בשאלה
-        try:
-            await update.message.reply_text(
-                "זיהיתי שזו שאלה. אנא השתמש/י בתפריט הראשי או פנה/י אליי ישירות עם השאלה שלך.",
-                reply_markup=build_main_keyboard(),
-            )
-        except Exception as e:
-            logger.error("Telegram API error in reply_text: %s", e)
-        return ConversationHandler.END
-
-    elif text_type == "food_list":
-        # טיפול ברשימת מאכלים
-        return await handle_food_report(update, context, text)
-
-    else:
-        # טקסט לא מזוהה
-        try:
-            await update.message.reply_text(
-                "לא הצלחתי לזהות אם זו רשימת מאכלים או שאלה.\n\n"
-                "אם זו רשימת מאכלים, אנא כתוב אותם עם פסיקים ביניהם.\n"
-                "אם זו שאלה, אנא השתמש/י בתפריט הראשי.",
-                reply_markup=build_main_keyboard(),
-            )
-        except Exception as e:
-            logger.error("Telegram API error in reply_text: %s", e)
-        return ConversationHandler.END
+    """מטפל בקלט טקסט חופשי - מזהה צריכת מזון ושאלות כלליות."""
+    if not update.message or not update.message.text:
+        return
+    
+    text = update.message.text.strip()
+    
+    # זיהוי משפטים שמתחילים ב"אכלתי"
+    if text.startswith("אכלתי") or text.startswith("אכלתי ") or "אכלתי" in text[:10]:
+        # זהו צריכת מזון - עדכן את יומן הצריכה
+        await handle_food_consumption(update, context, text)
+        return
+    
+    # זיהוי שאלות על קלוריות
+    if any(keyword in text.lower() for keyword in ["כמה קלוריות", "קלוריות", "תזונה", "בריא", "משקל"]):
+        # זהו שאלה כללית - הפנה ל-GPT
+        await handle_nutrition_question(update, context, text)
+        return
+    
+    # אם זה לא מזוהה - שלח הודעה כללית
+    try:
+        await update.message.reply_text(
+            "אני לא מבין את הבקשה. אפשר לכתוב:\n"
+            "• 'אכלתי [מה אכלת]' - לרישום מזון\n"
+            "• שאלות על תזונה וקלוריות\n"
+            "• או להשתמש בתפריט למטה",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.error("Telegram API error in reply_text: %s", e)
 
 
-async def handle_food_report(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, food_text: str = None):
-    """מטפל בדיווח אכילה."""
+async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+    """מטפל בצריכת מזון - מעדכן יומן ומחסיר מהתקציב היומי."""
     if context.user_data is None:
         context.user_data = {}
-    if not update.message or not (update.message.text or food_text):
-        return ConversationHandler.END
-        
-    text = food_text or (update.message.text.strip() if update.message and update.message.text else "")
     
-    try:
-        # Use GPT to process the food input
-        user = context.user_data
-        user_id = update.effective_user.id if update.effective_user else None
-        calorie_budget = user.get("calorie_budget", 1800)
-        total_eaten = sum(e["calories"] for e in user.get("eaten_today", []))
-        remaining = calorie_budget - total_eaten
-        diet = ", ".join(user.get("diet", []))
-        allergies = ", ".join(user.get("allergies", []))
-        eaten_today = ", ".join(
-            [clean_desc(e["desc"]) for e in user.get("eaten_today", [])]
-        )
-        
-        prompt = f"""המשתמש/ת כתב/ה: "{text}"
-
-זה נראה כמו דיווח אכילה. אנא:
-1. זהה את המאכל/ים
-2. חשב/י קלוריות מדויקות (במיוחד למשקאות - קולה, מיץ וכו')
-3. הוסף/י את זה למה שנאכל היום
-4. הצג/י סיכום: מה נוסף, כמה קלוריות, סה\"כ היום, כמה נשארו
-
-מידע על המשתמש/ת:
-- תקציב יומי: {calorie_budget} קלוריות
-- נאכל היום: {eaten_today}
-- נשארו: {remaining} קלוריות
-- העדפות תזונה: {diet}
-- אלרגיות: {allergies}
-
-הצג תשובה בעברית, עם HTML בלבד (<b>, <i>), בלי Markdown. אל תמציא ערכים - אם אינך בטוח, ציין זאת."""
-
-        response = await call_gpt(prompt)
-        
-        if response and len(response.strip()) > 0:
-            try:
-                await update.message.reply_text(response, parse_mode="HTML")
-                # נסה לחלץ קלוריות מהתשובה
-                calorie_match = re.search(r"(\d+)\s*קלוריות?", response)
-                if calorie_match:
-                    calories = int(calorie_match.group(1))
-                    if "eaten_today" not in user:
-                        user["eaten_today"] = []
-                    user["eaten_today"].append({"desc": text, "calories": calories})
-                    user["remaining_calories"] = remaining - calories
-                    if user_id:
-                        nutrition_db.save_user(user_id, user)
-            except Exception as e:
-                logger.error("Error processing food input: %s", e)
-                try:
-                    await update.message.reply_text(
-                        "תודה על הדיווח! עיבדתי את המידע.",
-                        parse_mode="HTML",
-                    )
-                except Exception as e:
-                    logger.error("Telegram API error in reply_text: %s", e)
-        else:
+    # חלץ את תיאור המזון מהטקסט
+    food_desc = text.replace("אכלתי", "").strip()
+    if not food_desc:
+        try:
+            await update.message.reply_text(
+                "מה אכלת? אנא פרט את המזון שאכלת.",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
+        return
+    
+    # שמור ליומן הצריכה
+    user_id = update.effective_user.id if update.effective_user else None
+    if user_id:
+        try:
+            # הוסף ליומן הצריכה היומי
+            if "daily_food_log" not in context.user_data:
+                context.user_data["daily_food_log"] = []
+            
+            food_entry = {
+                "description": food_desc,
+                "timestamp": datetime.now().isoformat(),
+                "calories": 0  # יוערך על ידי GPT
+            }
+            context.user_data["daily_food_log"].append(food_entry)
+            
+            # שמור למסד נתונים
+            nutrition_db.save_user(user_id, context.user_data)
+            
+            # הערך קלוריות באמצעות GPT
+            calorie_estimate = await estimate_food_calories(food_desc)
+            food_entry["calories"] = calorie_estimate
+            
+            # עדכן את התקציב היומי
+            current_budget = context.user_data.get("calorie_budget", 0)
+            remaining_budget = current_budget - calorie_estimate
+            
             try:
                 await update.message.reply_text(
-                    gendered_text(context, "לא הצלחתי להבין את הדיווח. נסה לכתוב מה אכלת בפירוט.", "לא הצלחתי להבין את הדיווח. נסי לכתוב מה אכלת בפירוט."),
-                    parse_mode="HTML",
+                    f"✅ נרשם: {food_desc}\n"
+                    f"📊 קלוריות: ~{calorie_estimate}\n"
+                    f"💰 נותר: {remaining_budget} קלוריות",
+                    parse_mode="HTML"
                 )
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
+                
+        except Exception as e:
+            logger.error(f"Error saving food consumption: {e}")
+            try:
+                await update.message.reply_text(
+                    "אירעה שגיאה ברישום המזון. נסה שוב.",
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+
+
+async def handle_nutrition_question(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+    """מטפל בשאלות תזונה כלליות באמצעות GPT."""
+    try:
+        # שלח הודעת המתנה
+        await update.message.reply_text("מחפש תשובה... ⏳")
+        
+        # בנה פרומפט לשאלה
+        prompt = f"""המשתמש/ת שואל/ת: {text}
+
+אנא ענה בקצרה בעברית, בצורה ברורה ומדויקת.
+התמקד בתשובה ישירה לשאלה.
+אם השאלה על קלוריות - תן ערכים מדויקים.
+אם השאלה על בריאות - תן עצה קצרה ומעשית."""
+
+        # קבל תשובה מ-GPT
+        response = await call_gpt(prompt)
+        
+        if response:
+            try:
+                await update.message.reply_text(
+                    response,
+                    parse_mode=None
+                )
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+        else:
+            try:
+                await update.message.reply_text(
+                    "לא הצלחתי למצוא תשובה לשאלה שלך. נסה לשאול בצורה אחרת.",
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+                
     except Exception as e:
-        logger.error("Error processing food report: %s", e)
+        logger.error(f"Error handling nutrition question: {e}")
         try:
             await update.message.reply_text(
-                gendered_text(context, "לא הצלחתי להבין את הדיווח. נסה לכתוב מה אכלת בפירוט.", "לא הצלחתי להבין את הדיווח. נסי לכתוב מה אכלת בפירוט."),
-                parse_mode="HTML",
+                "אירעה שגיאה בחיפוש התשובה. נסה שוב.",
+                parse_mode="HTML"
             )
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
-    return ConversationHandler.END
+
+
+async def estimate_food_calories(food_desc: str) -> int:
+    """מעריך קלוריות למזון באמצעות GPT."""
+    try:
+        prompt = f"""הערך את הקלוריות במזון הבא: {food_desc}
+
+תן רק מספר קלוריות מדויק (למשל: 250).
+אל תוסיף טקסט נוסף, רק מספר."""
+
+        response = await call_gpt(prompt)
+        
+        if response:
+            # חלץ מספר מהתשובה
+            import re
+            numbers = re.findall(r'\d+', response)
+            if numbers:
+                return int(numbers[0])
+        
+        # אם לא הצליח - החזר ערך ברירת מחדל
+        return 200
+        
+    except Exception as e:
+        logger.error(f"Error estimating calories: {e}")
+        return 200
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2547,6 +2585,17 @@ async def generate_personalized_menu(
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
 
+        # שלח הודעת תקציב קלוריות יומי לפני התפריט
+        calorie_budget = user_data.get('calorie_budget', 0)
+        if calorie_budget and update.message:
+            try:
+                calorie_msg = f"📊 תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות"
+                calorie_message = await update.message.reply_text(calorie_msg, parse_mode=None)
+                # הצמד את ההודעה לראש השיחה
+                await calorie_message.pin()
+            except Exception as e:
+                logger.error(f"Error sending or pinning calorie budget message: {e}")
+
         # בניית פרומפט מותאם אישית
         prompt = build_user_prompt_for_gpt(user_data)
 
@@ -2567,7 +2616,7 @@ async def generate_personalized_menu(
             response = re.sub(r'\n\s*\n', '\n\n', response)
             response = response.strip()
 
-            # שליחת התפריט למשתמש (ה-GPT כבר כולל את הברכה האישית)
+            # שליחת התפריט למשתמש
             menu_text = response
             try:
                 await update.message.reply_text(
@@ -2596,17 +2645,6 @@ async def generate_personalized_menu(
                 )
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
-
-        # שלח הודעה עם תקציב קלוריות יומי לפני התפריט
-        calorie_budget = user_data.get('calorie_budget', 0)
-        if calorie_budget and update.message:
-            try:
-                calorie_msg = f"תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות"
-                calorie_message = await update.message.reply_text(calorie_msg, parse_mode=None)
-                # הצמד את ההודעה לראש השיחה
-                await update.message.pin()
-            except Exception as e:
-                logger.error(f"Error sending or pinning calorie budget message: {e}")
 
     except Exception as e:
         logger.error("Error generating personalized menu: %s", e)

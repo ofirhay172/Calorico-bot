@@ -265,16 +265,16 @@ class NutritionDB:
 
                 # הכנת הנתונים ל-INSERT
                 insert_data = (
-                    user_id,
-                    user_data.get("name"),
-                    user_data.get("age"),
-                    user_data.get("gender"),
-                    user_data.get("height"),
-                    user_data.get("weight"),
-                    user_data.get("goal"),
-                    user_data.get("activity"),
-                    diet_json,
-                    allergies_json,
+                        user_id,
+                        user_data.get("name"),
+                        user_data.get("age"),
+                        user_data.get("gender"),
+                        user_data.get("height"),
+                        user_data.get("weight"),
+                        user_data.get("goal"),
+                        user_data.get("activity"),
+                        diet_json,
+                        allergies_json,
                 )
                 logger.info(f"Insert data: {insert_data}")
 

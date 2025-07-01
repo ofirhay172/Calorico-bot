@@ -249,9 +249,11 @@ class NutritionDB:
 
     def save_user(self, user_id: int, user_data: Dict[str, Any]) -> bool:
         """שומר או מעדכן משתמש במסד הנתונים."""
+        logger.info(f"save_user called with user_id: {user_id}, user_data keys: {list(user_data.keys()) if user_data else 'None'}")
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                logger.info(f"Connected to database: {self.db_path}")
 
                 # המרת רשימות ל-JSON
                 diet_json = json.dumps(user_data.get(
@@ -259,6 +261,22 @@ class NutritionDB:
                 allergies_json = json.dumps(
                     user_data.get("allergies", []), ensure_ascii=False
                 )
+                logger.info(f"Converted diet: {diet_json}, allergies: {allergies_json}")
+
+                # הכנת הנתונים ל-INSERT
+                insert_data = (
+                    user_id,
+                    user_data.get("name"),
+                    user_data.get("age"),
+                    user_data.get("gender"),
+                    user_data.get("height"),
+                    user_data.get("weight"),
+                    user_data.get("goal"),
+                    user_data.get("activity"),
+                    diet_json,
+                    allergies_json,
+                )
+                logger.info(f"Insert data: {insert_data}")
 
                 cursor.execute(
                     """
@@ -266,24 +284,18 @@ class NutritionDB:
                     (user_id, name, age, gender, height, weight, goal, activity, diet, allergies, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                     """,
-                    (
-                        user_id,
-                        user_data.get("name"),
-                        user_data.get("age"),
-                        user_data.get("gender"),
-                        user_data.get("height"),
-                        user_data.get("weight"),
-                        user_data.get("goal"),
-                        user_data.get("activity"),
-                        diet_json,
-                        allergies_json,
-                    ),
+                    insert_data,
                 )
+                logger.info(f"SQL executed successfully, rows affected: {cursor.rowcount}")
+                
                 conn.commit()
-                logger.info(f"Saved user {user_id} to database")
+                logger.info(f"Commit successful for user {user_id}")
                 return True
         except Exception as e:
             logger.error(f"Error saving user to database: {e}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return False
 
     def load_user(self, user_id: int) -> Optional[Dict[str, Any]]:

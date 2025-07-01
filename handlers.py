@@ -21,7 +21,7 @@ from telegram import (
 from telegram.ext import ContextTypes, ConversationHandler
 import telegram
 
-from db import NutritionDB
+from db import NutritionDB, save_user_data
 
 from config import (
     NAME,
@@ -203,6 +203,12 @@ def validate_body_fat(body_fat_text: str) -> tuple[bool, float, str]:
         return False, 0, "אנא הזן מספר תקין לאחוז שומן."
 
 
+def reset_user(user_id):
+    # איפוס נתוני משתמש ב-users.json
+    save_user_data(user_id, {})
+    # אפשר להוסיף כאן איפוס נוסף ב-nutrition.db אם צריך
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """מתחיל את הבוט ומציג תפריט ראשי."""
     if not update.message:
@@ -212,14 +218,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not user:
         return
 
-    logger.info("Bot started by user %s", user.id)
-
-    # איפוס מלא של context.user_data
+    user_id = user.id
+    # איפוס נתוני משתמש במסד נתונים
+    reset_user(user_id)
+    # איפוס context
     if context.user_data is not None:
         context.user_data.clear()
     else:
         context.user_data = {}
-    
+
+    logger.info("Bot started by user %s", user.id)
+
     # המשתמש חדש - הצג פתיח מדויק
     user_name = user.first_name or user.username or "חבר/ה"
     try:
@@ -1558,12 +1567,11 @@ async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYP
             return ALLERGIES
         
         if answer == "לא":
-            # אין אלרגיות - המשך לשאלה הבאה
             context.user_data["allergies"] = []
-            context.user_data["allergy_step"] = "yes_no"  # איפוס לפעם הבאה
+            context.user_data["allergy_step"] = "yes_no"
             try:
                 await update.message.reply_text(
-                    "מעולה! עכשיו בואו נמשיך לשאלה הבאה...",
+                    "מעולה! נמשיך לשאלה הבאה...",
                     reply_markup=ReplyKeyboardRemove(),
                     parse_mode="HTML",
                 )
@@ -1572,12 +1580,9 @@ async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYP
             return await ask_water_reminder_opt_in(update, context)
         
         else:  # answer == "כן"
-            # יש אלרגיות - עבור לשלב הבחירה המרובה
             context.user_data["allergy_step"] = "multi_select"
             if "allergies" not in context.user_data:
                 context.user_data["allergies"] = []
-            
-            # הצג את התפריט לבחירה מרובה
             keyboard = build_allergy_keyboard(context.user_data["allergies"])
             try:
                 await update.message.reply_text(

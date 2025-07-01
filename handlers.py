@@ -135,10 +135,8 @@ def build_allergy_keyboard(selected):
     keyboard = []
     for opt in ALLERGY_OPTIONS:
         if opt == "אין":
-            # כפתור "אין" תמיד למעלה, בודד
-            text = "אין אלרגיות" + (" ✅" if opt in selected else "")
-            callback_data = "allergy_none"
-            keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
+            # דלג על כפתור "אין" - הוא יטופל בשלב הקודם
+            continue
         else:
             # כפתור טוגל לכל אלרגיה
             text = opt + (" ❌" if opt in selected else "")
@@ -1527,9 +1525,96 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """שואל את המשתמש על אלרגיות עם inline keyboard בלבד."""
+    """שואל את המשתמש על אלרגיות - קודם כן/לא, ואז בחירה מרובה אם כן."""
     if context.user_data is None:
         context.user_data = {}
+    
+    # בדוק אם זה השלב הראשון (yes/no) או השני (multi-select)
+    if "allergy_step" not in context.user_data:
+        context.user_data["allergy_step"] = "yes_no"
+    
+    if context.user_data["allergy_step"] == "yes_no":
+        return await get_allergies_yes_no(update, context)
+    else:
+        return await get_allergies_multi_select(update, context)
+
+
+async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """שלב ראשון - שאלת כן/לא על אלרגיות."""
+    if update.message and update.message.text:
+        answer = update.message.text.strip()
+        if answer not in ["כן", "לא"]:
+            keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
+            gender = context.user_data.get("gender", "זכר")
+            if gender == "נקבה":
+                error_text = "בחרי 'כן' או 'לא' מהתפריט למטה:"
+            else:
+                error_text = "בחר 'כן' או 'לא' מהתפריט למטה:"
+            try:
+                await update.message.reply_text(
+                    error_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+            return ALLERGIES
+        
+        if answer == "לא":
+            # אין אלרגיות - המשך לשאלה הבאה
+            context.user_data["allergies"] = []
+            context.user_data["allergy_step"] = "yes_no"  # איפוס לפעם הבאה
+            try:
+                await update.message.reply_text(
+                    "מעולה! עכשיו בואו נמשיך לשאלה הבאה...",
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+            return await ask_water_reminder_opt_in(update, context)
+        
+        else:  # answer == "כן"
+            # יש אלרגיות - עבור לשלב הבחירה המרובה
+            context.user_data["allergy_step"] = "multi_select"
+            if "allergies" not in context.user_data:
+                context.user_data["allergies"] = []
+            
+            # הצג את התפריט לבחירה מרובה
+            keyboard = build_allergy_keyboard(context.user_data["allergies"])
+            try:
+                await update.message.reply_text(
+                    "בחר/י את כל האלרגיות הרלוונטיות:",
+                    reply_markup=keyboard,
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+            return ALLERGIES
+    
+    # אם אין הודעה - הצג את השאלה הראשונה
+    keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
+    gender = context.user_data.get("gender", "זכר")
+    if gender == "נקבה":
+        allergy_text = "האם יש לך אלרגיות למזון? (אם לא, בחרי 'לא')"
+    else:
+        allergy_text = "האם יש לך אלרגיות למזון? (אם לא, בחר 'לא')"
+    
+    try:
+        await update.message.reply_text(
+            allergy_text,
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        logger.error("Telegram API error in reply_text: %s", e)
+    return ALLERGIES
+
+
+async def get_allergies_multi_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """שלב שני - בחירה מרובה של אלרגיות."""
     if "allergies" not in context.user_data:
         context.user_data["allergies"] = []
     selected = context.user_data["allergies"]
@@ -1540,7 +1625,7 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = build_allergy_keyboard(selected)
         try:
             await update.message.reply_text(
-                "האם יש לך אלרגיות למזון? בחר/י את כל מה שרלוונטי:",
+                "בחר/י את כל האלרגיות הרלוונטיות:",
                 reply_markup=keyboard,
                 parse_mode="HTML",
             )
@@ -1551,19 +1636,7 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # טיפול בלחיצות על כפתורים
     await query.answer()
     
-    if query.data == "allergy_none":
-        # המשתמש לחץ על "אין אלרגיות" - סיים מיד את השלב
-        context.user_data["allergies"] = []
-        try:
-            await query.edit_message_text(
-                "מעולה! עכשיו בואו נמשיך לשאלה הבאה...",
-                reply_markup=InlineKeyboardMarkup([])
-            )
-        except Exception as e:
-            logger.error("Telegram API error in edit_message_text: %s", e)
-        return await ask_water_reminder_opt_in(update, context)
-    
-    elif query.data == "allergy_done":
+    if query.data == "allergy_done":
         # המשתמש לחץ על "סיימתי" - המשך לשלב הבא
         try:
             await query.edit_message_text(
@@ -1572,6 +1645,8 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         except Exception as e:
             logger.error("Telegram API error in edit_message_text: %s", e)
+        # איפוס השלב לפעם הבאה
+        context.user_data["allergy_step"] = "yes_no"
         return await ask_water_reminder_opt_in(update, context)
     
     elif query.data.startswith("allergy_toggle_"):
@@ -2535,6 +2610,11 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
                 if activity not in selected_types:
                     selected_types.append(activity)
                     context.user_data["activity_types"] = selected_types
+                    # שלח הודעה מהצד של המשתמש
+                    try:
+                        await query.message.reply_text(f"בחרת: {activity}")
+                    except Exception as e:
+                        logger.error("Telegram API error in reply_text: %s", e)
                 break
     
     elif query.data.startswith("activity_remove_"):
@@ -2546,6 +2626,11 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
                 if activity in selected_types:
                     selected_types.remove(activity)
                     context.user_data["activity_types"] = selected_types
+                    # שלח הודעה מהצד של המשתמש
+                    try:
+                        await query.message.reply_text(f"הסרת: {activity}")
+                    except Exception as e:
+                        logger.error("Telegram API error in reply_text: %s", e)
                 break
     
     # עדכן את התפריט

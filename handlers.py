@@ -1445,19 +1445,31 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             diet_summary = ", ".join(selected_options)
             try:
                 await update.message.reply_text(
-                    f"העדפות התזונה שלך: {diet_summary}\n\n"
-                    "עכשיו בואו נמשיך לשאלה הבאה...",
+                    f"העדפות התזונה שלך: {diet_summary}\n\n",
                     reply_markup=ReplyKeyboardRemove(),
                     parse_mode="HTML",
                 )
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
-            await update.message.reply_text(
-                "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
-            return ALLERGIES
+            # המשך ישר לתפריט הראשי
+            keyboard = [
+                [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
+                [KeyboardButton("מה אכלתי היום")],
+                [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
+                [KeyboardButton("קבלת דוח")],
+                [KeyboardButton("תזכורות על שתיית מים")],
+            ]
+            gender = context.user_data.get("gender", "זכר")
+            action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
+            try:
+                await update.message.reply_text(
+                    f"{action_text}",
+                    reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+            return ConversationHandler.END
 
         # Check if user clicked "סיימתי בחירת העדפות"
         if "סיימתי בחירת העדפות" in diet_text:
@@ -1477,19 +1489,31 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             diet_summary = ", ".join(selected_options)
             try:
                 await update.message.reply_text(
-                    f"העדפות התזונה שלך: {diet_summary}\n\n"
-                    "עכשיו בואו נמשיך לשאלה הבאה...",
+                    f"העדפות התזונה שלך: {diet_summary}\n\n",
                     reply_markup=ReplyKeyboardRemove(),
                     parse_mode="HTML",
                 )
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
-            await update.message.reply_text(
-                "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
-            return ALLERGIES
+            # המשך ישר לתפריט הראשי
+            keyboard = [
+                [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
+                [KeyboardButton("מה אכלתי היום")],
+                [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
+                [KeyboardButton("קבלת דוח")],
+                [KeyboardButton("תזכורות על שתיית מים")],
+            ]
+            gender = context.user_data.get("gender", "זכר")
+            action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
+            try:
+                await update.message.reply_text(
+                    f"{action_text}",
+                    reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+            return ConversationHandler.END
         # ... existing code ...
 
     # Handle individual diet options
@@ -1592,7 +1616,25 @@ async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYP
                 )
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
-            return await ask_water_reminder_opt_in(update, context)
+            # המשך ישר לתפריט הראשי
+            keyboard = [
+                [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
+                [KeyboardButton("מה אכלתי היום")],
+                [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
+                [KeyboardButton("קבלת דוח")],
+                [KeyboardButton("תזכורות על שתיית מים")],
+            ]
+            gender = context.user_data.get("gender", "זכר")
+            action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
+            try:
+                await update.message.reply_text(
+                    f"{action_text}",
+                    reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+            return ConversationHandler.END
         
         else:  # answer == "כן"
             context.user_data["allergy_step"] = "multi_select"
@@ -1662,7 +1704,25 @@ async def get_allergies_multi_select(update: Update, context: ContextTypes.DEFAU
             logger.error("Telegram API error in edit_message_text: %s", e)
         # איפוס השלב לפעם הבאה
         context.user_data["allergy_step"] = "yes_no"
-        return await ask_water_reminder_opt_in(update, context)
+        # המשך ישר לתפריט הראשי
+        keyboard = [
+            [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
+            [KeyboardButton("מה אכלתי היום")],
+            [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
+            [KeyboardButton("קבלת דוח")],
+            [KeyboardButton("תזכורות על שתיית מים")],
+        ]
+        gender = context.user_data.get("gender", "זכר")
+        action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
+        try:
+            await query.message.reply_text(
+                f"{action_text}",
+                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
+        return ConversationHandler.END
     
     elif query.data.startswith("allergy_toggle_"):
         # טוגל אלרגיה

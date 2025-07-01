@@ -2491,17 +2491,25 @@ async def generate_personalized_menu(
             # נקה רווחים כפולים
             response = re.sub(r'\n\s*\n', '\n\n', response)
             response = response.strip()
-            
+
+            # בנה ברכה מותאמת
+            name = user_data.get('name', '').strip()
+            if name:
+                greeting = f"שלום, {name}! הנה התפריט שלך להיום:"
+            else:
+                greeting = "הנה התפריט שלך להיום:"
+            menu_text = f"{greeting}\n\n{response}"
             # שליחת התפריט למשתמש
             try:
                 await update.message.reply_text(
-                    response,
+                    menu_text,
                     parse_mode=None,
                     disable_web_page_preview=True
                 )
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
-            # שמירה למסד נתונים
+
+        # שמירה למסד נתונים
         user_id = update.effective_user.id if update.effective_user else None
         logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id:

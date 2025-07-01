@@ -294,8 +294,8 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
     - שם: {user_data.get('name', 'לא צוין')}
     - מגדר: {user_data.get('gender', 'לא צוין')}
     - גיל: {user_data.get('age', 'לא צוין')}
-    - גובה: {user_data.get('height', 'לא צוין')} ס"מ
-    - משקל: {user_data.get('weight', 'לא צוין')} ק"ג
+    - גובה: {user_data.get('height', 'לא צוין')} ס\"מ
+    - משקל: {user_data.get('weight', 'לא צוין')} ק\"ג
     - מטרה: {user_data.get('goal', 'לא צוין')}
     - תקציב קלורי יומי: {user_data.get('calorie_budget', 1800)}
     - העדפות תזונה: {diet_str}
@@ -312,6 +312,11 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
 
     הפק תפריט ב-HTML ברור, עם כותרות, רשימות ואחוז קלוריות לכל חלק.
     השתמש בעברית יומיומית ופשוטה בלבד.
+    
+    הנחיות חשובות:
+    - השתמש רק במרכיבים קיימים ונפוצים. אל תמציא מאכלים. אל תכלול פריטים דמיוניים או ניסוחים לא תקניים.
+    - דוגמה לארוחה תקינה: "2 פרוסות לחם מלא, גבינה לבנה 5%, עגבנייה, מלפפון, ביצה קשה".
+    - אל תשתמש בשם המשתמש או /start בברכה.
     """
 
 async def call_gpt(prompt: str) -> str:

@@ -286,6 +286,7 @@ def validate_numeric_input(text: str, min_val: float, max_val: float, field_name
 
 def build_user_prompt_for_gpt(user_data: dict) -> str:
     """בונה פרומפט מותאם אישית עבור GPT לפי הנוסח החדש."""
+    name = user_data.get('name', 'חבר/ה')
     gender = user_data.get('gender', 'לא צוין')
     age = user_data.get('age', 'לא צוין')
     height = user_data.get('height', 'לא צוין')
@@ -299,6 +300,7 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
     prompt = f"""אתה עוזר אישי לתזונה. עליך ליצור תפריט יומי מותאם אישית לפי מטרה (ירידה / שמירה / עלייה במשקל), גיל, מין, גובה, משקל, רמת פעילות גופנית, העדפות תזונה (צמחונות, טבעונות, כשרות, דגים) ואלרגיות.
 
 נתוני המשתמש/ת:
+- שם: {name}
 - מגדר: {gender}
 - גיל: {age}
 - גובה: {height} ס"מ
@@ -330,7 +332,9 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
 מבנה הפלט:
 תן כותרת: "תפריט יומי מותאם אישית"
 ולאחר מכן כל סעיף (בוקר / צהריים וכו') בפסקה ברורה, כולל פירוט כמויות וקלוריות.
-אין צורך להוסיף המלצות שתייה או הערות כלליות מחוץ לתפריט."""
+אין צורך להוסיף המלצות שתייה או הערות כלליות מחוץ לתפריט.
+
+התחל את התפריט עם: "שלום, {name}! הנה התפריט שלך להיום:" """
 
     return prompt
 

@@ -227,10 +227,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         context.user_data = {}
 
+    # קבלת שם המשתמש מטלגרם או שאלת שם
+    if user.first_name:
+        # השתמש בשם מטלגרם
+        context.user_data["name"] = user.first_name
+        user_name = user.first_name
+    else:
+        # אין שם בטלגרם - נשאל
+        user_name = "חבר/ה"
+        # נשאל את השם בשלב הבא
+
     logger.info("Bot started by user %s", user.id)
 
     # המשתמש חדש - הצג פתיח מדויק
-    user_name = user.first_name or user.username or "חבר/ה"
     try:
         await update.message.reply_text(
             f"שלום {user_name}! אני קלוריקו – הבוט שיעזור לך לשמור על תזונה, מעקב והתמדה 🙌\n\n"
@@ -250,7 +259,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     except Exception as e:
         logger.error("Telegram API error in reply_text: %s", e)
-    return await get_name(update, context)
+    
+    # אם אין שם מטלגרם - נשאל
+    if not user.first_name:
+        return await get_name(update, context)
+    else:
+        # יש שם - נמשיך לשאלת מגדר
+        return await get_gender(update, context)
 
 
 async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -297,7 +312,7 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message:
         try:
             await update.message.reply_text(
-                "מה השם שלך?",
+                "איך לקרוא לך?",
                 reply_markup=ReplyKeyboardRemove(),
                 parse_mode="HTML",
             )
@@ -2492,14 +2507,8 @@ async def generate_personalized_menu(
             response = re.sub(r'\n\s*\n', '\n\n', response)
             response = response.strip()
 
-            # בנה ברכה מותאמת
-            name = user_data.get('name', '').strip()
-            if name:
-                greeting = f"שלום, {name}! הנה התפריט שלך להיום:"
-            else:
-                greeting = "שלום, חבר/ה! הנה התפריט שלך להיום:"
-            menu_text = f"{greeting}\n\n{response}"
-            # שליחת התפריט למשתמש
+            # שליחת התפריט למשתמש (ה-GPT כבר כולל את הברכה האישית)
+            menu_text = response
             try:
                 await update.message.reply_text(
                     menu_text,
@@ -2514,7 +2523,7 @@ async def generate_personalized_menu(
         logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id:
             try:
-                user_data["last_menu"] = response
+                user_data["last_menu"] = menu_text
                 user_data["last_menu_date"] = date.today().isoformat()
                 nutrition_db.save_user(user_id, user_data)
             except Exception as db_error:

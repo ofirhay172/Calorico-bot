@@ -67,10 +67,10 @@ from config import (
     ACTIVITY_TYPES_SELECTION,
 )
 from db import (
-    save_user,
     save_daily_entry,
     save_user_allergies_data,
     save_food_entry,
+    NutritionDB,
 )
 from utils import (
     clean_desc,
@@ -273,8 +273,9 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
         # שמירה למסד נתונים
         user_id = update.effective_user.id if update.effective_user else None
+        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id and context.user_data:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
         keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
         try:
@@ -337,8 +338,9 @@ async def get_gender(
 
         # שמירה למסד נתונים
         user_id = update.effective_user.id if update.effective_user else None
+        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id and context.user_data:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
         gender_text = "בת כמה את?" if gender == "נקבה" else "בן כמה אתה?"
         try:
@@ -378,8 +380,9 @@ async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
         # שמירה למסד נתונים
         user_id = update.effective_user.id if update.effective_user else None
+        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id and context.user_data:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
         gender = context.user_data.get("gender", "זכר")
         height_text = "מה הגובה שלך בס\"מ?" if gender == "זכר" else "מה הגובה שלך בס\"מ?"
@@ -434,8 +437,9 @@ async def get_height(
 
         # שמירה למסד נתונים
         user_id = update.effective_user.id if update.effective_user else None
+        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id and context.user_data:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
         gender = context.user_data.get("gender", "זכר")
         weight_text = "מה המשקל שלך בק\"ג?" if gender == "זכר" else "מה המשקל שלך בק\"ג?"
@@ -490,8 +494,9 @@ async def get_weight(
 
         # שמירה למסד נתונים
         user_id = update.effective_user.id if update.effective_user else None
+        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id and context.user_data:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
         keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
         gender = context.user_data.get("gender", "זכר")
@@ -562,8 +567,9 @@ async def get_body_fat_current(
 
         # שמירה למסד נתונים
         user_id = update.effective_user.id if update.effective_user else None
+        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
         gender = context.user_data.get(
             "gender", "זכר") if context.user_data else "זכר"
@@ -630,8 +636,9 @@ async def get_body_fat_target_goal(
 
         # שמירה למסד נתונים
         user_id = update.effective_user.id if update.effective_user else None
+        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id and context.user_data:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
         # המשך לשאלת פעילות
         return await get_activity(update, context)
@@ -697,8 +704,9 @@ async def get_activity(
 
         # שמירה למסד נתונים
         user_id = update.effective_user.id if update.effective_user else None
+        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id and context.user_data:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
         if activity_answer == "לא":
             # Skip to diet questions
@@ -1634,7 +1642,7 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
         if user_id:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
         asyncio.create_task(start_water_reminder_loop_with_buttons(update, context))
     else:
         context.user_data["water_reminder_opt_in"] = False
@@ -1652,7 +1660,7 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
         if user_id:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
     keyboard = [
         [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
@@ -1694,7 +1702,7 @@ async def start_water_reminder_loop_with_buttons(
         except Exception as e:
             logger.error("Water reminder error: %s", e)
         if user_id:
-            save_user(user_id, context.user_data)
+            nutrition_db.save_user(user_id, context.user_data)
 
 
 async def send_water_reminder(
@@ -1704,7 +1712,7 @@ async def send_water_reminder(
         context.user_data = {}
     user_id = update.effective_user.id if update.effective_user else None
     if user_id:
-        save_user(user_id, context.user_data)
+        nutrition_db.save_user(user_id, context.user_data)
     if update.message:
         try:
             await update.message.reply_text(
@@ -1728,7 +1736,7 @@ async def remind_in_10_minutes(
     await asyncio.sleep(10 * 60)  # 10 minutes
     user_id = update.effective_user.id if update.effective_user else None
     if user_id:
-        save_user(user_id, context.user_data)
+        nutrition_db.save_user(user_id, context.user_data)
     if update.message:
         try:
             await update.message.reply_text(
@@ -1751,7 +1759,7 @@ async def cancel_water_reminders(
     context.user_data["water_reminder_active"] = False
     user_id = update.effective_user.id if update.effective_user else None
     if user_id:
-        save_user(user_id, context.user_data)
+        nutrition_db.save_user(user_id, context.user_data)
     if update.message:
         try:
             await update.message.reply_text(
@@ -1949,7 +1957,7 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                         
                         # Save to database
                         if user_id:
-                            save_user(user_id, user)
+                            nutrition_db.save_user(user_id, user)
                 except Exception as e:
                     logger.error("Error processing food input: %s", e)
                     try:
@@ -2098,7 +2106,7 @@ async def schedule_menu(
     context.user_data["schedule_time"] = time
     user_id = update.effective_user.id if update.effective_user else None
     if user_id:
-        save_user(user_id, context.user_data)
+        nutrition_db.save_user(user_id, context.user_data)
     if update.message:
         try:
             await update.message.reply_text(
@@ -2317,7 +2325,7 @@ async def handle_food_report(
                     user["eaten_today"].append({"desc": text, "calories": calories})
                     user["remaining_calories"] = remaining - calories
                     if user_id:
-                        save_user(user_id, user)
+                        nutrition_db.save_user(user_id, user)
             except Exception as e:
                 logger.error("Error processing food input: %s", e)
                 try:
@@ -2419,14 +2427,15 @@ async def generate_personalized_menu(
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
             # שמירה למסד נתונים
-            user_id = update.effective_user.id if update.effective_user else None
-            if user_id:
-                try:
-                    user_data["last_menu"] = response
-                    user_data["last_menu_date"] = date.today().isoformat()
-                    save_user(user_id, user_data)
-                except Exception as db_error:
-                    logger.error("Error saving menu to database: %s", db_error)
+        user_id = update.effective_user.id if update.effective_user else None
+        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
+        if user_id:
+            try:
+                user_data["last_menu"] = response
+                user_data["last_menu_date"] = date.today().isoformat()
+                nutrition_db.save_user(user_id, user_data)
+            except Exception as db_error:
+                logger.error("Error saving menu to database: %s", db_error)
         else:
             try:
                 await update.message.reply_text(
@@ -2495,11 +2504,11 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
     if query.data == "activity_done":
         # המשתמש סיים בחירה - המשך לשלב הבא
         if not selected_types:
-            # אם לא נבחר כלום, חזור לתפריט
+            # אם לא נבחר כלום, חזור לתפריט עם הודעת שגיאה
             keyboard = build_activity_types_keyboard(selected_types)
             try:
                 await query.edit_message_text(
-                    gendered_text("בחר לפחות סוג פעילות אחד:", "בחרי לפחות סוג פעילות אחד:", context),
+                    "יש לבחור לפחות סוג פעילות אחד לפני המשך.",
                     reply_markup=keyboard
                 )
             except Exception as e:
@@ -2520,7 +2529,6 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
     elif query.data.startswith("activity_add_"):
         # הוסף סוג פעילות
         activity_clean = query.data.replace("activity_add_", "")
-        # מצא את הפעילות המלאה לפי הטקסט הנקי
         for activity in ACTIVITY_TYPES_MULTI:
             activity_clean_check = activity.replace(" ", "_").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
             if activity_clean_check == activity_clean:
@@ -2532,7 +2540,6 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
     elif query.data.startswith("activity_remove_"):
         # הסר סוג פעילות
         activity_clean = query.data.replace("activity_remove_", "")
-        # מצא את הפעילות המלאה לפי הטקסט הנקי
         for activity in ACTIVITY_TYPES_MULTI:
             activity_clean_check = activity.replace(" ", "_").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
             if activity_clean_check == activity_clean:
@@ -2567,10 +2574,17 @@ async def process_activity_types(update: Update, context: ContextTypes.DEFAULT_T
             diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
         else:
             diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
-        
         try:
             if update.callback_query:
-                await update.callback_query.edit_message_text(
+                await update.callback_query.message.reply_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            elif update.message:
+                await update.message.reply_text(
                     diet_text,
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
@@ -2579,14 +2593,12 @@ async def process_activity_types(update: Update, context: ContextTypes.DEFAULT_T
                 )
         except Exception as e:
             logger.error("Telegram API error in process_activity_types: %s", e)
-        
         return DIET
     
     # שמור את הסוג הראשון לעיבוד
     current_activity = selected_types[0]
     context.user_data["current_activity_index"] = 0
     context.user_data["current_activity"] = current_activity
-    
     # עבור לשאלות הספציפיות לסוג הפעילות הנוכחי
     return await route_to_activity_questions(update, context, current_activity)
 
@@ -2825,4 +2837,8 @@ async def safe_edit_message_text(query, text, reply_markup=None, parse_mode=None
     if parse_mode is not None:
         kwargs["parse_mode"] = parse_mode
     await query.edit_message_text(**kwargs)
+
+
+# יצירת instance של NutritionDB לשימוש בכל הפונקציות
+nutrition_db = NutritionDB()
 

@@ -73,6 +73,7 @@ from utils import (
     build_main_keyboard,
     build_user_prompt_for_gpt,
     call_gpt,
+    analyze_meal_with_gpt,
 )
 from report_generator import (
     get_weekly_report,
@@ -1001,7 +1002,23 @@ async def get_activity_frequency(
                 logger.error("Telegram API error in reply_text: %s", e)
             return ACTIVITY_FREQUENCY
 
-        context.user_data["activity_frequency"] = frequency
+        # שמור את המידע הספציפי לסוג הפעילות הנוכחי
+        if context.user_data is None:
+            context.user_data = {}
+        
+        current_activity = context.user_data.get("current_activity", "")
+        if current_activity:
+            # אתחל את activity_details אם לא קיים
+            if "activity_details" not in context.user_data:
+                context.user_data["activity_details"] = {}
+            
+            # הסר אימוג'ים מהטקסט לצורך שמירה
+            activity_clean = current_activity.replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
+            
+            # שמור את התדירות לסוג הפעילות הנוכחי
+            context.user_data["activity_details"][activity_clean] = {
+                "frequency": frequency
+            }
 
         # Continue to next activity or diet
         return await continue_to_next_activity(update, context)
@@ -1131,7 +1148,7 @@ async def get_cardio_goal(
             keyboard = [[KeyboardButton(opt)] for opt in CARDIO_GOAL_OPTIONS]
             try:
                 await update.message.reply_text(
-                    gendered_text(context, "בחר מטרה מהתפריט למטה:", "בחרי מטרה מהתפריט למטה:"),
+                    gendered_text("בחר מטרה מהתפריט למטה:", "בחרי מטרה מהתפריט למטה:", context),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -1159,7 +1176,7 @@ async def get_strength_goal(update: Update,
             keyboard = [[KeyboardButton(opt)] for opt in STRENGTH_GOAL_OPTIONS]
             try:
                 await update.message.reply_text(
-                    gendered_text(context, "בחר מטרה מהתפריט למטה:", "בחרי מטרה מהתפריט למטה:"),
+                    gendered_text("בחר מטרה מהתפריט למטה:", "בחרי מטרה מהתפריט למטה:", context),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -2206,43 +2223,39 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data is None:
         context.user_data = {}
     user = context.user_data
-    if "eaten_today" in user and user["eaten_today"]:
-        eaten_lines = [
-            f"• <b>{clean_desc(e['desc'])}</b> (<b>{e['calories']}</b> קלוריות)"
-            for e in user["eaten_today"]
-        ]
+    food_log = user.get("daily_food_log", [])
+    calorie_budget = user.get("calorie_budget", 0)
+    calories_consumed = user.get("calories_consumed", 0)
+    if food_log:
+        eaten_lines = [f"• <b>{item['name']}</b> (<b>{item['calories']}</b> קלוריות)" for item in food_log]
         eaten = "\n".join(eaten_lines)
-        total_eaten = sum(e["calories"] for e in user["eaten_today"])
+        total_eaten = sum(item["calories"] for item in food_log)
     else:
         eaten = "לא דווח"
         total_eaten = 0
-    remaining = user.get("calorie_budget", 0) - total_eaten
-    summary = f'<b>סיכום יומי:</b>\n{eaten}\n\n<b>סה"כ נאכל:</b> <b>{total_eaten}</b> קלוריות\n<b>נשארו:</b> <b>{remaining}</b> קלוריות להיום.'
-    summary = markdown_to_html(summary)
+    remaining = calorie_budget - total_eaten
+    if remaining < 0:
+        remaining = 0
+    # האם נשמר התקציב?
+    if total_eaten <= calorie_budget:
+        budget_status = "✅ עמדת בתקציב!"
+    else:
+        budget_status = "⚠️ חרגת מהתקציב."
+    # בקשת המלצה ליום הבא מ-GPT
+    try:
+        prompt = f"המשתמש/ת צרך/ה היום {total_eaten} קלוריות מתוך תקציב של {calorie_budget}. תן המלצה קצרה ליום מחר (ב-1-2 משפטים, בעברית, ללא פתיח אישי)."
+        from utils import call_gpt
+        recommendation = await call_gpt(prompt)
+    except Exception as e:
+        logger.error(f"Error getting next day recommendation: {e}")
+        recommendation = ""
+    summary = f'<b>סיכום יומי:</b>\n{eaten}\n\n<b>סה\'כ נאכל:</b> <b>{total_eaten}</b> קלוריות\n<b>נשארו:</b> <b>{remaining}</b> קלוריות להיום.\n{budget_status}\n\n<b>המלצה למחר:</b> {recommendation}'
     if update.message:
         try:
             await update.message.reply_text(summary, parse_mode="HTML")
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
-    user_id = update.effective_user.id if update.effective_user else None
-    if user_id and total_eaten > 0:
-        try:
-            meals_list = [clean_desc(e["desc"]) for e in user["eaten_today"]]
-            estimated_protein = (total_eaten * 0.15) / 4
-            estimated_fat = (total_eaten * 0.30) / 9
-            estimated_carbs = (total_eaten * 0.55) / 4
-            save_daily_entry(
-                user_id,
-                total_eaten,
-                estimated_protein,
-                estimated_fat,
-                estimated_carbs,
-                meals_list,
-                user.get("goal", ""),
-            )
-            save_food_entry(user_id, {"meals": meals_list, "total_calories": total_eaten})
-        except Exception as e:
-            logger.error("Error saving daily entry: %s", e)
+    # אפשר להוסיף כאן שמירה למסד נתונים אם צריך
 
 
 async def schedule_menu(
@@ -2816,7 +2829,10 @@ async def process_activity_types(update: Update, context: ContextTypes.DEFAULT_T
 
 async def route_to_activity_questions(update: Update, context: ContextTypes.DEFAULT_TYPE, activity_type: str) -> int:
     """מנתב לשאלות הספציפיות לסוג הפעילות."""
-    if activity_type == "ריצה":
+    # הסר אימוג'ים מהטקסט לצורך השוואה
+    activity_clean = activity_type.replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
+    
+    if activity_clean == "ריצה":
         keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
         gender = context.user_data.get("gender", "זכר")
         if gender == "נקבה":
@@ -2845,37 +2861,16 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
         except Exception as e:
             logger.error("Telegram API error in route_to_activity_questions: %s", e)
         return ACTIVITY_FREQUENCY
-    elif activity_type == "אימוני כוח":
-        keyboard = [[KeyboardButton(opt)] for opt in TRAINING_TIME_OPTIONS]
-        try:
-            if update.callback_query:
-                await update.callback_query.message.reply_text(
-                    "באיזה שעה בדרך כלל את/ה מתאמן/ת?",
-                    reply_markup=ReplyKeyboardMarkup(
-                        keyboard, one_time_keyboard=True, resize_keyboard=True
-                    ),
-                    parse_mode="HTML",
-                )
-            elif update.message:
-                await update.message.reply_text(
-                    "באיזה שעה בדרך כלל את/ה מתאמן/ת?",
-                    reply_markup=ReplyKeyboardMarkup(
-                        keyboard, one_time_keyboard=True, resize_keyboard=True
-                    ),
-                    parse_mode="HTML",
-                )
-        except Exception as e:
-            logger.error("Telegram API error in route_to_activity_questions: %s", e)
-        return TRAINING_TIME
-    elif activity_type in ["הליכה", "אופניים", "שחייה"]:
+    
+    elif activity_clean == "אימוני כוח":
         keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
         gender = context.user_data.get("gender", "זכר")
         if gender == "נקבה":
-            frequency_text = "כמה פעמים בשבוע את מבצעת את הפעילות?"
+            frequency_text = "כמה פעמים בשבוע את מתאמנת?"
         elif gender == "זכר":
-            frequency_text = "כמה פעמים בשבוע אתה מבצע את הפעילות?"
+            frequency_text = "כמה פעמים בשבוע אתה מתאמן?"
         else:
-            frequency_text = "כמה פעמים בשבוע את/ה מבצע/ת את הפעילות?"
+            frequency_text = "כמה פעמים בשבוע את/ה מתאמן/ת?"
         try:
             if update.callback_query:
                 await update.callback_query.message.reply_text(
@@ -2896,19 +2891,20 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
         except Exception as e:
             logger.error("Telegram API error in route_to_activity_questions: %s", e)
         return ACTIVITY_FREQUENCY
-    elif activity_type in ["יוגה", "פילאטיס"]:
-        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
+    
+    elif activity_clean in ["הליכה", "אופניים", "שחייה"]:
+        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
         gender = context.user_data.get("gender", "זכר")
         if gender == "נקבה":
-            diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+            frequency_text = f"כמה פעמים בשבוע את מבצעת {activity_clean}?"
         elif gender == "זכר":
-            diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+            frequency_text = f"כמה פעמים בשבוע אתה מבצע {activity_clean}?"
         else:
-            diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+            frequency_text = f"כמה פעמים בשבוע את/ה מבצע/ת {activity_clean}?"
         try:
             if update.callback_query:
                 await update.callback_query.message.reply_text(
-                    diet_text,
+                    frequency_text,
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -2916,7 +2912,7 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
                 )
             elif update.message:
                 await update.message.reply_text(
-                    diet_text,
+                    frequency_text,
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -2924,20 +2920,51 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
                 )
         except Exception as e:
             logger.error("Telegram API error in route_to_activity_questions: %s", e)
-        return DIET
+        return ACTIVITY_FREQUENCY
+    
+    elif activity_clean in ["יוגה", "פילאטיס"]:
+        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
+        gender = context.user_data.get("gender", "זכר")
+        if gender == "נקבה":
+            frequency_text = f"כמה פעמים בשבוע את מתאמנת {activity_clean}?"
+        elif gender == "זכר":
+            frequency_text = f"כמה פעמים בשבוע אתה מתאמן {activity_clean}?"
+        else:
+            frequency_text = f"כמה פעמים בשבוע את/ה מתאמן/ת {activity_clean}?"
+        try:
+            if update.callback_query:
+                await update.callback_query.message.reply_text(
+                    frequency_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            elif update.message:
+                await update.message.reply_text(
+                    frequency_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+        except Exception as e:
+            logger.error("Telegram API error in route_to_activity_questions: %s", e)
+        return ACTIVITY_FREQUENCY
+    
     else:  # "אחר"
-        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
+        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
         gender = context.user_data.get("gender", "זכר")
         if gender == "נקבה":
-            diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+            frequency_text = "כמה פעמים בשבוע את מבצעת פעילות אחרת?"
         elif gender == "זכר":
-            diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+            frequency_text = "כמה פעמים בשבוע אתה מבצע פעילות אחרת?"
         else:
-            diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+            frequency_text = "כמה פעמים בשבוע את/ה מבצע/ת פעילות אחרת?"
         try:
             if update.callback_query:
                 await update.callback_query.message.reply_text(
-                    diet_text,
+                    frequency_text,
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -2945,7 +2972,7 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
                 )
             elif update.message:
                 await update.message.reply_text(
-                    diet_text,
+                    frequency_text,
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -2953,7 +2980,7 @@ async def route_to_activity_questions(update: Update, context: ContextTypes.DEFA
                 )
         except Exception as e:
             logger.error("Telegram API error in route_to_activity_questions: %s", e)
-        return DIET
+        return ACTIVITY_FREQUENCY
 
 
 async def continue_to_next_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

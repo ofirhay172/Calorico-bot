@@ -12,6 +12,7 @@ from typing import List, Optional
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 import os
 import openai
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -254,6 +255,7 @@ def build_main_keyboard():
         [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
         [KeyboardButton("קבלת דוח")],
         [KeyboardButton("תזכורות על שתיית מים")],
+        [KeyboardButton("סיימתי להיום")],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -297,19 +299,28 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
     allergies = ", ".join(user_data.get('allergies', [])) if user_data.get('allergies') else "אין"
     daily_calories = user_data.get('calorie_budget', 1800)
 
+    # פירוט פעילות גופנית
+    activity_details = user_data.get('activity_details', {})
+    activity_details_text = ""
+    if activity_details:
+        activity_details_text = "\n\nפירוט פעילות גופנית של המשתמש/ת:\n"
+        for act, details in activity_details.items():
+            freq = details.get('frequency', '')
+            activity_details_text += f"- {act}: {freq}\n"
+
     prompt = f"""אתה תזונאי קליני מנוסה. עליך לייצר תפריט יומי מותאם אישית לפי תקציב קלוריות מוגדר מראש, עבור משתמשת בגיל ורמת פעילות מסוימת.
 
 נתוני המשתמש/ת:
 - שם: {name}
 - מגדר: {gender}
 - גיל: {age}
-- גובה: {height} ס"מ
-- משקל: {weight} ק"ג
+- גובה: {height} ס\"מ
+- משקל: {weight} ק\"ג
 - מטרה: {goal}
 - רמת פעילות: {activity_level}
 - העדפות תזונה: {diet_preferences}
 - אלרגיות: {allergies}
-- תקציב קלוריות יומי: {daily_calories} קלוריות
+- תקציב קלוריות יומי: {daily_calories} קלוריות{activity_details_text}
 
 🔹 פורמט הפלט:
 - כותרת: "תפריט יומי מותאם אישית"
@@ -330,6 +341,7 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
 - שלב בכל ארוחה פחמימה, חלבון וירק או שומן בריא.
 - השתמש במרכיבים זמינים ונפוצים – לא מנות גורמה.
 - אין לתת המלצות כלליות או טיפים – רק תפריט פרקטי.
+- <b>נשנושים צריכים להיות קלים לעיכול, קטנים, ונוחים לצריכה בין הארוחות – רק פירות, יוגורט, קרקרים, חופן אגוזים. אין לכלול טונה, חזה עוף, או מנות מבושלות.</b>
 
 🔹 דוגמה מבנית:
 
@@ -397,3 +409,37 @@ async def call_gpt(prompt: str) -> str:
         return get_gendered_text(None, 
             "אירעה שגיאה לא צפויה. אנא נסה שוב.",
             "אירעה שגיאה לא צפויה. אנא נסי שוב.")
+
+
+async def analyze_meal_with_gpt(text: str) -> dict:
+    """
+    שולח ל-GPT תיאור ארוחה חופשי ומקבל רשימת פריטים עם קלוריות לכל פריט וסך הכל.
+    מחזיר dict: {'items': [{'name': str, 'calories': int}], 'total': int}
+    """
+    prompt = f"""
+פענח את הארוחה הבאה למרכיבים ברורים, עם כמויות סבירות וקלוריות לכל פריט. אם לא צוינה כמות, השתמש בברירת מחדל ישראלית (למשל: פרוסת לחם, ביצה אחת, קערת סלט קטנה, כף שוקולד וכו').
+
+החזר תשובה בפורמט JSON בלבד, כך:
+{{
+  "items": [
+    {{"name": "שם פריט", "calories": מספר}},
+    ...
+  ],
+  "total": סכום כל הקלוריות
+}}
+
+הארוחה:
+{text}
+"""
+    response = await call_gpt(prompt)
+    # ננסה להוציא JSON מהתשובה
+    try:
+        # מצא את ה-json הראשון בתשובה
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        json_str = response[json_start:json_end]
+        data = json.loads(json_str)
+        return data
+    except Exception as e:
+        logger.error(f"Failed to parse GPT meal JSON: {e}, response: {response}")
+        return {"items": [], "total": 0}

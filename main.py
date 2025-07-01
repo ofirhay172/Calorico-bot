@@ -201,6 +201,14 @@ def main():
             filters.TEXT & filters.Regex(menu_regex),
             handle_daily_choice))
 
+    # Handler לכפתור 'סיימתי להיום'
+    application.add_handler(
+        MessageHandler(
+            filters.TEXT & filters.Regex(r"^סיימתי להיום$"),
+            send_summary
+        )
+    )
+
     # Add handler for free text input (only if not in conversation)
     application.add_handler(
         MessageHandler(

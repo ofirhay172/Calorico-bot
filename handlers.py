@@ -73,6 +73,8 @@ from config import (
     ALLERGY_OPTIONS,
     SYSTEM_BUTTONS,
     GENDERED_ACTION,
+    ACTIVITY_TYPES_MULTI,
+    ACTIVITY_TYPES_SELECTION,
 )
 from db import (
     save_user,
@@ -233,22 +235,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # המשתמש חדש - הצג פתיח מדויק
     user_name = user.first_name or user.username or "חבר/ה"
-    await update.message.reply_text(
-        f"שלום {user_name}! אני קלוריקו – הבוט שיעזור לך לשמור על תזונה, מעקב והתמדה 🙌\n\n"
-        "הנה מה שאני יודע לעשות:\n"
-        "✅ התאמה אישית של תפריט יומי – לפי הגובה, משקל, גיל, מטרה ותזונה שלך\n"
-        "📊 דוחות תזונתיים – שבועי וחודשי\n"
-        "💧 תזכורות חכמות לשתיית מים\n"
-        '🍽 רישום יומי של \"מה אכלתי היום\" או \"מה אכלתי אתמול\"\n'
-        "🔥 מעקב קלוריות יומי, ממוצע לארוחה וליום\n"
-        "📅 ניתוח מגמות – צריכת חלבון, שומן ופחמימות\n"
-        "🏋️ חיבור לאימונים שדיווחת עליהם\n"
-        "📝 אפשרות לעדכן בכל שלב את המשקל, המטרה, התזונה או רמת הפעילות שלך\n"
-        "⏰ תפריט יומי שנשלח אליך אוטומטית בשעה שתבחר\n\n"
-        "בוא/י נתחיל בהרשמה קצרה:",
-        reply_markup=ReplyKeyboardRemove(),
-        parse_mode="HTML",
-    )
+    try:
+        await update.message.reply_text(
+            f"שלום {user_name}! אני קלוריקו – הבוט שיעזור לך לשמור על תזונה, מעקב והתמדה 🙌\n\n"
+            "הנה מה שאני יודע לעשות:\n"
+            "✅ התאמה אישית של תפריט יומי – לפי הגובה, משקל, גיל, מטרה ותזונה שלך\n"
+            "📊 דוחות תזונתיים – שבועי וחודשי\n"
+            "💧 תזכורות חכמות לשתיית מים\n"
+            '🍽 רישום יומי של \"מה אכלתי היום\" או \"מה אכלתי אתמול\"\n'
+            "🔥 מעקב קלוריות יומי, ממוצע לארוחה וליום\n"
+            "📅 ניתוח מגמות – צריכת חלבון, שומן ופחמימות\n"
+            "🏋️ חיבור לאימונים שדיווחת עליהם\n"
+            "📝 אפשרות לעדכן בכל שלב את המשקל, המטרה, התזונה או רמת הפעילות שלך\n"
+            "⏰ תפריט יומי שנשלח אליך אוטומטית בשעה שתבחר\n\n"
+            "בוא/י נתחיל בהרשמה קצרה:",
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        logger.error(f"Telegram API error in reply_text: {e}")
     return await get_name(update, context)
 
 
@@ -257,11 +262,14 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message and update.message.text:
         name = update.message.text.strip()
         if not name:
-            await update.message.reply_text(
-                "אנא הזן שם תקין.",
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "אנא הזן שם תקין.",
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return NAME
 
         if context.user_data is None:
@@ -275,23 +283,29 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             save_user(user_id, context.user_data)
 
         keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
-        await update.message.reply_text(
-            "מה המגדר שלך?",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                "מה המגדר שלך?",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return GENDER
 
     # This is when called from start function - ask for name
     logger.info("get_name called from start - asking for name")
     if update.message:
-        await update.message.reply_text(
-            "מה השם שלך?",
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                "מה השם שלך?",
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return NAME
 
 
@@ -310,13 +324,16 @@ async def get_gender(
         if gender not in GENDER_OPTIONS:
             logger.warning("Invalid gender selected: '%s'", gender)
             keyboard = [[KeyboardButton(opt)] for opt in GENDER_OPTIONS]
-            await update.message.reply_text(
-                "בחר מגדר מהתפריט למטה:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "בחר מגדר מהתפריט למטה:",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return GENDER
 
         if context.user_data is None:
@@ -330,11 +347,14 @@ async def get_gender(
             save_user(user_id, context.user_data)
 
         gender_text = "בת כמה את?" if gender == "נקבה" else "בן כמה אתה?"
-        await update.message.reply_text(
-            gender_text,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                gender_text,
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return AGE
 
     logger.error("get_gender called without text")
@@ -348,11 +368,14 @@ async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         is_valid, age, error_msg = validate_age(age_text)
 
         if not is_valid:
-            await update.message.reply_text(
-                error_msg,
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    error_msg,
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return AGE
 
         if context.user_data is None:
@@ -366,11 +389,14 @@ async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
         gender = context.user_data.get("gender", "זכר")
         height_text = "מה הגובה שלך בס\"מ?" if gender == "זכר" else "מה הגובה שלך בס\"מ?"
-        await update.message.reply_text(
-            height_text,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                height_text,
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return HEIGHT
 
     if context.user_data is None:
@@ -378,11 +404,14 @@ async def get_age(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     gender = context.user_data.get("gender", "זכר")
     age_text = "בת כמה את?" if gender == "נקבה" else "בן כמה אתה?"
     if update.message:
-        await update.message.reply_text(
-            age_text,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                age_text,
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return AGE
 
 
@@ -395,11 +424,14 @@ async def get_height(
         is_valid, height, error_msg = validate_height(height_text)
 
         if not is_valid:
-            await update.message.reply_text(
-                error_msg,
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    error_msg,
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return HEIGHT
 
         if context.user_data is None:
@@ -413,11 +445,14 @@ async def get_height(
 
         gender = context.user_data.get("gender", "זכר")
         weight_text = "מה המשקל שלך בק\"ג?" if gender == "זכר" else "מה המשקל שלך בק\"ג?"
-        await update.message.reply_text(
-            weight_text,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                weight_text,
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return WEIGHT
 
     if context.user_data is None:
@@ -425,11 +460,14 @@ async def get_height(
     gender = context.user_data.get("gender", "זכר")
     height_text = "מה הגובה שלך בס\"מ?" if gender == "זכר" else "מה הגובה שלך בס\"מ?"
     if update.message:
-        await update.message.reply_text(
-            height_text,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                height_text,
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return HEIGHT
 
 
@@ -442,11 +480,14 @@ async def get_weight(
         is_valid, weight, error_msg = validate_weight(weight_text)
 
         if not is_valid:
-            await update.message.reply_text(
-                error_msg,
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    error_msg,
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return WEIGHT
 
         if context.user_data is None:
@@ -461,13 +502,16 @@ async def get_weight(
         keyboard = [[KeyboardButton(opt)] for opt in GOAL_OPTIONS]
         gender = context.user_data.get("gender", "זכר")
         goal_text = "מה המטרה שלך?" if gender == "זכר" else "מה המטרה שלך?"
-        await update.message.reply_text(
-            goal_text,
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                goal_text,
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return GOAL
 
     if context.user_data is None:
@@ -475,11 +519,14 @@ async def get_weight(
     gender = context.user_data.get("gender", "זכר")
     weight_text = "מה המשקל שלך בק\"ג?" if gender == "זכר" else "מה המשקל שלך בק\"ג?"
     if update.message:
-        await update.message.reply_text(
-            weight_text,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                weight_text,
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return WEIGHT
 
 
@@ -505,11 +552,14 @@ async def get_body_fat_current(
         is_valid, body_fat, error_msg = validate_body_fat(body_fat_text)
 
         if not is_valid:
-            await update.message.reply_text(
-                error_msg,
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    error_msg,
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return BODY_FAT_CURRENT
 
         if context.user_data is None:
@@ -524,22 +574,28 @@ async def get_body_fat_current(
         gender = context.user_data.get(
             "gender", "זכר") if context.user_data else "זכר"
         target_text = "מה אחוז השומן היעד שלך?" if gender == "זכר" else "מה אחוז השומן היעד שלך?"
-        await update.message.reply_text(
-            target_text,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                target_text,
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return BODY_FAT_TARGET_GOAL
     else:
         gender = context.user_data.get(
             "gender", "זכר") if context.user_data else "זכר"
         body_fat_text = "מה אחוז השומן הנוכחי שלך?" if gender == "זכר" else "מה אחוז השומן הנוכחי שלך?"
         if update.message:
-            await update.message.reply_text(
-                body_fat_text,
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    body_fat_text,
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         return BODY_FAT_CURRENT
 
 
@@ -552,20 +608,26 @@ async def get_body_fat_target_goal(
         is_valid, target_fat, error_msg = validate_body_fat(target_text)
 
         if not is_valid:
-            await update.message.reply_text(
-                error_msg,
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    error_msg,
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return BODY_FAT_TARGET_GOAL
 
         current_fat = context.user_data.get("body_fat_current", 0) if context.user_data else 0
         if target_fat >= current_fat:
-            await update.message.reply_text(
-                "אחוז השומן היעד חייב להיות נמוך מהנוכחי כדי לרדת באחוזי שומן.",
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "אחוז השומן היעד חייב להיות נמוך מהנוכחי כדי לרדת באחוזי שומן.",
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return BODY_FAT_TARGET_GOAL
 
         if context.user_data is None:
@@ -585,11 +647,14 @@ async def get_body_fat_target_goal(
         gender = context.user_data.get("gender", "זכר")
         target_text = "מה אחוז השומן היעד שלך?" if gender == "זכר" else "מה אחוז השומן היעד שלך?"
         if update.message:
-            await update.message.reply_text(
-                target_text,
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    target_text,
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         return BODY_FAT_TARGET_GOAL
 
 
@@ -613,13 +678,16 @@ async def get_activity(
                 error_text = (
                     "האם את/ה עושה פעילות גופנית? (בחר/י כן או לא מהתפריט למטה)"
                 )
-            await update.message.reply_text(
-                error_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    error_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return ACTIVITY
         
         if context.user_data is None:
@@ -641,16 +709,36 @@ async def get_activity(
                 diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
             else:
                 diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+            try:
+                await update.message.reply_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
+            return DIET
+        # אם כן - הצג תפריט בחירת סוגי פעילות
+        keyboard = build_activity_types_keyboard()
+        gender = context.user_data.get("gender", "זכר")
+        if gender == "נקבה":
+            activity_text = "איזה סוגי פעילות את עושה? (בחרי כל מה שמתאים)"
+        elif gender == "זכר":
+            activity_text = "איזה סוגי פעילות אתה עושה? (בחר כל מה שמתאים)"
+        else:
+            activity_text = "איזה סוגי פעילות את/ה עושה? (בחר/י כל מה שמתאים)"
+        
+        try:
             await update.message.reply_text(
-                diet_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
+                activity_text,
+                reply_markup=keyboard,
                 parse_mode="HTML",
             )
-            return DIET
-        # אם כן - המשך לשאלות פעילות
-        return await get_activity_type(update, context)
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
+        return ACTIVITY_TYPES_SELECTION
     # אם אין הודעה, הצג את השאלה
     if update.message:
         keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_YES_NO_OPTIONS]
@@ -663,13 +751,16 @@ async def get_activity(
             activity_text = "האם אתה עושה פעילות גופנית? (בחר כן או לא)"
         else:
             activity_text = "האם את/ה עושה פעילות גופנית? (בחר/י כן או לא)"
-        await update.message.reply_text(
-            activity_text,
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                activity_text,
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return ACTIVITY
 
 
@@ -684,13 +775,16 @@ async def get_activity_type(update: Update,
                 context.user_data = {}
             gender = context.user_data.get("gender", "זכר")
             error_text = "בחר סוג פעילות מהתפריט למטה:" if gender == "זכר" else "בחרי סוג פעילות מהתפריט למטה:"
-            await update.message.reply_text(
-                error_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    error_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return ACTIVITY_TYPE
 
         if context.user_data is None:
@@ -708,13 +802,16 @@ async def get_activity_type(update: Update,
                 diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
             else:
                 diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
-            await update.message.reply_text(
-                diet_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return DIET
 
         elif activity_type == "הליכה מהירה / ריצה קלה":
@@ -728,13 +825,16 @@ async def get_activity_type(update: Update,
                 frequency_text = "כמה פעמים בשבוע אתה מבצע את הפעילות?"
             else:
                 frequency_text = "כמה פעמים בשבוע את/ה מבצע/ת את הפעילות?"
-            await update.message.reply_text(
-                frequency_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    frequency_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return ACTIVITY_FREQUENCY
 
         elif activity_type in ["אימוני כוח", "אימוני HIIT / קרוספיט"]:
@@ -748,13 +848,16 @@ async def get_activity_type(update: Update,
                 frequency_text = "כמה פעמים בשבוע אתה מתאמן?"
             else:
                 frequency_text = "כמה פעמים בשבוע את/ה מתאמן/ת?"
-            await update.message.reply_text(
-                frequency_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    frequency_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return ACTIVITY_FREQUENCY
 
         elif activity_type == "יוגה / פילאטיס":
@@ -768,13 +871,16 @@ async def get_activity_type(update: Update,
                 frequency_text = "כמה פעמים בשבוע אתה מתאמן?"
             else:
                 frequency_text = "כמה פעמים בשבוע את/ה מתאמן/ת?"
-            await update.message.reply_text(
-                frequency_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    frequency_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return ACTIVITY_FREQUENCY
 
         elif activity_type == "שילוב של כמה סוגים":
@@ -794,13 +900,16 @@ async def get_activity_type(update: Update,
                 mixed_text = (
                     "אילו סוגי אימונים את/ה מבצע/ת במהלך השבוע? (בחר/י כל מה שמתאים)"
                 )
-            await update.message.reply_text(
-                mixed_text,
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    mixed_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return MIXED_ACTIVITIES
 
         return DIET
@@ -816,27 +925,22 @@ async def get_activity_frequency(
         if frequency not in ACTIVITY_FREQUENCY_OPTIONS:
             keyboard = [[KeyboardButton(opt)]
                         for opt in ACTIVITY_FREQUENCY_OPTIONS]
-            await update.message.reply_text(
-                "בחר/י תדירות מהתפריט למטה:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "בחר/י תדירות מהתפריט למטה:",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return ACTIVITY_FREQUENCY
 
         context.user_data["activity_frequency"] = frequency
 
-        # Ask duration
-        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_DURATION_OPTIONS]
-        await update.message.reply_text(
-            "כמה זמן נמשך כל אימון? (בדקות)",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-        return ACTIVITY_DURATION
+        # Continue to next activity or diet
+        return await continue_to_next_activity(update, context)
     return ACTIVITY_FREQUENCY
 
 
@@ -849,13 +953,16 @@ async def get_activity_duration(
         if duration not in ACTIVITY_DURATION_OPTIONS:
             keyboard = [[KeyboardButton(opt)]
                         for opt in ACTIVITY_DURATION_OPTIONS]
-            await update.message.reply_text(
-                "בחר/י משך מהתפריט למטה:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "בחר/י משך מהתפריט למטה:",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return ACTIVITY_DURATION
 
         context.user_data["activity_duration"] = duration
@@ -865,37 +972,46 @@ async def get_activity_duration(
         if activity_type == "הליכה מהירה / ריצה קלה":
             # Ask cardio goal
             keyboard = [[KeyboardButton(opt)] for opt in CARDIO_GOAL_OPTIONS]
-            await update.message.reply_text(
-                "מה מטרת הפעילות?",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "מה מטרת הפעילות?",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return CARDIO_GOAL
 
         elif activity_type in ["אימוני כוח", "אימוני HIIT / קרוספיט"]:
             # Ask training time
             keyboard = [[KeyboardButton(opt)] for opt in TRAINING_TIME_OPTIONS]
-            await update.message.reply_text(
-                "באיזה שעה בדרך כלל את/ה מתאמן/ת?",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "באיזה שעה בדרך כלל את/ה מתאמן/ת?",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return TRAINING_TIME
 
         elif activity_type == "יוגה / פילאטיס":
             # Ask if this is the only activity
             keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
-            await update.message.reply_text(
-                "האם זו הפעילות היחידה שלך?",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "האם זו הפעילות היחידה שלך?",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return DIET  # Continue to diet questions
 
         return DIET
@@ -909,13 +1025,16 @@ async def get_training_time(update: Update,
         training_time = update.message.text.strip()
         if training_time not in TRAINING_TIME_OPTIONS:
             keyboard = [[KeyboardButton(opt)] for opt in TRAINING_TIME_OPTIONS]
-            await update.message.reply_text(
-                "בחר/י שעה מהתפריט למטה:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "בחר/י שעה מהתפריט למטה:",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return TRAINING_TIME
 
         if context.user_data is None:
@@ -924,13 +1043,16 @@ async def get_training_time(update: Update,
 
         # Ask strength goal
         keyboard = [[KeyboardButton(opt)] for opt in STRENGTH_GOAL_OPTIONS]
-        await update.message.reply_text(
-            "מה המטרה?",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                "מה המטרה?",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return STRENGTH_GOAL
     return TRAINING_TIME
 
@@ -943,35 +1065,24 @@ async def get_cardio_goal(
         goal = update.message.text.strip()
         if goal not in CARDIO_GOAL_OPTIONS:
             keyboard = [[KeyboardButton(opt)] for opt in CARDIO_GOAL_OPTIONS]
-            await update.message.reply_text(
-                "בחר/י מטרה מהתפריט למטה:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "בחר/י מטרה מהתפריט למטה:",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return CARDIO_GOAL
 
         if context.user_data is None:
             context.user_data = {}
         context.user_data["cardio_goal"] = goal
 
-        # Continue to diet questions
-        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
-        gender = context.user_data.get("gender", "זכר")
-        diet_text = (
-            "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
-            if gender == "נקבה"
-            else "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
-        )
-        await update.message.reply_text(
-            diet_text,
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-        return DIET
+        # Continue to next activity or diet
+        return await continue_to_next_activity(update, context)
     return CARDIO_GOAL
 
 
@@ -982,29 +1093,24 @@ async def get_strength_goal(update: Update,
         goal = update.message.text.strip()
         if goal not in STRENGTH_GOAL_OPTIONS:
             keyboard = [[KeyboardButton(opt)] for opt in STRENGTH_GOAL_OPTIONS]
-            await update.message.reply_text(
-                "בחר/י מטרה מהתפריט למטה:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "בחר/י מטרה מהתפריט למטה:",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return STRENGTH_GOAL
 
         if context.user_data is None:
             context.user_data = {}
         context.user_data["strength_goal"] = goal
 
-        # Ask about supplements
-        keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
-        await update.message.reply_text(
-            "האם את/ה משתמש/ת בתוספי תזונה?",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-        return SUPPLEMENTS
+        # Continue to next activity or diet
+        return await continue_to_next_activity(update, context)
     return STRENGTH_GOAL
 
 
@@ -1016,13 +1122,16 @@ async def get_supplements(
         choice = update.message.text.strip()
         if choice not in ["כן", "לא"]:
             keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
-            await update.message.reply_text(
-                "בחר/י כן או לא:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "בחר/י כן או לא:",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return SUPPLEMENTS
 
         if context.user_data is None:
@@ -1032,22 +1141,20 @@ async def get_supplements(
         if choice == "כן":
             # Ask for supplement types
             keyboard = [[KeyboardButton(opt)] for opt in SUPPLEMENT_OPTIONS]
-            await update.message.reply_text(
-                "איזה תוספים את/ה לוקח/ת? (בחר/י כל מה שמתאים)",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "איזה תוספים את/ה לוקח/ת? (בחר/י כל מה שמתאים)",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return SUPPLEMENT_TYPES
         else:
-            # Ask about limitations
-            await update.message.reply_text(
-                "האם יש מגבלות פיזיות / כאבים? (אם לא, כתוב 'אין')",
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
-            return LIMITATIONS
+            # Continue to next activity or diet
+            return await continue_to_next_activity(update, context)
     return SUPPLEMENTS
 
 
@@ -1068,13 +1175,8 @@ async def get_supplement_types(
             context.user_data = {}
         context.user_data["supplements"] = selected_supplements
 
-        # Ask about limitations
-        await update.message.reply_text(
-            "האם יש מגבלות פיזיות / כאבים? (אם לא, כתוב 'אין')",
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
-        return LIMITATIONS
+        # Continue to next activity or diet
+        return await continue_to_next_activity(update, context)
     return SUPPLEMENT_TYPES
 
 
@@ -1091,22 +1193,8 @@ async def get_limitations(
         else:
             context.user_data["limitations"] = limitations
 
-        # Continue to diet questions
-        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
-        gender = context.user_data.get("gender", "זכר")
-        diet_text = (
-            "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
-            if gender == "נקבה"
-            else "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
-        )
-        await update.message.reply_text(
-            diet_text,
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
-        return DIET
+        # Continue to next activity or diet
+        return await continue_to_next_activity(update, context)
     return LIMITATIONS
 
 
@@ -1123,10 +1211,13 @@ async def get_mixed_activities(
         if text == "המשך":
             if not selected:
                 if update.message:
-                    await update.message.reply_text(
-                        "אנא בחר/י לפחות סוג פעילות אחד לפני ההמשך.",
-                        reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
-                    )
+                    try:
+                        await update.message.reply_text(
+                            "אנא בחר/י לפחות סוג פעילות אחד לפני ההמשך.",
+                            reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
+                        )
+                    except Exception as e:
+                        logger.error(f"Telegram API error in reply_text: {e}")
                 return MIXED_ACTIVITIES
             context.user_data["mixed_activities"] = list(selected)
             del context.user_data["mixed_activities_selected"]
@@ -1140,10 +1231,13 @@ async def get_mixed_activities(
             selected.clear()
             selected.add("אין")
     if update.message:
-        await update.message.reply_text(
-            "בחר/י את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):",
-            reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
-        )
+        try:
+            await update.message.reply_text(
+                "בחר/י את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):",
+                reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return MIXED_ACTIVITIES
 
 
@@ -1158,17 +1252,23 @@ async def get_mixed_frequency(
             context.user_data["mixed_frequency"] = text
             keyboard = [[KeyboardButton(opt)] for opt in MIXED_DURATION_OPTIONS]
             if update.message:
-                await update.message.reply_text(
-                    "כמה זמן נמשך כל אימון בממוצע?",
-                    reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-                )
+                try:
+                    await update.message.reply_text(
+                        "כמה זמן נמשך כל אימון בממוצע?",
+                        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                    )
+                except Exception as e:
+                    logger.error(f"Telegram API error in reply_text: {e}")
             return MIXED_DURATION
     keyboard = [[KeyboardButton(opt)] for opt in MIXED_FREQUENCY_OPTIONS]
     if update.message:
-        await update.message.reply_text(
-            "כמה פעמים בשבוע את/ה מתאמן/ת?",
-            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-        )
+        try:
+            await update.message.reply_text(
+                "כמה פעמים בשבוע את/ה מתאמן/ת?",
+                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return MIXED_FREQUENCY
 
 
@@ -1189,10 +1289,13 @@ async def get_mixed_duration(
             return await get_mixed_menu_adaptation(update, context)
     keyboard = [[KeyboardButton(opt)] for opt in MIXED_DURATION_OPTIONS]
     if update.message:
-        await update.message.reply_text(
-            "כמה זמן נמשך כל אימון בממוצע?",
-            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-        )
+        try:
+            await update.message.reply_text(
+                "כמה זמן נמשך כל אימון בממוצע?",
+                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return MIXED_DURATION
 
 
@@ -1217,13 +1320,16 @@ async def get_mixed_menu_adaptation(
         choice = update.message.text.strip()
         if choice not in ["כן", "לא"]:
             keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
-            await update.message.reply_text(
-                "בחר/י כן או לא:",
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard, one_time_keyboard=True, resize_keyboard=True
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "בחר/י כן או לא:",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return MIXED_MENU_ADAPTATION
         context.user_data["menu_adaptation"] = choice == "כן"
         keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
@@ -1234,13 +1340,16 @@ async def get_mixed_menu_adaptation(
             if gender == "נקבה"
             else "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
         )
-        await update.message.reply_text(
-            diet_text,
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                diet_text,
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return DIET
     return ConversationHandler.END
 
@@ -1270,12 +1379,15 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
             context.user_data["calorie_budget"] = calorie_budget
             diet_summary = ", ".join(selected_options)
-            await update.message.reply_text(
-                f"העדפות התזונה שלך: {diet_summary}\n\n"
-                "עכשיו בואו נמשיך לשאלה הבאה...",
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    f"העדפות התזונה שלך: {diet_summary}\n\n"
+                    "עכשיו בואו נמשיך לשאלה הבאה...",
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             await update.message.reply_text(
                 "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
                 reply_markup=ReplyKeyboardRemove(),
@@ -1299,12 +1411,15 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
             context.user_data["calorie_budget"] = calorie_budget
             diet_summary = ", ".join(selected_options)
-            await update.message.reply_text(
-                f"העדפות התזונה שלך: {diet_summary}\n\n"
-                "עכשיו בואו נמשיך לשאלה הבאה...",
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    f"העדפות התזונה שלך: {diet_summary}\n\n"
+                    "עכשיו בואו נמשיך לשאלה הבאה...",
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             await update.message.reply_text(
                 "האם יש לך אלרגיות למזון? (אם לא, כתוב 'אין')",
                 reply_markup=ReplyKeyboardRemove(),
@@ -1332,20 +1447,26 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             else:
                 diet_text_msg = "מה העדפות התזונה שלך? (לחץ/י על אפשרות כדי לבחור או לבטל בחירה)"
                 
-            await update.message.reply_text(
-                diet_text_msg,
-                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    diet_text_msg,
+                    reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             return DIET
             
     # If no valid option was selected, show error
     keyboard = build_diet_keyboard(selected_options)
-    await update.message.reply_text(
-        "אנא בחר/י אפשרות מהתפריט למטה או לחץ/י על 'סיימתי בחירת העדפות'",
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-        parse_mode="HTML",
-    )
+    try:
+        await update.message.reply_text(
+            "אנא בחר/י אפשרות מהתפריט למטה או לחץ/י על 'סיימתי בחירת העדפות'",
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        logger.error(f"Telegram API error in reply_text: {e}")
     return DIET
 
 
@@ -1363,13 +1484,16 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["allergies"] = detected_allergies
         allergies_text = ", ".join(detected_allergies)
         if update.message:
-            await update.message.reply_text(
-                f"זיהיתי את האלרגיות הבאות: {allergies_text}\n\n"
-                "אם יש אלרגיות נוספות שלא זוהו, אנא כתוב אותן.",
-                reply_markup=ReplyKeyboardMarkup(
-                    [["אין אלרגיות נוספות"]], resize_keyboard=True
-                ),
-            )
+            try:
+                await update.message.reply_text(
+                    f"זיהיתי את האלרגיות הבאות: {allergies_text}\n\n"
+                    "אם יש אלרגיות נוספות שלא זוהו, אנא כתוב אותן.",
+                    reply_markup=ReplyKeyboardMarkup(
+                        [["אין אלרגיות נוספות"]], resize_keyboard=True
+                    ),
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         return ALLERGIES_ADDITIONAL
     else:
         if any(word in text.lower() for word in ["אין", "לא", "ללא", "אפס", "כלום"]):
@@ -1378,24 +1502,30 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if user_id:
                 save_user_allergies_data(user_id, [])
             if update.message:
-                await update.message.reply_text(
-                    "מעולה! אין אלרגיות.\n\n" "עכשיו בואו נמשיך לשאלה הבאה...",
-                    reply_markup=ReplyKeyboardRemove(),
-                )
+                try:
+                    await update.message.reply_text(
+                        "מעולה! אין אלרגיות.\n\n" "עכשיו בואו נמשיך לשאלה הבאה...",
+                        reply_markup=ReplyKeyboardRemove(),
+                    )
+                except Exception as e:
+                    logger.error(f"Telegram API error in reply_text: {e}")
             return await ask_water_reminder_opt_in(update, context)
         else:
             if update.message:
-                await update.message.reply_text(
-                    "לא זיהיתי אלרגנים ספציפיים בטקסט שלך.\n\n"
-                    "אנא כתוב את האלרגיות שלך בצורה ברורה, למשל:\n"
-                    "• חלב, בוטנים\n"
-                    "• גלוטן, ביצים\n"
-                    "• אין אלרגיות\n\n"
-                    "או כתוב 'אין' אם אין לך אלרגיות.",
-                    reply_markup=ReplyKeyboardMarkup(
-                        [["אין אלרגיות"]], resize_keyboard=True
-                    ),
-                )
+                try:
+                    await update.message.reply_text(
+                        "לא זיהיתי אלרגנים ספציפיים בטקסט שלך.\n\n"
+                        "אנא כתוב את האלרגיות שלך בצורה ברורה, למשל:\n"
+                        "• חלב, בוטנים\n"
+                        "• גלוטן, ביצים\n"
+                        "• אין אלרגיות\n\n"
+                        "או כתוב 'אין' אם אין לך אלרגיות.",
+                        reply_markup=ReplyKeyboardMarkup(
+                            [["אין אלרגיות"]], resize_keyboard=True
+                        ),
+                    )
+                except Exception as e:
+                    logger.error(f"Telegram API error in reply_text: {e}")
             return ALLERGIES
 
 
@@ -1409,9 +1539,12 @@ async def get_allergies_additional(
     text = update.message.text.strip()
     if "אין" in text.lower():
         if update.message:
-            await update.message.reply_text(
-                "מעולה! עכשיו בואו נמשיך לשאלה הבאה...", reply_markup=ReplyKeyboardRemove()
-            )
+            try:
+                await update.message.reply_text(
+                    "מעולה! עכשיו בואו נמשיך לשאלה הבאה...", reply_markup=ReplyKeyboardRemove()
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         return await ask_water_reminder_opt_in(update, context)
     else:
         additional_allergies = extract_allergens_from_text(text)
@@ -1424,20 +1557,26 @@ async def get_allergies_additional(
             context.user_data["allergies"] = all_allergies
             allergies_text = ", ".join(all_allergies)
             if update.message:
-                await update.message.reply_text(
-                    f'סה"כ האלרגיות שלך: {allergies_text}\n\n'
-                    "עכשיו בואו נמשיך לשאלה הבאה...",
-                    reply_markup=ReplyKeyboardRemove(),
-                )
+                try:
+                    await update.message.reply_text(
+                        f'סה"כ האלרגיות שלך: {allergies_text}\n\n'
+                        "עכשיו בואו נמשיך לשאלה הבאה...",
+                        reply_markup=ReplyKeyboardRemove(),
+                    )
+                except Exception as e:
+                    logger.error(f"Telegram API error in reply_text: {e}")
             return await ask_water_reminder_opt_in(update, context)
         else:
             if update.message:
-                await update.message.reply_text(
-                    "לא זיהיתי אלרגיות נוספות. אם אין עוד אלרגיות, כתוב 'אין'.",
-                    reply_markup=ReplyKeyboardMarkup(
-                        [["אין אלרגיות נוספות"]], resize_keyboard=True
-                    ),
-                )
+                try:
+                    await update.message.reply_text(
+                        "לא זיהיתי אלרגיות נוספות. אם אין עוד אלרגיות, כתוב 'אין'.",
+                        reply_markup=ReplyKeyboardMarkup(
+                            [["אין אלרגיות נוספות"]], resize_keyboard=True
+                        ),
+                    )
+                except Exception as e:
+                    logger.error(f"Telegram API error in reply_text: {e}")
             return ALLERGIES_ADDITIONAL
 
 
@@ -1454,13 +1593,16 @@ async def ask_water_reminder_opt_in(
         else "האם תרצה לקבל תזכורת לשתות מים כל שעה וחצי?"
     )
     if update.message:
-        await update.message.reply_text(
-            reminder_text,
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard, one_time_keyboard=True, resize_keyboard=True
-            ),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                reminder_text,
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard, one_time_keyboard=True, resize_keyboard=True
+                ),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return WATER_REMINDER_OPT_IN
 
 
@@ -1475,14 +1617,17 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
         context.user_data["water_reminder_opt_in"] = True
         context.user_data["water_reminder_active"] = True
         if update.message:
-            await update.message.reply_text(
-                get_gendered_text(
-                    context,
-                    "מעולה! אזכיר לך לשתות מים כל שעה וחצי עד שתסיים את היום.",
-                    "מעולה! אזכיר לך לשתות מים כל שעה וחצי עד שתסיימי את היום.",
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    get_gendered_text(
+                        context,
+                        "מעולה! אזכיר לך לשתות מים כל שעה וחצי עד שתסיים את היום.",
+                        "מעולה! אזכיר לך לשתות מים כל שעה וחצי עד שתסיימי את היום.",
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         if user_id:
             save_user(user_id, context.user_data)
         asyncio.create_task(start_water_reminder_loop_with_buttons(update, context))
@@ -1490,14 +1635,17 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
         context.user_data["water_reminder_opt_in"] = False
         context.user_data["water_reminder_active"] = False
         if update.message:
-            await update.message.reply_text(
-                get_gendered_text(
-                    context,
-                    "אין בעיה! אפשר להפעיל תזכורות מים בכל שלב.",
-                    "אין בעיה! אפשר להפעיל תזכורות מים בכל שלב.",
-                ),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    get_gendered_text(
+                        context,
+                        "אין בעיה! אפשר להפעיל תזכורות מים בכל שלב.",
+                        "אין בעיה! אפשר להפעיל תזכורות מים בכל שלב.",
+                    ),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         if user_id:
             save_user(user_id, context.user_data)
 
@@ -1511,11 +1659,14 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
     gender = context.user_data.get("gender", "זכר")
     action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
     if update.message:
-        await update.message.reply_text(
-            action_text,
-            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                action_text,
+                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return ConversationHandler.END
 
 
@@ -1550,15 +1701,18 @@ async def send_water_reminder(
     if user_id:
         save_user(user_id, context.user_data)
     if update.message:
-        await update.message.reply_text(
-            get_gendered_text(
-                context,
-                "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
-                "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
-            ),
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                get_gendered_text(
+                    context,
+                    "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
+                    "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
+                ),
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
 
 
 async def remind_in_10_minutes(
@@ -1571,14 +1725,17 @@ async def remind_in_10_minutes(
     if user_id:
         save_user(user_id, context.user_data)
     if update.message:
-        await update.message.reply_text(
-            get_gendered_text(
-                context,
-                "זכור לשתות מים! 💧",
-                "זכרי לשתות מים! 💧",
-            ),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                get_gendered_text(
+                    context,
+                    "זכור לשתות מים! 💧",
+                    "זכרי לשתות מים! 💧",
+                ),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
 
 
 async def cancel_water_reminders(
@@ -1591,15 +1748,18 @@ async def cancel_water_reminders(
     if user_id:
         save_user(user_id, context.user_data)
     if update.message:
-        await update.message.reply_text(
-            get_gendered_text(
-                context,
-                "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
-                "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
-            ),
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                get_gendered_text(
+                    context,
+                    "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
+                    "בסדר! הפסקתי להזכיר לך לשתות מים. אפשר להפעיל שוב בכל שלב.",
+                ),
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
 
 
 async def water_intake_start(update: Update,
@@ -1612,11 +1772,14 @@ async def water_intake_start(update: Update,
         [KeyboardButton("אחר")],
     ]
     if update.message:
-        await update.message.reply_text(
-            "כמה מים שתית?",
-            reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                "כמה מים שתית?",
+                reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return WATER_REMINDER_OPT_IN
 
 
@@ -1642,19 +1805,25 @@ async def water_intake_amount(
         amount = int(amount_text)
     else:
         if update.message:
-            await update.message.reply_text(
-                'הזן כמות במ"ל (למשל: 300):',
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    'הזן כמות במ"ל (למשל: 300):',
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         return WATER_REMINDER_OPT_IN
     context.user_data["water_today"] += amount
     if update.message:
-        await update.message.reply_text(
-            f'כל הכבוד! שתית {amount} מ"ל מים. סה"כ היום: {context.user_data["water_today"]} מ"ל',
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                f'כל הכבוד! שתית {amount} מ"ל מים. סה"כ היום: {context.user_data["water_today"]} מ"ל',
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return ConversationHandler.END
 
 
@@ -1670,11 +1839,14 @@ async def show_daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     gender = user.get("gender", "male")
     action_text = GENDERED_ACTION["female"] if gender == "female" else GENDERED_ACTION["male"]
     if update.message:
-        await update.message.reply_text(
-            action_text,
-            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                action_text,
+                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return DAILY
 
 
@@ -1684,7 +1856,10 @@ async def daily_menu(
     if context.user_data is None:
         context.user_data = {}
     if update.message:
-        await update.message.reply_text("רגע, בונה עבורך תפריט...")
+        try:
+            await update.message.reply_text("רגע, בונה עבורך תפריט...")
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     if update.message and update.message.text:
         choice = update.message.text.strip()
         if choice == "סיימתי":
@@ -1710,9 +1885,12 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 prompt = "אשמח שתפרט מה אכלת היום, בצורה הבאה: ביצת עין, 2 פרוסות לחם לבן עם גבינה לבנה 5%, סלט ירקות ממלפפון ועגבנייה"
             else:
                 prompt = "אשמח שתפרט/י מה אכלת היום, בצורה הבאה: ביצת עין, 2 פרוסות לחם לבן עם גבינה לבנה 5%, סלט ירקות ממלפפון ועגבנייה"
-            await update.message.reply_text(
-                prompt, reply_markup=ReplyKeyboardRemove(), parse_mode="HTML"
-            )
+            try:
+                await update.message.reply_text(
+                    prompt, reply_markup=ReplyKeyboardRemove(), parse_mode="HTML"
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         user["eaten_prompted"] = True
         return EATEN
     
@@ -1752,32 +1930,48 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             response = await call_gpt(prompt)
             
             if response:
-                await update.message.reply_text(response, parse_mode="HTML")
-                
-                # Try to extract calories from GPT response
-                calorie_match = re.search(r"(\d+)\s*קלוריות?", response)
-                if calorie_match:
-                    calories = int(calorie_match.group(1))
-                    if "eaten_today" not in user:
-                        user["eaten_today"] = []
-                    user["eaten_today"].append({"desc": food_text, "calories": calories})
-                    user["remaining_calories"] = remaining - calories
+                try:
+                    await update.message.reply_text(response, parse_mode="HTML")
                     
-                    # Save to database
-                    if user_id:
-                        save_user(user_id, user)
+                    # Try to extract calories from GPT response
+                    calorie_match = re.search(r"(\d+)\s*קלוריות?", response)
+                    if calorie_match:
+                        calories = int(calorie_match.group(1))
+                        if "eaten_today" not in user:
+                            user["eaten_today"] = []
+                        user["eaten_today"].append({"desc": food_text, "calories": calories})
+                        user["remaining_calories"] = remaining - calories
+                        
+                        # Save to database
+                        if user_id:
+                            save_user(user_id, user)
+                except Exception as e:
+                    logger.error(f"Error processing food input: {e}")
+                    try:
+                        await update.message.reply_text(
+                            "תודה על הדיווח! עיבדתי את המידע.",
+                            parse_mode="HTML",
+                        )
+                    except Exception as e:
+                        logger.error(f"Telegram API error in reply_text: {e}")
             else:
+                try:
+                    await update.message.reply_text(
+                        "תודה על הדיווח! עיבדתי את המידע.",
+                        parse_mode="HTML",
+                    )
+                except Exception as e:
+                    logger.error(f"Telegram API error in reply_text: {e}")
+                
+        except Exception as e:
+            logger.error(f"Error processing food input: {e}")
+            try:
                 await update.message.reply_text(
                     "תודה על הדיווח! עיבדתי את המידע.",
                     parse_mode="HTML",
                 )
-                
-        except Exception as e:
-            logger.error(f"Error processing food input: {e}")
-            await update.message.reply_text(
-                "תודה על הדיווח! עיבדתי את המידע.",
-                parse_mode="HTML",
-            )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
     
     return EATEN
 
@@ -1795,11 +1989,14 @@ async def handle_daily_choice(
         return MENU
     elif choice == "בניית ארוחה לפי מה שיש לי בבית":
         if update.message:
-            await update.message.reply_text(
-                "פרטי לי מה יש לך בבית, לדוגמא - חזה עוף, בשר טחון, סלמון, פסטה וכו'",
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
+            try:
+                await update.message.reply_text(
+                    "פרטי לי מה יש לך בבית, לדוגמא - חזה עוף, בשר טחון, סלמון, פסטה וכו'",
+                    reply_markup=ReplyKeyboardRemove(),
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         return EATEN
     elif choice == "מה אכלתי היום":
         return await eaten(update, context)
@@ -1810,9 +2007,12 @@ async def handle_daily_choice(
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         if update.message:
-            await update.message.reply_text(
-                "📊 <b>בחר/י סוג דוח:</b>", reply_markup=reply_markup, parse_mode="HTML"
-            )
+            try:
+                await update.message.reply_text(
+                    "📊 <b>בחר/י סוג דוח:</b>", reply_markup=reply_markup, parse_mode="HTML"
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         keyboard = [
             [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
             [KeyboardButton("מה אכלתי היום")],
@@ -1821,10 +2021,13 @@ async def handle_daily_choice(
             [KeyboardButton("תזכורות על שתיית מים")],
         ]
         if update.message:
-            await update.message.reply_text(
-                "בחר/י פעולה:",
-                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-            )
+            try:
+                await update.message.reply_text(
+                    "בחר/י פעולה:",
+                    reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
         return MENU
     elif choice == "תזכורות על שתיית מים":
         await water_intake_start(update, context)
@@ -1854,7 +2057,10 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     summary = f'<b>סיכום יומי:</b>\n{eaten}\n\n<b>סה"כ נאכל:</b> <b>{total_eaten}</b> קלוריות\n<b>נשארו:</b> <b>{remaining}</b> קלוריות להיום.'
     summary = markdown_to_html(summary)
     if update.message:
-        await update.message.reply_text(summary, parse_mode="HTML")
+        try:
+            await update.message.reply_text(summary, parse_mode="HTML")
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     user_id = update.effective_user.id if update.effective_user else None
     if user_id and total_eaten > 0:
         try:
@@ -1889,15 +2095,18 @@ async def schedule_menu(
     if user_id:
         save_user(user_id, context.user_data)
     if update.message:
-        await update.message.reply_text(
-            get_gendered_text(
-                context,
-                f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
-                f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
-            ),
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
+        try:
+            await update.message.reply_text(
+                get_gendered_text(
+                    context,
+                    f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
+                    f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
+                ),
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return ConversationHandler.END
 
 
@@ -2022,10 +2231,13 @@ async def handle_free_text_input(
 
     if text_type == "question":
         # טיפול בשאלה
-        await update.message.reply_text(
-            "זיהיתי שזו שאלה. אנא השתמש/י בתפריט הראשי או פנה/י אליי ישירות עם השאלה שלך.",
-            reply_markup=build_main_keyboard(),
-        )
+        try:
+            await update.message.reply_text(
+                "זיהיתי שזו שאלה. אנא השתמש/י בתפריט הראשי או פנה/י אליי ישירות עם השאלה שלך.",
+                reply_markup=build_main_keyboard(),
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return ConversationHandler.END
 
     elif text_type == "food_list":
@@ -2034,12 +2246,15 @@ async def handle_free_text_input(
 
     else:
         # טקסט לא מזוהה
-        await update.message.reply_text(
-            "לא הצלחתי לזהות אם זו רשימת מאכלים או שאלה.\n\n"
-            "אם זו רשימת מאכלים, אנא כתוב אותם עם פסיקים ביניהם.\n"
-            "אם זו שאלה, אנא השתמש/י בתפריט הראשי.",
-            reply_markup=build_main_keyboard(),
-        )
+        try:
+            await update.message.reply_text(
+                "לא הצלחתי לזהות אם זו רשימת מאכלים או שאלה.\n\n"
+                "אם זו רשימת מאכלים, אנא כתוב אותם עם פסיקים ביניהם.\n"
+                "אם זו שאלה, אנא השתמש/י בתפריט הראשי.",
+                reply_markup=build_main_keyboard(),
+            )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
         return ConversationHandler.END
 
 
@@ -2086,28 +2301,44 @@ async def handle_food_report(
         response = await call_gpt(prompt)
         
         if response and len(response.strip()) > 0:
-            await update.message.reply_text(response, parse_mode="HTML")
-            # נסה לחלץ קלוריות מהתשובה
-            calorie_match = re.search(r"(\d+)\s*קלוריות?", response)
-            if calorie_match:
-                calories = int(calorie_match.group(1))
-                if "eaten_today" not in user:
-                    user["eaten_today"] = []
-                user["eaten_today"].append({"desc": text, "calories": calories})
-                user["remaining_calories"] = remaining - calories
-                if user_id:
-                    save_user(user_id, user)
+            try:
+                await update.message.reply_text(response, parse_mode="HTML")
+                # נסה לחלץ קלוריות מהתשובה
+                calorie_match = re.search(r"(\d+)\s*קלוריות?", response)
+                if calorie_match:
+                    calories = int(calorie_match.group(1))
+                    if "eaten_today" not in user:
+                        user["eaten_today"] = []
+                    user["eaten_today"].append({"desc": text, "calories": calories})
+                    user["remaining_calories"] = remaining - calories
+                    if user_id:
+                        save_user(user_id, user)
+            except Exception as e:
+                logger.error(f"Error processing food input: {e}")
+                try:
+                    await update.message.reply_text(
+                        "תודה על הדיווח! עיבדתי את המידע.",
+                        parse_mode="HTML",
+                    )
+                except Exception as e:
+                    logger.error(f"Telegram API error in reply_text: {e}")
         else:
+            try:
+                await update.message.reply_text(
+                    "לא הצלחתי להבין את הדיווח. נסה/י לכתוב מה אכלת בפירוט.",
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
+    except Exception as e:
+        logger.error(f"Error processing food report: {e}")
+        try:
             await update.message.reply_text(
                 "לא הצלחתי להבין את הדיווח. נסה/י לכתוב מה אכלת בפירוט.",
                 parse_mode="HTML",
             )
-    except Exception as e:
-        logger.error(f"Error processing food report: {e}")
-        await update.message.reply_text(
-            "לא הצלחתי להבין את הדיווח. נסה/י לכתוב מה אכלת בפירוט.",
-            parse_mode="HTML",
-        )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
     return ConversationHandler.END
 
 
@@ -2132,7 +2363,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 אם יש לך שאלות, פשוט כתוב לי!
     """
     if update.message:
-        await update.message.reply_text(help_text, parse_mode="HTML")
+        try:
+            await update.message.reply_text(help_text, parse_mode="HTML")
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
 
 
 async def generate_personalized_menu(
@@ -2143,9 +2377,9 @@ async def generate_personalized_menu(
     if not update.message:
         return
 
-    await update.message.reply_text("בונה עבורך תפריט מותאם אישית... ⏳")
-
     try:
+        await update.message.reply_text("בונה עבורך תפריט מותאם אישית... ⏳")
+
         # בניית פרומפט מותאם אישית
         prompt = build_user_prompt_for_gpt(user_data)
 
@@ -2156,11 +2390,14 @@ async def generate_personalized_menu(
             # סינון תגיות לא נתמכות
             response = re.sub(r'<\/?(doctype|html|body|head|div|span|p|br|hr)[^>]*>', '', response, flags=re.IGNORECASE)
             # שליחת התפריט למשתמש
-            await update.message.reply_text(
-                response,
-                parse_mode=None,
-                disable_web_page_preview=True
-            )
+            try:
+                await update.message.reply_text(
+                    response,
+                    parse_mode=None,
+                    disable_web_page_preview=True
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
             # שמירה למסד נתונים
             user_id = update.effective_user.id if update.effective_user else None
             if user_id:
@@ -2171,15 +2408,357 @@ async def generate_personalized_menu(
                 except Exception as db_error:
                     logger.error(f"Error saving menu to database: {db_error}")
         else:
+            try:
+                await update.message.reply_text(
+                    "אירעה תקלה בבניית התפריט 😔 נסה/י שוב בעוד רגע.",
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in reply_text: {e}")
+
+    except Exception as e:
+        logger.error(f"Error generating personalized menu: {e}")
+        try:
             await update.message.reply_text(
                 "אירעה תקלה בבניית התפריט 😔 נסה/י שוב בעוד רגע.",
                 parse_mode="HTML"
             )
+        except Exception as e:
+            logger.error(f"Telegram API error in reply_text: {e}")
 
+
+def build_activity_types_keyboard(selected_types: list = None) -> InlineKeyboardMarkup:
+    """בונה inline keyboard לבחירת סוגי פעילות מרובים."""
+    if selected_types is None:
+        selected_types = []
+    
+    keyboard = []
+    for activity in ACTIVITY_TYPES_MULTI:
+        # הסר אימוג'י מהטקסט לצורך השוואה
+        activity_clean = activity.split(' ')[0]  # לוקח רק את הטקסט לפני האימוג'י
+        
+        if activity_clean in selected_types:
+            # אם נבחר - הצג עם ❌
+            text = f"{activity} ❌"
+            callback_data = f"activity_remove_{activity_clean}"
+        else:
+            # אם לא נבחר - הצג עם האימוג'י המקורי
+            text = activity
+            callback_data = f"activity_add_{activity_clean}"
+        
+        keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
+    
+    # כפתור "סיימתי" - מופיע רק אם יש לפחות בחירה אחת
+    if selected_types:
+        keyboard.append([InlineKeyboardButton("סיימתי", callback_data="activity_done")])
+    
+    return InlineKeyboardMarkup(keyboard)
+
+
+async def handle_activity_types_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """מטפל בבחירת סוגי פעילות מרובים."""
+    if not update.callback_query:
+        return ACTIVITY_TYPES_SELECTION
+    
+    query = update.callback_query
+    await query.answer()
+    
+    if context.user_data is None:
+        context.user_data = {}
+    
+    # אתחל רשימת סוגי פעילות אם לא קיימת
+    if "activity_types" not in context.user_data:
+        context.user_data["activity_types"] = []
+    
+    selected_types = context.user_data["activity_types"]
+    
+    if query.data == "activity_done":
+        # המשתמש סיים בחירה - המשך לשלב הבא
+        if not selected_types:
+            # אם לא נבחר כלום, חזור לתפריט
+            keyboard = build_activity_types_keyboard(selected_types)
+            try:
+                await query.edit_message_text(
+                    "בחר/י לפחות סוג פעילות אחד:",
+                    reply_markup=keyboard
+                )
+            except Exception as e:
+                logger.error(f"Telegram API error in edit_message_text: {e}")
+            return ACTIVITY_TYPES_SELECTION
+        
+        # המשך לשאלות הספציפיות לכל סוג פעילות
+        return await process_activity_types(update, context)
+    
+    elif query.data.startswith("activity_add_"):
+        # הוסף סוג פעילות
+        activity_type = query.data.replace("activity_add_", "")
+        if activity_type not in selected_types:
+            selected_types.append(activity_type)
+            context.user_data["activity_types"] = selected_types
+    
+    elif query.data.startswith("activity_remove_"):
+        # הסר סוג פעילות
+        activity_type = query.data.replace("activity_remove_", "")
+        if activity_type in selected_types:
+            selected_types.remove(activity_type)
+            context.user_data["activity_types"] = selected_types
+    
+    # עדכן את התפריט
+    keyboard = build_activity_types_keyboard(selected_types)
+    try:
+        await query.edit_message_reply_markup(reply_markup=keyboard)
     except Exception as e:
-        logger.error(f"Error generating personalized menu: {e}")
-        await update.message.reply_text(
-            "אירעה תקלה בבניית התפריט 😔 נסה/י שוב בעוד רגע.",
-            parse_mode="HTML"
-        )
+        logger.error(f"Telegram API error in edit_message_reply_markup: {e}")
+    
+    return ACTIVITY_TYPES_SELECTION
+
+
+async def process_activity_types(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """מעבד את סוגי הפעילות שנבחרו ועובר לשאלות הספציפיות."""
+    if context.user_data is None:
+        context.user_data = {}
+    
+    selected_types = context.user_data.get("activity_types", [])
+    if not selected_types:
+        # אם אין בחירות, המשך לתזונה
+        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
+        gender = context.user_data.get("gender", "זכר")
+        if gender == "נקבה":
+            diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+        elif gender == "זכר":
+            diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+        else:
+            diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+        
+        try:
+            if update.callback_query:
+                await update.callback_query.edit_message_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+        except Exception as e:
+            logger.error(f"Telegram API error in process_activity_types: {e}")
+        
+        return DIET
+    
+    # שמור את הסוג הראשון לעיבוד
+    current_activity = selected_types[0]
+    context.user_data["current_activity_index"] = 0
+    context.user_data["current_activity"] = current_activity
+    
+    # עבור לשאלות הספציפיות לסוג הפעילות הנוכחי
+    return await route_to_activity_questions(update, context, current_activity)
+
+
+
+
+
+async def route_to_activity_questions(update: Update, context: ContextTypes.DEFAULT_TYPE, activity_type: str) -> int:
+    """מנתב לשאלות הספציפיות לסוג הפעילות."""
+    if activity_type == "ריצה":
+        # שאלות ריצה
+        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
+        gender = context.user_data.get("gender", "זכר")
+        if gender == "נקבה":
+            frequency_text = "כמה פעמים בשבוע את רצה?"
+        elif gender == "זכר":
+            frequency_text = "כמה פעמים בשבוע אתה רץ?"
+        else:
+            frequency_text = "כמה פעמים בשבוע את/ה רץ/ה?"
+        
+        try:
+            if update.callback_query:
+                await update.callback_query.edit_message_text(
+                    frequency_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            elif update.message:
+                await update.message.reply_text(
+                    frequency_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+        except Exception as e:
+            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+        return ACTIVITY_FREQUENCY
+    
+    elif activity_type == "אימוני כוח":
+        # שאלות אימוני כוח
+        keyboard = [[KeyboardButton(opt)] for opt in TRAINING_TIME_OPTIONS]
+        try:
+            if update.callback_query:
+                await update.callback_query.edit_message_text(
+                    "באיזה שעה בדרך כלל את/ה מתאמן/ת?",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            elif update.message:
+                await update.message.reply_text(
+                    "באיזה שעה בדרך כלל את/ה מתאמן/ת?",
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+        except Exception as e:
+            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+        return TRAINING_TIME
+    
+    elif activity_type in ["הליכה", "אופניים", "שחייה"]:
+        # שאלות פעילות אירובית
+        keyboard = [[KeyboardButton(opt)] for opt in ACTIVITY_FREQUENCY_OPTIONS]
+        gender = context.user_data.get("gender", "זכר")
+        if gender == "נקבה":
+            frequency_text = "כמה פעמים בשבוע את מבצעת את הפעילות?"
+        elif gender == "זכר":
+            frequency_text = "כמה פעמים בשבוע אתה מבצע את הפעילות?"
+        else:
+            frequency_text = "כמה פעמים בשבוע את/ה מבצע/ת את הפעילות?"
+        
+        try:
+            if update.callback_query:
+                await update.callback_query.edit_message_text(
+                    frequency_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            elif update.message:
+                await update.message.reply_text(
+                    frequency_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+        except Exception as e:
+            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+        return ACTIVITY_FREQUENCY
+    
+    elif activity_type in ["יוגה", "פילאטיס"]:
+        # עבור ישירות לתזונה
+        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
+        gender = context.user_data.get("gender", "זכר")
+        if gender == "נקבה":
+            diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+        elif gender == "זכר":
+            diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+        else:
+            diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+        
+        try:
+            if update.callback_query:
+                await update.callback_query.edit_message_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            elif update.message:
+                await update.message.reply_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+        except Exception as e:
+            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+        return DIET
+    
+    else:  # "אחר"
+        # עבור ישירות לתזונה
+        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
+        gender = context.user_data.get("gender", "זכר")
+        if gender == "נקבה":
+            diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+        elif gender == "זכר":
+            diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+        else:
+            diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+        
+        try:
+            if update.callback_query:
+                await update.callback_query.edit_message_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            elif update.message:
+                await update.message.reply_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+        except Exception as e:
+            logger.error(f"Telegram API error in route_to_activity_questions: {e}")
+        return DIET
+
+
+async def continue_to_next_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """ממשיך לסוג הפעילות הבא או לתזונה אם סיימנו."""
+    if context.user_data is None:
+        context.user_data = {}
+    
+    selected_types = context.user_data.get("activity_types", [])
+    current_index = context.user_data.get("current_activity_index", 0)
+    
+    # עבור לסוג הפעילות הבא
+    current_index += 1
+    context.user_data["current_activity_index"] = current_index
+    
+    if current_index >= len(selected_types):
+        # סיימנו את כל סוגי הפעילות - המשך לתזונה
+        keyboard = [[KeyboardButton(opt)] for opt in DIET_OPTIONS]
+        gender = context.user_data.get("gender", "זכר")
+        if gender == "נקבה":
+            diet_text = "מה העדפות התזונה שלך? (בחרי כל מה שמתאים)"
+        elif gender == "זכר":
+            diet_text = "מה העדפות התזונה שלך? (בחר כל מה שמתאים)"
+        else:
+            diet_text = "מה העדפות התזונה שלך? (בחר/י כל מה שמתאים)"
+        
+        try:
+            if update.callback_query:
+                await update.callback_query.edit_message_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+            elif update.message:
+                await update.message.reply_text(
+                    diet_text,
+                    reply_markup=ReplyKeyboardMarkup(
+                        keyboard, one_time_keyboard=True, resize_keyboard=True
+                    ),
+                    parse_mode="HTML",
+                )
+        except Exception as e:
+            logger.error(f"Telegram API error in continue_to_next_activity: {e}")
+        
+        return DIET
+    
+    # עבור לסוג הפעילות הבא
+    next_activity = selected_types[current_index]
+    context.user_data["current_activity"] = next_activity
+    
+    return await route_to_activity_questions(update, context, next_activity)
 

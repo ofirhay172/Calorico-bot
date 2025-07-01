@@ -12,6 +12,7 @@ import os
 from datetime import datetime, timedelta
 
 from telegram import Update
+from telegram.ext import CallbackQueryHandler
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -35,6 +36,7 @@ from config import (
     MIXED_FREQUENCY,
     MIXED_DURATION,
     MIXED_MENU_ADAPTATION,
+    ACTIVITY_TYPES_SELECTION,
     ALLERGIES,
     ALLERGIES_ADDITIONAL,
     DIET,
@@ -75,6 +77,7 @@ from handlers import (
     get_mixed_frequency,
     get_mixed_duration,
     get_mixed_menu_adaptation,
+    handle_activity_types_selection,
     get_diet,
     get_allergies,
     get_allergies_additional,
@@ -164,6 +167,7 @@ def main():
             BODY_FAT_CURRENT: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_current)],
             BODY_FAT_TARGET_GOAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_body_fat_target_goal)],
             ACTIVITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity)],
+            ACTIVITY_TYPES_SELECTION: [CallbackQueryHandler(handle_activity_types_selection)],
             ACTIVITY_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_type)],
             ACTIVITY_FREQUENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_frequency)],
             ACTIVITY_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_duration)],
@@ -205,6 +209,11 @@ def main():
     # Add command handlers
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("menu", show_daily_menu))
+
+    # Add global error handler
+    async def global_error_handler(update, context):
+        logger.error("Unhandled exception", exc_info=context.error)
+    application.add_error_handler(global_error_handler)
 
     # Initialize scheduler
     # start_scheduler(application)  # TODO: Implement proper async

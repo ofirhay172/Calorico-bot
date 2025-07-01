@@ -29,6 +29,7 @@ MIXED_ACTIVITIES = 19
 MIXED_FREQUENCY = 20
 MIXED_DURATION = 21
 MIXED_MENU_ADAPTATION = 22
+ACTIVITY_TYPES_SELECTION = 35
 DIET = 23
 ALLERGIES = 24
 ALLERGIES_ADDITIONAL = 25
@@ -213,3 +214,15 @@ WATER_REMINDER_OPTIONS = ["כן", "לא"]
 
 USERS_FILE = "users.json"
 DB_NAME = "nutrition.db"
+
+# Activity types for multi-selection
+ACTIVITY_TYPES_MULTI = [
+    "ריצה 🏃",
+    "הליכה 🚶", 
+    "אופניים 🚴",
+    "שחייה 🏊",
+    "אימוני כוח 🏋️",
+    "יוגה 🧘",
+    "פילאטיס 🤸",
+    "אחר ❓"
+]

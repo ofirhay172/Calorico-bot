@@ -18,7 +18,7 @@ from telegram import (
     Update,
 )
 from telegram.ext import ContextTypes, ConversationHandler
-from telegram.constants import ParseMode
+
 
 from config import (
     NAME,
@@ -228,17 +228,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     logger.info("Bot started by user %s", user.id)
 
-    # בדיקה אם המשתמש כבר קיים במערכת
-    if context.user_data and context.user_data.get("name"):
-        # המשתמש כבר עבר את השאלון - הצג תפריט ראשי
-        keyboard = build_main_keyboard()
-        await update.message.reply_text(
-            f"שלום {context.user_data['name']}! מה תרצה/י לעשות?",
-            reply_markup=keyboard,
-            parse_mode="HTML",
-        )
-        return ConversationHandler.END
-
+    # איפוס מלא של context.user_data
+    context.user_data = {}
+    
     # המשתמש חדש - הצג פתיח מדויק
     user_name = user.first_name or user.username or "חבר/ה"
     await update.message.reply_text(
@@ -1763,7 +1755,6 @@ async def eaten(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 await update.message.reply_text(response, parse_mode="HTML")
                 
                 # Try to extract calories from GPT response
-                import re
                 calorie_match = re.search(r"(\d+)\s*קלוריות?", response)
                 if calorie_match:
                     calories = int(calorie_match.group(1))
@@ -2016,7 +2007,7 @@ async def handle_free_text_input(
         update: Update,
         context: ContextTypes.DEFAULT_TYPE):
     """מטפל בטקסט חופשי ומסווג אותו."""
-    text = update.message.text.strip()
+    text = update.message.text.strip() if update.message.text else ""
     main_menu_buttons = [
         "לקבלת תפריט יומי מותאם אישית",
         "מה אכלתי היום",
@@ -2033,9 +2024,7 @@ async def handle_free_text_input(
         # טיפול בשאלה
         await update.message.reply_text(
             "זיהיתי שזו שאלה. אנא השתמש/י בתפריט הראשי או פנה/י אליי ישירות עם השאלה שלך.",
-            reply_markup=ReplyKeyboardMarkup(
-                build_main_keyboard(), resize_keyboard=True
-            ),
+            reply_markup=build_main_keyboard(),
         )
         return ConversationHandler.END
 
@@ -2049,9 +2038,7 @@ async def handle_free_text_input(
             "לא הצלחתי לזהות אם זו רשימת מאכלים או שאלה.\n\n"
             "אם זו רשימת מאכלים, אנא כתוב אותם עם פסיקים ביניהם.\n"
             "אם זו שאלה, אנא השתמש/י בתפריט הראשי.",
-            reply_markup=ReplyKeyboardMarkup(
-                build_main_keyboard(), resize_keyboard=True
-            ),
+            reply_markup=build_main_keyboard(),
         )
         return ConversationHandler.END
 
@@ -2064,7 +2051,7 @@ async def handle_food_report(
     if not update.message or not (update.message.text or food_text):
         return ConversationHandler.END
         
-    text = food_text or update.message.text.strip()
+    text = food_text or (update.message.text.strip() if update.message and update.message.text else "")
     
     try:
         # Use GPT to process the food input
@@ -2101,7 +2088,6 @@ async def handle_food_report(
         if response and len(response.strip()) > 0:
             await update.message.reply_text(response, parse_mode="HTML")
             # נסה לחלץ קלוריות מהתשובה
-            import re
             calorie_match = re.search(r"(\d+)\s*קלוריות?", response)
             if calorie_match:
                 calories = int(calorie_match.group(1))
@@ -2113,13 +2099,13 @@ async def handle_food_report(
                     save_user(user_id, user)
         else:
             await update.message.reply_text(
-                "לא הצלחתי להבין את הדיווח. נסה/י לכתוב מה אכלת בפירוט (לדוגמה: סנדוויץ' עם חביתה, עגבנייה, וטחינה).",
+                "לא הצלחתי להבין את הדיווח. נסה/י לכתוב מה אכלת בפירוט.",
                 parse_mode="HTML",
             )
     except Exception as e:
         logger.error(f"Error processing food report: {e}")
         await update.message.reply_text(
-            "לא הצלחתי להבין את הדיווח. נסה/י לכתוב מה אכלת בפירוט (לדוגמה: סנדוויץ' עם חביתה, עגבנייה, וטחינה).",
+            "לא הצלחתי להבין את הדיווח. נסה/י לכתוב מה אכלת בפירוט.",
             parse_mode="HTML",
         )
     return ConversationHandler.END
@@ -2168,11 +2154,11 @@ async def generate_personalized_menu(
 
         if response:
             # סינון תגיות לא נתמכות
-            response = re.sub(r'<\/?(doctype|html|body|head)[^>]*>', '', response, flags=re.IGNORECASE)
+            response = re.sub(r'<\/?(doctype|html|body|head|div|span|p|br|hr)[^>]*>', '', response, flags=re.IGNORECASE)
             # שליחת התפריט למשתמש
             await update.message.reply_text(
                 response,
-                parse_mode=ParseMode.HTML,
+                parse_mode=None,
                 disable_web_page_preview=True
             )
             # שמירה למסד נתונים

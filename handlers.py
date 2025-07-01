@@ -2536,7 +2536,7 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
             keyboard = build_activity_types_keyboard(selected_types)
             try:
                 await query.edit_message_text(
-                    gendered_text(context, "בחר לפחות סוג פעילות אחד:", "בחרי לפחות סוג פעילות אחד:"),
+                    gendered_text("בחר לפחות סוג פעילות אחד:", "בחרי לפחות סוג פעילות אחד:", context),
                     reply_markup=keyboard
                 )
             except Exception as e:
@@ -2615,9 +2615,6 @@ async def process_activity_types(update: Update, context: ContextTypes.DEFAULT_T
     
     # עבור לשאלות הספציפיות לסוג הפעילות הנוכחי
     return await route_to_activity_questions(update, context, current_activity)
-
-
-
 
 
 async def route_to_activity_questions(update: Update, context: ContextTypes.DEFAULT_TYPE, activity_type: str) -> int:

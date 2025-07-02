@@ -2733,9 +2733,10 @@ async def handle_free_text_input(
         await handle_ingredients_input(update, context, text)
         return
     
-    # זיהוי משפטים שמתחילים ב"אכלתי"
-    if text.startswith("אכלתי") or text.startswith("אכלתי ") or "אכלתי" in text[:10]:
-        # זהו צריכת מזון - עדכן את יומן הצריכה
+    # זיהוי משפטים שמתחילים ב"אכלתי", "שתיתי", "נשנשתי", "טעמתי"
+    consumption_triggers = ["אכלתי", "שתיתי", "נשנשתי", "טעמתי"]
+    if any(text.startswith(trigger) or text.startswith(trigger + " ") or trigger in text[:10] for trigger in consumption_triggers):
+        # זהו צריכת מזון/שתייה/נשנוש - עדכן את יומן הצריכה
         await handle_food_consumption(update, context, text)
         return
     

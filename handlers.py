@@ -1692,14 +1692,13 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """שואל את המשתמש על אלרגיות - קודם כן/לא, ואז בחירה מרובה אם כן."""
     if context.user_data is None:
         context.user_data = {}
-    
     # בדוק אם זה השלב הראשון (yes/no) או השני (multi-select)
+    if context.user_data is None:
+        context.user_data = {}
     if "allergy_step" not in context.user_data:
         context.user_data["allergy_step"] = "yes_no"
-    
     if context.user_data["allergy_step"] == "yes_no":
         return await get_allergies_yes_no(update, context)
     else:
@@ -1707,12 +1706,13 @@ async def get_allergies(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """שלב ראשון - שאלת כן/לא על אלרגיות."""
+    if context.user_data is None:
+        context.user_data = {}
     if update.message and update.message.text:
         answer = update.message.text.strip()
         if answer not in ["כן", "לא"]:
             keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
-            gender = context.user_data.get("gender", "זכר")
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
             if gender == "נקבה":
                 error_text = "בחרי 'כן' או 'לא' מהתפריט למטה:"
             else:
@@ -1728,7 +1728,6 @@ async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYP
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
             return ALLERGIES
-        
         if answer == "לא":
             context.user_data["allergies"] = []
             context.user_data["allergy_step"] = "yes_no"
@@ -1748,7 +1747,7 @@ async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYP
                 [KeyboardButton("קבלת דוח")],
                 [KeyboardButton("תזכורות על שתיית מים")],
             ]
-            gender = context.user_data.get("gender", "זכר")
+            gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
             action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
             try:
                 await update.message.reply_text(
@@ -1759,7 +1758,6 @@ async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYP
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
             return ConversationHandler.END
-        
         else:  # answer == "כן"
             context.user_data["allergy_step"] = "multi_select"
             if "allergies" not in context.user_data:
@@ -1774,15 +1772,13 @@ async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYP
             except Exception as e:
                 logger.error("Telegram API error in reply_text: %s", e)
             return ALLERGIES
-    
     # אם אין הודעה - הצג את השאלה הראשונה
     keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
-    gender = context.user_data.get("gender", "זכר")
+    gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
     if gender == "נקבה":
         allergy_text = "האם יש לך אלרגיות למזון? (אם לא, בחרי 'לא')"
     else:
         allergy_text = "האם יש לך אלרגיות למזון? (אם לא, בחר 'לא')"
-    
     try:
         await update.message.reply_text(
             allergy_text,
@@ -1795,11 +1791,11 @@ async def get_allergies_yes_no(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def get_allergies_multi_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """שלב שני - בחירה מרובה של אלרגיות."""
+    if context.user_data is None:
+        context.user_data = {}
     if "allergies" not in context.user_data:
         context.user_data["allergies"] = []
     selected = context.user_data["allergies"]
-
     query = update.callback_query
     if not query:
         # שלב ראשון - שלח מקלדת
@@ -1813,10 +1809,8 @@ async def get_allergies_multi_select(update: Update, context: ContextTypes.DEFAU
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
         return ALLERGIES
-
     # טיפול בלחיצות על כפתורים
     await query.answer()
-    
     if query.data == "allergy_done":
         # המשתמש לחץ על "סיימתי" - המשך לשלב הבא
         try:
@@ -1836,7 +1830,7 @@ async def get_allergies_multi_select(update: Update, context: ContextTypes.DEFAU
             [KeyboardButton("קבלת דוח")],
             [KeyboardButton("תזכורות על שתיית מים")],
         ]
-        gender = context.user_data.get("gender", "זכר")
+        gender = context.user_data.get("gender", "זכר") if context.user_data else "זכר"
         action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
         try:
             await query.message.reply_text(
@@ -1847,7 +1841,6 @@ async def get_allergies_multi_select(update: Update, context: ContextTypes.DEFAU
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
         return ConversationHandler.END
-    
     elif query.data.startswith("allergy_toggle_"):
         # טוגל אלרגיה
         allergy = query.data.replace("allergy_toggle_", "")
@@ -1856,14 +1849,12 @@ async def get_allergies_multi_select(update: Update, context: ContextTypes.DEFAU
         else:
             selected.append(allergy)
         context.user_data["allergies"] = selected
-        
         # עדכן את המקלדת
         keyboard = build_allergy_keyboard(selected)
         try:
             await query.edit_message_reply_markup(reply_markup=keyboard)
         except Exception as e:
             logger.error("Telegram API error in edit_message_reply_markup: %s", e)
-    
     return ALLERGIES
 
 
@@ -2133,24 +2124,43 @@ async def water_intake_amount(
 async def show_daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data is None:
         context.user_data = {}
-    keyboard = [
-        [KeyboardButton("מה אכלתי")],
-        [KeyboardButton("סיימתי")],
-        [KeyboardButton("עריכה")],
-    ]
-    user = context.user_data
-    gender = user.get("gender", "male")
-    action_text = GENDERED_ACTION["female"] if gender == "female" else GENDERED_ACTION["male"]
+    user_data = context.user_data if context.user_data is not None else {}
+    # סגור את המקלדת מיד אחרי הלחיצה
     if update.message:
         try:
-            await update.message.reply_text(
-                action_text,
-                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-                parse_mode="HTML",
-            )
+            await update.message.reply_text("מעבד את התפריט עבורך... ⏳", reply_markup=ReplyKeyboardRemove())
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
-    return DAILY
+    # סדר שליחת ההודעות: תקציב -> תפריט -> הדרכה -> תפריט ראשי
+    user_id = update.effective_user.id if update.effective_user else None
+    remaining_calories = user_data.get("remaining_calories", user_data.get("calorie_budget", 0))
+    # 1. שלח תקציב מוצמד
+    if update.message:
+        try:
+            msg = await update.message.reply_text(f"נותרו לך להיום: {remaining_calories} קלוריות 🔄")
+            await msg.pin()
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
+    # 2. שלח תפריט יומי
+    try:
+        from utils import build_user_prompt_for_gpt, send_contextual_guidance, build_main_keyboard
+        prompt = build_user_prompt_for_gpt(user_data)
+        menu_response = await call_gpt(prompt)
+        if menu_response:
+            await update.message.reply_text(menu_response, parse_mode="HTML")
+    except Exception as e:
+        logger.error("Error generating daily menu: %s", e)
+    # 3. שלח הדרכה מה עכשיו
+    await send_contextual_guidance(update, context)
+    # 4. שלח תפריט ראשי (פעם אחת בלבד)
+    if not user_data.get("main_menu_sent", False):
+        user_data["main_menu_sent"] = True
+        await update.message.reply_text(
+            "התפריט הראשי:",
+            reply_markup=build_main_keyboard(user_data=user_data),
+            parse_mode="HTML"
+        )
+    return MENU
 
 
 async def daily_menu(
@@ -2288,21 +2298,15 @@ async def handle_daily_choice(
         return MENU
     choice = update.message.text.strip()
     if choice == "לקבלת תפריט יומי מותאם אישית":
-        # סגור את המקלדת מיד
-        await update.message.reply_text("מכין עבורך תפריט יומי...", reply_markup=ReplyKeyboardRemove())
-        # שלח תקציב קלוריות מוצמד
-        calorie_budget = context.user_data.get("calorie_budget", 1800)
-        budget_msg = f"📌 תקציב הקלוריות היומי שלך הוא: {calorie_budget} קלוריות"
-        sent_msg = await update.message.reply_text(budget_msg, parse_mode="HTML")
-        try:
-            await sent_msg.pin()
-        except Exception:
-            pass
-        # שלח תפריט יומי
         await generate_personalized_menu(update, context)
-        # שלח הודעת 'מה עכשיו?'
-        from utils import send_contextual_guidance
-        await send_contextual_guidance(update, context)
+        # הצג תפריט ראשי אחרי קבלת התפריט
+        if update.message:
+            from utils import build_main_keyboard
+            await update.message.reply_text(
+                "התפריט הראשי:",
+                reply_markup=build_main_keyboard(user_data=context.user_data),
+                parse_mode="HTML"
+            )
         return MENU
     elif choice == "מה אכלתי היום":
         await show_today_food_summary(update, context)
@@ -3125,13 +3129,15 @@ def build_activity_types_keyboard(selected_types: list = None) -> InlineKeyboard
     
     keyboard = []
     for activity in ACTIVITY_TYPES_MULTI:
-        # הסר אימוג'י ורווחים ל-callback_data תקני
+        # השתמש בטקסט המלא של הפעילות ב-callback_data
         activity_clean = activity.replace(" ", "_").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
         
         if activity in selected_types:
+            # אם נבחר - הצג עם ❌
             text = f"{activity} ❌"
             callback_data = f"activity_remove_{activity_clean}"
         else:
+            # אם לא נבחר - הצג עם האימוג'י המקורי
             text = activity
             callback_data = f"activity_add_{activity_clean}"
         

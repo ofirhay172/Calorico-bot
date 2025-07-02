@@ -13,4 +13,12 @@ __pycache__/
 pylint_report.txt
 daily_menus.json
 users.json
-.env 
+.env
+venv/
+env/
+build/
+dist/
+node_modules/
+*.egg-info/
+*.tar.gz
+*.zip 

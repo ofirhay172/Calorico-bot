@@ -216,6 +216,9 @@ async def daily_menu_scheduler(context):
                 
                 # תעד מועד שליחה במסד
                 user_data["last_menu_sent"] = now.isoformat()
+                # איפוס כפתור התפריט היומי כדי שיופיע מחר
+                user_data["menu_sent_today"] = True
+                user_data["menu_sent_date"] = now.date().isoformat()
                 nutrition_db.save_user(user_id, user_data)
                 
                 logger.info(f"Sent daily menu to user {user_id}")
@@ -326,7 +329,7 @@ def main():
     # Handler לכפתור 'סיימתי להיום' או 'סיימתי' (כולל וריאציות)
     application.add_handler(
         MessageHandler(
-            filters.TEXT & filters.Regex(r"^סיימתי( להיום)?[.!]?$"),
+            filters.TEXT & filters.Regex(r"^✅ סיימתי להיום$|^סיימתי( להיום)?[.!]?$"),
             send_summary
         )
     )

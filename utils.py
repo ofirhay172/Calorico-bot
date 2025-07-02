@@ -19,6 +19,64 @@ logger = logging.getLogger(__name__)
 # Global variable to store OpenAI client
 OPENAI_CLIENT = None
 
+# מילון אימוג'י למזון
+FOOD_EMOJI_MAP = {
+    # בשר ודגים
+    "עוף": "🥩", "חזה עוף": "🥩", "שניצל": "🥩", "בשר": "🥩", "סטייק": "🥩", "המבורגר": "🍔",
+    "דג": "🐟", "סלמון": "🐟", "טונה": "🐟", "בקלה": "🐟", "אמנון": "🐟",
+    "ביצה": "🥚", "ביצים": "🥚", "חביתה": "🥚", "מקושקשת": "🥚",
+    
+    # ירקות
+    "ברוקולי": "🥦", "כרובית": "🥦", "כרוב": "🥬", "חסה": "🥬", "עגבניה": "🍅", "עגבניות": "🍅",
+    "מלפפון": "🥒", "גזר": "🥕", "בטטה": "🍠", "תפוח אדמה": "🥔", "תפוחי אדמה": "🥔",
+    "בצל": "🧅", "שום": "🧄", "פלפל": "🫑", "פלפלים": "🫑", "חציל": "🍆",
+    
+    # פירות
+    "תפוח": "🍎", "תפוחים": "🍎", "בננה": "🍌", "בננות": "🍌", "תות": "🍓", "תותים": "🍓",
+    "ענבים": "🍇", "תפוז": "🍊", "תפוזים": "🍊", "אבוקדו": "🥑", "אפרסק": "🍑",
+    
+    # דגנים ופחמימות
+    "לחם": "🍞", "טוסט": "🍞", "בייגל": "🥯", "קרואסון": "🥐", "פסטה": "🍝", "אורז": "🍚",
+    "קינואה": "🌾", "קוסקוס": "🌾", "שיבולת שועל": "🥣", "גרנולה": "🥣",
+    
+    # מוצרי חלב
+    "חלב": "🥛", "יוגורט": "🥛", "גבינה": "🧀", "גבינה צהובה": "🧀", "קוטג'": "🧀",
+    "גבינה לבנה": "🧀", "חמאה": "🧈", "שמנת": "🥛",
+    
+    # אגוזים וזרעים
+    "שקדים": "🥜", "אגוזים": "🥜", "בוטנים": "🥜", "גרעינים": "🌻", "שומשום": "⚪",
+    
+    # משקאות
+    "מים": "💧", "קפה": "☕", "תה": "🫖", "מיץ": "🧃", "קולה": "🥤", "ספרייט": "🥤",
+    "בירה": "🍺", "יין": "🍷", "שייק": "🥤", "מילקשייק": "🥤",
+    
+    # חטיפים וממתקים
+    "שוקולד": "🍫", "עוגה": "🍰", "עוגיות": "🍪", "גלידה": "🍦", "צ'יפס": "🍟",
+    "תפוצ'יפס": "🍟", "פופקורן": "🍿", "בייגלה": "🥨",
+    
+    # רטבים ותבלינים
+    "שמן זית": "🫒", "מאיו": "🥄", "קטשופ": "🥄", "חרדל": "🥄", "סויה": "🥄",
+    
+    # ברירת מחדל
+    "default": "🍽️"
+}
+
+def get_food_emoji(food_name: str) -> str:
+    """מחזיר אימוג'י מתאים למזון לפי השם."""
+    food_lower = food_name.lower().strip()
+    
+    # בדוק התאמה מדויקת
+    if food_lower in FOOD_EMOJI_MAP:
+        return FOOD_EMOJI_MAP[food_lower]
+    
+    # בדוק התאמה חלקית
+    for key, emoji in FOOD_EMOJI_MAP.items():
+        if key in food_lower or food_lower in key:
+            return emoji
+    
+    # אם לא נמצא התאמה, החזר ברירת מחדל
+    return FOOD_EMOJI_MAP["default"]
+
 
 def extract_openai_response_content(response) -> str:
     """Extracts the content string from an OpenAI response object safely."""
@@ -247,7 +305,7 @@ def learning_logic(context) -> str:
     return f"💡 <b>טיפ מותאם אישית:</b> {tip_text}"
 
 
-def build_main_keyboard(hide_menu_button: bool = False, user_data: dict = None) -> ReplyKeyboardMarkup:
+def build_main_keyboard(hide_menu_button: bool = False, user_data: Optional[dict] = None) -> ReplyKeyboardMarkup:
     """בונה מקלדת ראשית עם כל האפשרויות, עם אפשרות להסתיר כפתורים מסוימים.
     כפתור 'סיימתי' יופיע רק אם המשתמש צרך משהו היום."""
     from datetime import date
@@ -259,8 +317,8 @@ def build_main_keyboard(hide_menu_button: bool = False, user_data: dict = None) 
         if food_log:
             show_end_button = True
         # הסתר כפתור תפריט יומי אם כבר נשלח היום
-        menu_sent_today = user_data.get('menu_sent_today')
-        menu_sent_date = user_data.get('menu_sent_date')
+        menu_sent_today = user_data.get('menu_sent_today', False)
+        menu_sent_date = user_data.get('menu_sent_date', '')
         if menu_sent_today and menu_sent_date == today:
             show_menu_button = False
     keyboard = []
@@ -269,7 +327,7 @@ def build_main_keyboard(hide_menu_button: bool = False, user_data: dict = None) 
     keyboard.append([KeyboardButton("מה אכלתי היום")])
     keyboard.append([KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")])
     if show_end_button:
-        keyboard.append([KeyboardButton("סיימתי")])
+        keyboard.append([KeyboardButton("✅ סיימתי להיום")])
     keyboard.append([KeyboardButton("קבלת דוח")])
     keyboard.append([KeyboardButton("עדכון פרטים אישיים")])
     keyboard.append([KeyboardButton("עזרה")])
@@ -492,6 +550,8 @@ async def analyze_meal_with_gpt(text: str) -> dict:
             item.setdefault('protein', 0.0)
             item.setdefault('fat', 0.0)
             item.setdefault('carbs', 0.0)
+            # הוסף אימוג'י לפריט
+            item['emoji'] = get_food_emoji(item['name'])
             
         return data
     except Exception as e:
@@ -588,8 +648,8 @@ def build_meal_from_ingredients_prompt(ingredients: str, user_data: dict) -> str
 🍽️ שם הארוחה (X קלוריות)
 
 רכיבים:
-- רכיב 1 (כמות מדויקת) - X קלוריות
-- רכיב 2 (כמות מדויקת) - X קלוריות
+- 🥩 רכיב 1 (כמות מדויקת) - X קלוריות
+- 🥦 רכיב 2 (כמות מדויקת) - X קלוריות
 ...
 
 סה"כ: X קלוריות
@@ -602,7 +662,7 @@ def build_meal_from_ingredients_prompt(ingredients: str, user_data: dict) -> str
     return prompt
 
 
-async def fallback_via_gpt(text: str, user_context: dict = None) -> dict:
+async def fallback_via_gpt(text: str, user_context: Optional[dict] = None) -> dict:
     """
     שולח ל-GPT טקסט חופשי ומבקש זיהוי האם מדובר בצריכה בפועל או בשאלה כללית.
     מחזיר dict:
@@ -616,7 +676,7 @@ async def fallback_via_gpt(text: str, user_context: dict = None) -> dict:
 המשתמש שלח: "{text}"
 
 האם מדובר בצריכה בפועל של מזון או שתייה? אם כן, החזר JSON:
-{{"action": "consume", "item": "שם המזון/שתייה", "amount": "כמות", "calories": מספר}}
+{{"action": "consume", "item": "שם המזון/שתייה", "amount": "כמות", "calories": מספר, "emoji": "אימוג'י מתאים"}}
 אם לא, החזר JSON:
 {{"action": "reply", "text": "תשובה קצרה וברורה"}}
 ענה רק בפורמט JSON, ללא הסברים נוספים.

@@ -2285,12 +2285,6 @@ async def handle_daily_choice(
     choice = update.message.text.strip()
     if choice == "לקבלת תפריט יומי מותאם אישית":
         await generate_personalized_menu(update, context)
-        # הסר את כפתור התפריט היומי עד מחר או עד 'סיימתי'
-        if update.message:
-            await update.message.reply_text(
-                gendered_text("התפריט היומי נשלח. כפתור זה יופיע שוב מחר.", "התפריט היומי נשלח. כפתור זה יופיע שוב מחר.", context),
-                reply_markup=build_main_keyboard(user_data=context.user_data),
-            )
         return MENU
     elif choice == "מה אכלתי היום":
         await show_today_food_summary(update, context)
@@ -2298,7 +2292,7 @@ async def handle_daily_choice(
     elif choice == "בניית ארוחה לפי מה שיש לי בבית":
         await handle_meal_building(update, context)
         return MENU
-    elif choice == "סיימתי":
+    elif choice == "✅ סיימתי להיום" or choice == "סיימתי":
         await send_summary(update, context)
         if update.message:
             await update.message.reply_text(
@@ -2367,12 +2361,15 @@ async def show_today_food_summary(update: Update, context: ContextTypes.DEFAULT_
         # בנה הודעת סיכום
         summary_text = f"📊 <b>סיכום יומי - {date.today().strftime('%d/%m/%Y')}</b>\n\n"
         
-        # רשימת מאכלים
+        # רשימת מאכלים עם אימוג'י
         summary_text += "<b>🍽️ מה אכלת היום:</b>\n"
+        from utils import get_food_emoji
         for meal in food_log:
             meal_name = meal.get('name', 'לא ידוע')
             meal_calories = meal.get('calories', 0)
-            summary_text += f"• {meal_name} ({meal_calories} קלוריות)\n"
+            # נסה לקבל אימוג'י מהפריט עצמו, אחרת השתמש בפונקציה
+            emoji = meal.get('emoji', get_food_emoji(meal_name))
+            summary_text += f"• {emoji} {meal_name} ({meal_calories} קלוריות)\n"
         
         summary_text += "\n"
         
@@ -2429,6 +2426,9 @@ async def handle_meal_building(update: Update, context: ContextTypes.DEFAULT_TYP
     if context.user_data is None:
         context.user_data = {}
     context.user_data['waiting_for_ingredients'] = True
+    # איפוס כפתור התפריט היומי כדי שיופיע מחר
+    context.user_data['menu_sent_today'] = False
+    context.user_data['menu_sent_date'] = ""
 
 
 async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2439,8 +2439,11 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message and update.message.text:
         text = update.message.text.strip()
         # אם יש טקסט נוסף אחרי 'סיימתי', הוסף אותו ליומן בלי לשלוח הודעה
-        if text.startswith("סיימתי") and len(text) > len("סיימתי"):
-            extra = text[len("סיימתי"):].strip()
+        if (text.startswith("✅ סיימתי להיום") and len(text) > len("✅ סיימתי להיום")) or (text.startswith("סיימתי") and len(text) > len("סיימתי")):
+            if text.startswith("✅ סיימתי להיום"):
+                extra = text[len("✅ סיימתי להיום"):].strip()
+            else:
+                extra = text[len("סיימתי"):].strip()
             if extra:
                 await handle_food_consumption(update, context, extra, silent=True)
     food_log = user.get("daily_food_log", [])
@@ -2454,9 +2457,14 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="HTML"
             )
         return
-    # פירוט ארוחות עיקריות
+    # פירוט ארוחות עיקריות עם אימוג'י
     if food_log:
-        eaten_lines = [f"• <b>{item['name']}</b> (<b>{item['calories']}</b> קלוריות)" for item in food_log]
+        from utils import get_food_emoji
+        eaten_lines = []
+        for item in food_log:
+            # נסה לקבל אימוג'י מהפריט עצמו, אחרת השתמש בפונקציה
+            emoji = item.get('emoji', get_food_emoji(item['name']))
+            eaten_lines.append(f"• {emoji} <b>{item['name']}</b> (<b>{item['calories']}</b> קלוריות)")
         eaten = "\n".join(eaten_lines)
         total_eaten = sum(item["calories"] for item in food_log)
     else:
@@ -2519,6 +2527,9 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # שלב 3: איפוס יומי (לא יגיע לכאן אם יש הודעה)
     user["daily_food_log"] = []
     user["calories_consumed"] = 0
+    # איפוס כפתור התפריט היומי כדי שיופיע מחר
+    user["menu_sent_today"] = False
+    user["menu_sent_date"] = ""
     from datetime import date
     user["last_reset_date"] = date.today().isoformat()
     user_id = update.effective_user.id if update.effective_user else None
@@ -2609,33 +2620,22 @@ async def schedule_menu(
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
     
-    # החזר תפריט ראשי אחרי בחירת השעה
-    if update.message and update.message.text:
-        time = update.message.text.strip()
-        context.user_data["preferred_menu_hour"] = time
-        user_id = update.effective_user.id if update.effective_user else None
-        if user_id:
-            nutrition_db.save_user(user_id, context.user_data)
-        try:
-            await update.message.reply_text(
-                f"מעולה! תפריט יישלח אליך מחר בשעה {time} ⏰",
-                reply_markup=ReplyKeyboardRemove(),
-                parse_mode="HTML",
-            )
-        except Exception as e:
-            logger.error("Telegram API error in reply_text: %s", e)
-        # החזר תפריט ראשי
-        try:
-            from utils import build_main_keyboard
-            main_keyboard = build_main_keyboard(hide_menu_button=False, user_data=context.user_data)
-            await update.message.reply_text(
-                "התפריט הראשי זמין לך:",
-                reply_markup=main_keyboard,
-                parse_mode="HTML"
-            )
-        except Exception as e:
-            logger.error(f"Error sending main menu after schedule: {e}")
-        return MENU
+    # איפוס כפתור התפריט היומי כדי שיופיע מחר
+    context.user_data["menu_sent_today"] = False
+    context.user_data["menu_sent_date"] = ""
+    
+    # החזר תפריט ראשי
+    try:
+        from utils import build_main_keyboard
+        main_keyboard = build_main_keyboard(hide_menu_button=False, user_data=context.user_data)
+        await update.message.reply_text(
+            "התפריט הראשי זמין לך:",
+            reply_markup=main_keyboard,
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.error(f"Error sending main menu after schedule: {e}")
+    return MENU
     
     return ConversationHandler.END
 
@@ -2787,9 +2787,11 @@ async def handle_free_text_input(
         # עדכון יומן הארוחות
         if "daily_food_log" not in context.user_data:
             context.user_data["daily_food_log"] = []
+        emoji = result.get("emoji", "🍽️")
         context.user_data["daily_food_log"].append({
             "name": f"{item} ({amount})",
             "calories": calories,
+            "emoji": emoji,
             "timestamp": datetime.now().isoformat(),
         })
         if "calories_consumed" not in context.user_data:
@@ -2799,7 +2801,8 @@ async def handle_free_text_input(
         if user_id:
             nutrition_db.save_user(user_id, context.user_data)
         # שלח אישור
-        await update.message.reply_text(f"נרשמה צריכה: {item} ({amount}) – {calories} קלוריות.")
+        emoji = result.get("emoji", "🍽️")
+        await update.message.reply_text(f"נרשמה צריכה: {emoji} {item} ({amount}) – {calories} קלוריות.")
         # הצג תפריט ראשי מעודכן
         from utils import build_main_keyboard
         await update.message.reply_text(
@@ -2847,6 +2850,7 @@ async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_
                     context.user_data["daily_food_log"].append({
                         "name": item["name"],
                         "calories": item["calories"],
+                        "emoji": item.get("emoji", "🍽️"),
                         "timestamp": datetime.now().isoformat(),
                     })
             # עדכון התקציב
@@ -2861,8 +2865,11 @@ async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_
                 remaining_budget = 0
             # שמור למסד נתונים
             nutrition_db.save_user(user_id, context.user_data)
-            # בנה הודעת פירוט
-            meal_lines = [f"{item['name']} – {item['calories']} קלוריות" for item in items]
+            # בנה הודעת פירוט עם אימוג'י
+            meal_lines = []
+            for item in items:
+                emoji = item.get('emoji', get_food_emoji(item['name']))
+                meal_lines.append(f"{emoji} {item['name']} – {item['calories']} קלוריות")
             meal_text = "\n".join(meal_lines)
             if is_drink:
                 meal_summary = (
@@ -3020,14 +3027,37 @@ async def generate_personalized_menu(
             await update.message.reply_text("מכין לך את התפריט היומי... רגע... ⏳")
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
-        # ... קוד שליחת תפריט ...
-        # אחרי שליחת התפריט:
+        
+        # בניית התפריט היומי
+        prompt = build_user_prompt_for_gpt(user_data)
+        menu_response = await call_gpt(prompt)
+        
+        if menu_response:
+            try:
+                await update.message.reply_text(menu_response, parse_mode="HTML")
+            except Exception as e:
+                logger.error("Telegram API error in reply_text: %s", e)
+        
+        # אחרי שליחת התפריט - שמור שהתפריט נשלח היום
         from datetime import date
         user_data['menu_sent_today'] = True
         user_data['menu_sent_date'] = date.today().isoformat()
+        # עדכן גם את context.user_data
+        if context.user_data is None:
+            context.user_data = {}
+        context.user_data['menu_sent_today'] = True
+        context.user_data['menu_sent_date'] = date.today().isoformat()
         user_id = update.effective_user.id if update.effective_user else None
         if user_id:
             nutrition_db.save_user(user_id, user_data)
+        # הצג תפריט ראשי ללא כפתור תפריט יומי
+        from utils import build_main_keyboard
+        await update.message.reply_text(
+            "התפריט הראשי:",
+            reply_markup=build_main_keyboard(user_data=context.user_data),
+            parse_mode="HTML"
+        )
+        
         # הצג תפריט ראשי ללא כפתור תפריט יומי
         from utils import build_main_keyboard
         await update.message.reply_text(
@@ -3723,12 +3753,17 @@ async def handle_ingredients_input(update: Update, context: ContextTypes.DEFAULT
                 # ניתוח הארוחה עם GPT לקבלת ערכים תזונתיים
                 meal_data = await analyze_meal_with_gpt(response)
                 if meal_data and meal_data.get('items'):
+                    # הוסף אימוג'י לארוחה
+                    from utils import get_food_emoji
+                    meal_emoji = get_food_emoji(ingredients)
+                    meal_name = f"{meal_emoji} ארוחה מותאמת: {ingredients}"
                     nutrition_db.save_food_log(user_id, {
-                        'name': f"ארוחה מותאמת: {ingredients}",
+                        'name': meal_name,
                         'calories': meal_data.get('total', 0),
                         'protein': sum(item.get('protein', 0) for item in meal_data.get('items', [])),
                         'fat': sum(item.get('fat', 0) for item in meal_data.get('items', [])),
                         'carbs': sum(item.get('carbs', 0) for item in meal_data.get('items', [])),
+                        'emoji': meal_emoji,
                         'meal_date': date.today().isoformat(),
                         'meal_time': datetime.now().strftime('%H:%M')
                     })

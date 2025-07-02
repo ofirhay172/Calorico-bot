@@ -276,10 +276,7 @@ def main():
         logger.error(f"Failed to create application: {e}")
         raise
 
-    # הוסף קודם את CommandHandler("start", start)
-    application.add_handler(CommandHandler("start", start))
-
-    # ואז את ConversationHandler
+    # ConversationHandler חייב להיות קודם כדי לתפוס הודעות טקסט בזמן השאלון
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={

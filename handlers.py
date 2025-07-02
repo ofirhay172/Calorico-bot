@@ -1311,7 +1311,7 @@ async def get_supplements(
             keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
             try:
                 await update.message.reply_text(
-                    gendered_text(context, "בחר כן או לא:", "בחרי כן או לא:"),
+                    gendered_text("בחר כן או לא:", "בחרי כן או לא:", context),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -1400,7 +1400,7 @@ async def get_mixed_activities(
                 if update.message:
                     try:
                         await update.message.reply_text(
-                            gendered_text(context, "אנא בחר לפחות סוג פעילות אחד לפני ההמשך.", "אנא בחרי לפחות סוג פעילות אחד לפני ההמשך."),
+                            gendered_text("אנא בחר לפחות סוג פעילות אחד לפני ההמשך.", "אנא בחרי לפחות סוג פעילות אחד לפני ההמשך.", context),
                             reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
                         )
                     except Exception as e:
@@ -1509,7 +1509,7 @@ async def get_mixed_menu_adaptation(
             keyboard = [[KeyboardButton("כן"), KeyboardButton("לא")]]
             try:
                 await update.message.reply_text(
-                    gendered_text(context, "בחר כן או לא:", "בחרי כן או לא:"),
+                    gendered_text("בחר כן או לא:", "בחרי כן או לא:", context),
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard, one_time_keyboard=True, resize_keyboard=True
                     ),
@@ -1935,24 +1935,40 @@ async def set_water_reminder_opt_in(update: Update, context: ContextTypes.DEFAUL
         if user_id:
             nutrition_db.save_user(user_id, context.user_data)
 
-    keyboard = [
-        [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
-        [KeyboardButton("מה אכלתי היום")],
-        [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
-        [KeyboardButton("קבלת דוח")],
-        [KeyboardButton("תזכורות על שתיית מים")],
-    ]
-    gender = context.user_data.get("gender", "זכר")
-    action_text = "מה תרצי לעשות כעת?" if gender == "נקבה" else "מה תרצה לעשות כעת?"
+    # Set flow state to tracking and setup_complete with day count
+    context.user_data["flow"] = {
+        "stage": "tracking", 
+        "setup_complete": True,
+        "day_count": 1  # התחל מיום 1
+    }
+    
+    # שמור למסד נתונים
+    if user_id:
+        nutrition_db.save_user(user_id, context.user_data)
+    
+    # שלח הודעת סיום השאלון
+    completion_msg = gendered_text(
+        "🎉 מעולה! השלמת את השאלון האישי.\n\n"
+        "עכשיו תוכל לעקוב אחרי התזונה שלך ולקבל תפריטים מותאמים אישית.\n\n"
+        "**כדי לסיים את היום – יש ללחוץ על הכפתור \"סיימתי\"**\n\n"
+        "זה מאפס את התקציב, שולח לך סיכום יומי, ושואל מתי לשלוח את התפריט למחר!",
+        "🎉 מעולה! השלמת את השאלון האישי.\n\n"
+        "עכשיו תוכלי לעקוב אחרי התזונה שלך ולקבל תפריטים מותאמים אישית.\n\n"
+        "**כדי לסיים את היום – יש ללחוץ על הכפתור \"סיימתי\"**\n\n"
+        "זה מאפס את התקציב, שולח לך סיכום יומי, ושואל מתי לשלוח את התפריט למחר!",
+        context
+    )
+    
     if update.message:
         try:
             await update.message.reply_text(
-                action_text,
-                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+                completion_msg,
+                reply_markup=build_main_keyboard(),
                 parse_mode="HTML",
             )
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
+    
     return ConversationHandler.END
 
 

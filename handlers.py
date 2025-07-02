@@ -1396,7 +1396,12 @@ async def get_mixed_activities(
     selected = context.user_data["mixed_activities_selected"]
     if update.message and update.message.text:
         text = update.message.text.strip().replace(" ❌", "")
-        if text == "המשך":
+        # ניקוי טקסט מהאימוג'י, רווחים ותווים נסתרים
+        def clean(val):
+            return val.replace(" ", "").replace("\u200e", "").strip()
+        cleaned_text = clean(text)
+        cleaned_options = {clean(opt): opt for opt in MIXED_ACTIVITY_OPTIONS}
+        if cleaned_text == clean("המשך"):
             if not selected:
                 if update.message:
                     try:
@@ -1410,12 +1415,13 @@ async def get_mixed_activities(
             context.user_data["mixed_activities"] = list(selected)
             del context.user_data["mixed_activities_selected"]
             return await get_mixed_frequency(update, context)
-        elif text in MIXED_ACTIVITY_OPTIONS:
-            if text in selected:
-                selected.remove(text)
+        elif cleaned_text in cleaned_options:
+            real_option = cleaned_options[cleaned_text]
+            if real_option in selected:
+                selected.remove(real_option)
             else:
-                selected.add(text)
-        elif text == "אין":
+                selected.add(real_option)
+        elif cleaned_text == clean("אין"):
             selected.clear()
             selected.add("אין")
     if update.message:
@@ -3837,4 +3843,56 @@ async def handle_ingredients_input(update: Update, context: ContextTypes.DEFAULT
         # נקה את המצב
         if context.user_data:
             context.user_data['waiting_for_ingredients'] = False
+
+
+async def send_main_menu(update, context):
+    from utils import build_main_keyboard
+    if context.user_data is None:
+        context.user_data = {}
+    if not context.user_data.get("main_menu_sent", False):
+        context.user_data["main_menu_sent"] = True
+        await update.message.reply_text(
+            "התפריט הראשי:",
+            reply_markup=build_main_keyboard(user_data=context.user_data),
+            parse_mode="HTML"
+        )
+
+async def show_daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.user_data is None:
+        context.user_data = {}
+    user_data = context.user_data
+    user_id = update.effective_user.id if update.effective_user else None
+    chat_id = update.effective_chat.id if update.effective_chat else None
+    # סגור את המקלדת מיד אחרי הלחיצה
+    if update.message:
+        try:
+            await update.message.reply_text("מעבד את התפריט עבורך... ⏳", reply_markup=ReplyKeyboardRemove())
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
+    # 1. שלח תקציב קלוריות כהודעה נפרדת והצמד אותה
+    remaining_calories = user_data.get("remaining_calories", user_data.get("calorie_budget", 0))
+    calorie_msg = f"נותרו לך להיום: {remaining_calories} קלוריות 🔄"
+    calorie_message = None
+    if update.message:
+        try:
+            calorie_message = await update.message.reply_text(calorie_msg)
+            if chat_id and calorie_message:
+                await context.bot.pin_chat_message(chat_id, calorie_message.message_id)
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
+    # 2. שלח תפריט יומי
+    try:
+        from utils import build_user_prompt_for_gpt
+        prompt = build_user_prompt_for_gpt(user_data)
+        menu_response = await call_gpt(prompt)
+        if menu_response:
+            await update.message.reply_text(menu_response, parse_mode="HTML")
+    except Exception as e:
+        logger.error("Error generating daily menu: %s", e)
+    # 3. שלח הדרכה מה עכשיו
+    from utils import send_contextual_guidance
+    await send_contextual_guidance(update, context)
+    # 4. שלח תפריט ראשי (פעם אחת בלבד)
+    await send_main_menu(update, context)
+    return MENU
 

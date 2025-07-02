@@ -253,12 +253,13 @@ def build_main_keyboard(hide_menu_button: bool = False, user_data: dict = None) 
     show_end_button = False
     if user_data:
         food_log = user_data.get('daily_food_log', [])
-        calories = user_data.get('calories_consumed', 0)
-        if food_log or calories > 0:
+        if food_log:
             show_end_button = True
     keyboard = []
     if not hide_menu_button:
         keyboard.append([KeyboardButton("לקבלת תפריט יומי מותאם אישית")])
+    keyboard.append([KeyboardButton("מה אכלתי היום")])
+    keyboard.append([KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")])
     if show_end_button:
         keyboard.append([KeyboardButton("סיימתי")])
     keyboard.append([KeyboardButton("קבלת דוח")])

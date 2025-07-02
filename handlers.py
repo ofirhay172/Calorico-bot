@@ -66,6 +66,7 @@ from config import (
     ALLERGY_OPTIONS,
     ACTIVITY_TYPES_MULTI,
     ACTIVITY_TYPES_SELECTION,
+    MENU,
 )
 from utils import (
     clean_desc,
@@ -2162,7 +2163,7 @@ async def daily_menu(
         choice = update.message.text.strip()
         if choice == "סיימתי":
             await send_summary(update, context)
-            return SCHEDULE
+            return MENU
         else:
             return await eaten(update, context)
     return DAILY
@@ -2602,16 +2603,32 @@ async def schedule_menu(
             logger.error("Telegram API error in reply_text: %s", e)
     
     # החזר תפריט ראשי אחרי בחירת השעה
-    try:
-        from utils import build_main_keyboard
-        main_keyboard = build_main_keyboard(hide_menu_button=False, user_data=context.user_data)
-        await update.message.reply_text(
-            "התפריט הראשי זמין לך:",
-            reply_markup=main_keyboard,
-            parse_mode="HTML"
-        )
-    except Exception as e:
-        logger.error(f"Error sending main menu after schedule: {e}")
+    if update.message and update.message.text:
+        time = update.message.text.strip()
+        context.user_data["preferred_menu_hour"] = time
+        user_id = update.effective_user.id if update.effective_user else None
+        if user_id:
+            nutrition_db.save_user(user_id, context.user_data)
+        try:
+            await update.message.reply_text(
+                f"מעולה! מחר בשעה {time} תקבל/י את התפריט היומי שלך 🙌",
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
+        # החזר תפריט ראשי
+        try:
+            from utils import build_main_keyboard
+            main_keyboard = build_main_keyboard(hide_menu_button=False, user_data=context.user_data)
+            await update.message.reply_text(
+                "התפריט הראשי זמין לך:",
+                reply_markup=main_keyboard,
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.error(f"Error sending main menu after schedule: {e}")
+        return MENU
     
     return ConversationHandler.END
 

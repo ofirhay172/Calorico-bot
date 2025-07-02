@@ -352,11 +352,11 @@ def main():
         )
     )
 
-    # Add handler for free text input (only if not in conversation)
+    # Add handler לכפתור עדכון פרטים אישיים (חייב להיות לפני free text)
     application.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND & ~filters.Regex(menu_regex),
-            handle_free_text_input
+            filters.TEXT & filters.Regex(r"^(כן|לא)$"),
+            handle_update_personal_details_response
         )
     )
 
@@ -365,11 +365,11 @@ def main():
     application.add_handler(CommandHandler("menu", show_daily_menu))
     application.add_handler(CommandHandler("reset", reset_command))
 
-    # Add handler לכפתור עדכון פרטים אישיים
+    # Add handler for free text input (רק אחרי כל ההנדלרים הספציפיים)
     application.add_handler(
         MessageHandler(
-            filters.TEXT & filters.Regex(r"^(כן|לא)$"),
-            handle_update_personal_details_response
+            filters.TEXT & ~filters.COMMAND & ~filters.Regex(menu_regex) & ~filters.Regex(help_action_regex) & ~filters.Regex(r"^(כן|לא)$"),
+            handle_free_text_input
         )
     )
 

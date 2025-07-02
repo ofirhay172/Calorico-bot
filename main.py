@@ -225,7 +225,7 @@ def start_scheduler(application):
 
 
 async def main():
-    """הפונקציה הראשית שמתחילה את הבוט."""
+    logger.info("[MAIN] Bot main() started")
     # Get bot token from environment
     bot_token = os.getenv("TELEGRAM_TOKEN")
     if not bot_token or bot_token == "your_telegram_bot_token_here":
@@ -350,26 +350,23 @@ async def main():
     except Exception as e:
         logger.error(f"Failed to start scheduler: {e}")
 
-    logger.info("Bot started successfully")
+    logger.info("[MAIN] Bot initialized, starting manually (no run_polling)...")
     try:
-        # Start the application without blocking
         await application.initialize()
         await application.start()
-        
-        # Keep the bot running
+        logger.info("[MAIN] Application started, entering keep-alive loop")
         while True:
-            await asyncio.sleep(1)
-            
+            await asyncio.sleep(60)
     except Exception as e:
-        logger.error(f"Failed to start polling: {e}")
+        logger.error(f"[MAIN] Exception in main loop: {e}")
         raise
     finally:
-        # Cleanup
+        logger.info("[MAIN] main() is exiting, cleaning up...")
         try:
             await application.stop()
             await application.shutdown()
         except Exception as e:
-            logger.error(f"Error during cleanup: {e}")
+            logger.error(f"[MAIN] Error during cleanup: {e}")
 
 
 if __name__ == "__main__":

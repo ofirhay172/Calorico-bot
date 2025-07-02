@@ -578,6 +578,42 @@ class NutritionDB:
                 "meal_count": 0,
             }
 
+    def get_all_users(self) -> Dict[int, Dict[str, Any]]:
+        """מחזיר את כל המשתמשים מהמסד עם הנתונים שלהם."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT user_id, name, age, gender, height, weight, goal, 
+                           activity, diet, allergies, created_at, updated_at
+                    FROM users
+                    """
+                )
+                rows = cursor.fetchall()
+                
+                users = {}
+                for row in rows:
+                    user_id = row[0]
+                    users[user_id] = {
+                        "name": row[1],
+                        "age": row[2],
+                        "gender": row[3],
+                        "height": row[4],
+                        "weight": row[5],
+                        "goal": row[6],
+                        "activity": row[7],
+                        "diet": json.loads(row[8]) if row[8] else [],
+                        "allergies": json.loads(row[9]) if row[9] else [],
+                        "created_at": row[10],
+                        "updated_at": row[11]
+                    }
+                
+                return users
+        except Exception as e:
+            logger.error(f"Error getting all users: {e}")
+            return {}
+
 
 # Wrapper functions for backward compatibility
 def save_user_data(user_id: int, user_data: Dict[str, Any]) -> bool:

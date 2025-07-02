@@ -525,3 +525,165 @@ def add_exercise_data(user_id: int, date: str, exercise_type: str,
     logger.info(
         f"Exercise data for user {user_id} on {date}: {exercise_type}, {duration_minutes}min, {calories_burned}cal")
     return True
+
+
+def generate_long_term_feedback(user_id: int, days: int = 7) -> str:
+    """מייצר פידבק חכם לאורך זמן על בסיס דפוסי תזונה."""
+    try:
+        from datetime import date, timedelta
+        from db import NutritionDB
+        
+        nutrition_db = NutritionDB()
+        
+        # קבל נתונים של הימים האחרונים
+        end_date = date.today()
+        start_date = end_date - timedelta(days=days)
+        
+        # קבל את כל הרשומות מהימים האחרונים
+        food_logs = []
+        for i in range(days):
+            check_date = end_date - timedelta(days=i)
+            daily_log = nutrition_db.get_food_log(user_id, check_date.isoformat())
+            if daily_log:
+                food_logs.extend(daily_log)
+        
+        if not food_logs:
+            return "אין מספיק נתונים לניתוח דפוסי תזונה. נסה שוב בעוד כמה ימים."
+        
+        # ניתוח דפוסים
+        patterns = analyze_eating_patterns(food_logs, days)
+        
+        # בניית פרומפט ל-GPT
+        prompt = build_long_term_feedback_prompt(patterns, user_id)
+        
+        # שליחה ל-GPT
+        from utils import call_gpt
+        import asyncio
+        
+        # יצירת event loop אם אין
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        response = loop.run_until_complete(call_gpt(prompt))
+        
+        return response if response else "לא הצלחתי לייצר פידבק חכם כרגע."
+        
+    except Exception as e:
+        logger.error(f"Error generating long-term feedback: {e}")
+        return "אירעה שגיאה בניתוח דפוסי התזונה."
+
+
+def analyze_eating_patterns(food_logs: List[Dict[str, Any]], days: int) -> Dict[str, Any]:
+    """מנתח דפוסי אכילה מהלוגים."""
+    patterns = {
+        "total_calories": 0,
+        "avg_calories_per_day": 0,
+        "protein_deficiency": False,
+        "overeating_days": 0,
+        "late_night_eating": False,
+        "meal_skipping": False,
+        "unhealthy_choices": 0
+    }
+    
+    if not food_logs:
+        return patterns
+    
+    # חישוב קלוריות כוללות וממוצע יומי
+    total_calories = sum(meal.get('calories', 0) for meal in food_logs)
+    patterns["total_calories"] = total_calories
+    patterns["avg_calories_per_day"] = total_calories / days
+    
+    # בדיקת חוסר חלבון (פחות מ-50 גרם ליום בממוצע)
+    total_protein = sum(meal.get('protein', 0) for meal in food_logs)
+    avg_protein = total_protein / days
+    if avg_protein < 50:
+        patterns["protein_deficiency"] = True
+    
+    # בדיקת ימי אכילה מוגזמת (יותר מ-2500 קלוריות)
+    daily_calories = {}
+    for meal in food_logs:
+        meal_date = meal.get('meal_date', '')
+        if meal_date not in daily_calories:
+            daily_calories[meal_date] = 0
+        daily_calories[meal_date] += meal.get('calories', 0)
+    
+    overeating_days = sum(1 for calories in daily_calories.values() if calories > 2500)
+    patterns["overeating_days"] = overeating_days
+    
+    # בדיקת אכילה בלילה (אחרי 22:00)
+    late_night_meals = [meal for meal in food_logs if meal.get('meal_time', '').startswith('22:') or meal.get('meal_time', '').startswith('23:')]
+    if len(late_night_meals) > days * 0.3:  # יותר מ-30% מהימים
+        patterns["late_night_eating"] = True
+    
+    # בדיקת דילוג על ארוחות (פחות מ-2 ארוחות ביום)
+    meals_per_day = len(food_logs) / days
+    if meals_per_day < 2:
+        patterns["meal_skipping"] = True
+    
+    # בדיקת בחירות לא בריאות
+    unhealthy_keywords = ['פיצה', 'המבורגר', 'צ\'יפס', 'שוקולד', 'עוגה', 'גלידה', 'ממתקים']
+    unhealthy_meals = 0
+    for meal in food_logs:
+        meal_name = meal.get('name', '').lower()
+        if any(keyword in meal_name for keyword in unhealthy_keywords):
+            unhealthy_meals += 1
+    
+    patterns["unhealthy_choices"] = unhealthy_meals
+    
+    return patterns
+
+
+def build_long_term_feedback_prompt(patterns: Dict[str, Any], user_id: int) -> str:
+    """בונה פרומפט לפידבק חכם לאורך זמן."""
+    from db import NutritionDB
+    
+    nutrition_db = NutritionDB()
+    user_data = nutrition_db.load_user(user_id) or {}
+    
+    name = user_data.get('name', 'חבר/ה')
+    gender = user_data.get('gender', 'לא צוין')
+    goal = user_data.get('goal', 'לא צוין')
+    calorie_budget = user_data.get('calorie_budget', 1800)
+    
+    avg_calories = patterns.get('avg_calories_per_day', 0)
+    protein_deficiency = patterns.get('protein_deficiency', False)
+    overeating_days = patterns.get('overeating_days', 0)
+    late_night_eating = patterns.get('late_night_eating', False)
+    meal_skipping = patterns.get('meal_skipping', False)
+    unhealthy_choices = patterns.get('unhealthy_choices', 0)
+    
+    prompt = f"""
+אתה תזונאי מנוסה. נתח את דפוסי התזונה של המשתמש/ת וספק פידבק חכם ומעודד.
+
+נתוני המשתמש/ת:
+- שם: {name}
+- מגדר: {gender}
+- מטרה: {goal}
+- תקציב קלוריות יומי: {calorie_budget}
+
+ניתוח דפוסי אכילה (7 ימים אחרונים):
+- ממוצע קלוריות יומי: {avg_calories:.0f}
+- חוסר חלבון: {'כן' if protein_deficiency else 'לא'}
+- ימי אכילה מוגזמת: {overeating_days}
+- אכילה בלילה: {'כן' if late_night_eating else 'לא'}
+- דילוג על ארוחות: {'כן' if meal_skipping else 'לא'}
+- בחירות לא בריאות: {unhealthy_choices}
+
+הנחיות:
+- ספק פידבק מעודד וחיובי
+- התמקד ב-2-3 נקודות לשיפור
+- תן המלצות מעשיות ופשוטות
+- התחשב במטרת המשתמש/ת
+- השתמש בשפה מותאמת מגדרית
+- ענה בעברית, בשפה טבעית וברורה
+- אל תשתמש ב-HTML או Markdown
+
+הפידבק צריך להיות:
+1. פתיח מעודד (2-3 משפטים)
+2. 2-3 נקודות לשיפור עם המלצות מעשיות
+3. סיכום חיובי ומעודד
+"""
+    return prompt

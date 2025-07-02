@@ -108,6 +108,7 @@ from handlers import (
     handle_help_action,
 )
 from utils import build_main_keyboard
+from db import NutritionDB
 
 # Configure logging
 logging.basicConfig(
@@ -116,6 +117,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Initialize database
+nutrition_db = NutritionDB()
+
 # File paths
 DAILY_MENUS_FILE = "daily_menus.json"
 
@@ -123,52 +127,97 @@ DAILY_MENUS_FILE = "daily_menus.json"
 async def daily_menu_scheduler(context):
     """שולח תפריט יומי למשתמשים שנרשמו לכך, בשעה שנבחרה."""
     try:
-        if not os.path.exists(USERS_FILE):
-            logger.info(
-                "Users file not found, skipping daily menu delivery")
-            return
-
-        with open(USERS_FILE, "r", encoding="utf-8") as f:
-            users = json.load(f)
-
         now = datetime.datetime.now()
         current_hour = now.strftime("%H:00")
-
-        for user_id_str, user_data in users.items():
-            if user_data.get("daily_menu_enabled", False) and user_data.get("preferred_menu_hour") == current_hour:
+        current_date = now.date().isoformat()
+        
+        # קבל את כל המשתמשים מהמסד
+        all_users = nutrition_db.get_all_users()
+        
+        for user_id, user_data in all_users.items():
+            try:
+                # בדוק אם המשתמש רשום לתפריט אוטומטי
+                if not user_data.get("daily_menu_enabled", False):
+                    continue
+                    
+                # בדוק אם השעה מתאימה
+                preferred_hour = user_data.get("preferred_menu_hour")
+                if preferred_hour != current_hour:
+                    continue
+                
+                # בדוק אם כבר נשלח היום
+                last_menu_sent = user_data.get("last_menu_sent")
+                if last_menu_sent:
+                    try:
+                        last_sent_date = datetime.datetime.fromisoformat(last_menu_sent).date()
+                        if last_sent_date >= now.date():
+                            logger.info(f"Menu already sent today for user {user_id}")
+                            continue
+                    except Exception as e:
+                        logger.error(f"Error parsing last_menu_sent for user {user_id}: {e}")
+                
+                # בדוק אם המשתמש בחר "מעדיף לבקש לבד"
+                if preferred_hour == "מעדיף לבקש לבד":
+                    continue
+                
+                # שלח תקציב קלוריות
+                calorie_budget = user_data.get("calorie_budget", 0)
+                calorie_msg = f"📌 תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות"
+                
                 try:
-                    user_id = int(user_id_str)
-                    calorie_budget = user_data.get("calorie_budget", 0)
-                    gender = user_data.get("gender", "נקבה")
-                    # שלח תקציב קלוריות
-                    calorie_msg = f"📌 תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות"
                     calorie_message = await context.bot.send_message(
                         chat_id=user_id,
                         text=calorie_msg,
                     )
+                    
                     # הצמד הודעה
                     try:
                         chat = await context.bot.get_chat(user_id)
                         await chat.pin_message(calorie_message.message_id)
                     except Exception as e:
-                        logger.error(f"Error pinning calorie message for user {user_id_str}: {e}")
-                    # שלח תפריט יומי
+                        logger.error(f"Error pinning calorie message for user {user_id}: {e}")
+                        
+                except Exception as e:
+                    logger.error(f"Error sending calorie message to user {user_id}: {e}")
+                    continue
+                
+                # שלח הודעת תפריט יומי
+                try:
                     await context.bot.send_message(
                         chat_id=user_id,
                         text="🍽️ התפריט היומי שלך מוכן! לחץ על 'לקבלת תפריט יומי מותאם אישית'",
                         reply_markup=build_main_keyboard(),
                     )
-                    # תעד מועד שליחה
-                    user_data["last_menu_sent"] = now.isoformat()
-                    # שמור במסד
-                    with open(USERS_FILE, "w", encoding="utf-8") as fw:
-                        json.dump(users, fw, ensure_ascii=False, indent=2)
-                    logger.info("Sent daily menu to user %s", user_id_str)
                 except Exception as e:
-                    logger.error(
-                        "Error sending daily menu to user %s: %s", user_id_str, e)
+                    logger.error(f"Error sending menu notification to user {user_id}: {e}")
+                    continue
+                
+                # תעד מועד שליחה במסד
+                user_data["last_menu_sent"] = now.isoformat()
+                nutrition_db.save_user(user_id, user_data)
+                
+                logger.info(f"Sent daily menu to user {user_id}")
+                
+            except Exception as e:
+                logger.error(f"Error processing user {user_id} in daily menu scheduler: {e}")
+                continue
+                
     except Exception as e:
-        logger.error("Error in daily menu scheduler: %s", e)
+        logger.error(f"Error in daily menu scheduler: {e}")
+
+
+def start_scheduler(application):
+    """מתחיל את ה-scheduler לשליחת תפריטים אוטומטיים."""
+    job_queue = application.job_queue
+    
+    # הפעל את הבדיקה כל 10 דקות
+    job_queue.run_repeating(
+        daily_menu_scheduler,
+        interval=datetime.timedelta(minutes=10),
+        first=datetime.timedelta(seconds=30)  # התחל אחרי 30 שניות
+    )
+    
+    logger.info("Daily menu scheduler started - checking every 10 minutes")
 
 
 def main():
@@ -237,7 +286,7 @@ def main():
     )
 
     # Add handler for report menu callback
-    application.add_handler(CallbackQueryHandler(handle_report_request, pattern=r"^report_(daily|weekly|monthly)$"))
+    application.add_handler(CallbackQueryHandler(handle_report_request, pattern=r"^report_(daily|weekly|monthly|smart_feedback)$"))
 
     # Add handler for help button ("עזרה")
     application.add_handler(
@@ -282,8 +331,7 @@ def main():
     application.add_error_handler(global_error_handler)
 
     # Initialize scheduler
-    # start_scheduler(application)  # TODO: Implement proper async
-    # scheduler
+    start_scheduler(application)
 
     logger.info("Bot started successfully")
     application.run_polling()

@@ -75,6 +75,7 @@ from utils import (
     call_gpt,
     analyze_meal_with_gpt,
     build_free_text_prompt,
+    build_meal_from_ingredients_prompt,
 )
 from report_generator import (
     get_weekly_report,
@@ -2201,6 +2202,12 @@ async def handle_daily_choice(
                 reply_markup=build_main_keyboard(hide_menu_button=True),
             )
         return MENU
+    elif choice == "מה אכלתי היום":
+        await show_today_food_summary(update, context)
+        return MENU
+    elif choice == "בניית ארוחה לפי מה שיש לי בבית":
+        await handle_meal_building(update, context)
+        return MENU
     elif choice == "סיימתי":
         await send_summary(update, context)
         if update.message:
@@ -2215,6 +2222,7 @@ async def handle_daily_choice(
             [InlineKeyboardButton("📊 סיכום יומי", callback_data="report_daily")],
             [InlineKeyboardButton("📅 סיכום שבועי", callback_data="report_weekly")],
             [InlineKeyboardButton("🗓 סיכום חודשי", callback_data="report_monthly")],
+            [InlineKeyboardButton("🧠 פידבק חכם", callback_data="report_smart_feedback")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         if update.message:
@@ -2240,6 +2248,97 @@ async def handle_daily_choice(
         return MENU
     else:
         return await eaten(update, context)
+
+
+async def show_today_food_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """מציג סיכום של יומן האכילה של היום הנוכחי."""
+    if not update.message:
+        return
+        
+    user_id = update.effective_user.id if update.effective_user else None
+    if not user_id:
+        return
+        
+    try:
+        # קבל את יומן האכילה של היום
+        food_log = nutrition_db.get_food_log(user_id, date.today().isoformat())
+        
+        if not food_log:
+            # אין נתונים להיום
+            await update.message.reply_text(
+                gendered_text("לא נרשם מזון היום.", "לא נרשם מזון היום.", context),
+                parse_mode="HTML"
+            )
+            return
+            
+        # קבל סיכום יומי
+        daily_summary = nutrition_db.get_daily_summary(user_id, date.today().isoformat())
+        
+        # בנה הודעת סיכום
+        summary_text = f"📊 <b>סיכום יומי - {date.today().strftime('%d/%m/%Y')}</b>\n\n"
+        
+        # רשימת מאכלים
+        summary_text += "<b>🍽️ מה אכלת היום:</b>\n"
+        for meal in food_log:
+            meal_name = meal.get('name', 'לא ידוע')
+            meal_calories = meal.get('calories', 0)
+            summary_text += f"• {meal_name} ({meal_calories} קלוריות)\n"
+        
+        summary_text += "\n"
+        
+        # סיכום קלוריות ומאקרו-נוטריאנטים
+        total_calories = daily_summary.get('total_calories', 0)
+        total_protein = daily_summary.get('total_protein', 0.0)
+        total_fat = daily_summary.get('total_fat', 0.0)
+        total_carbs = daily_summary.get('total_carbs', 0.0)
+        
+        summary_text += f"<b>🔥 סה\"כ קלוריות:</b> {total_calories}\n"
+        summary_text += f"<b>🥩 חלבון:</b> {total_protein:.1f}ג\n"
+        summary_text += f"<b>🧈 שומן:</b> {total_fat:.1f}ג\n"
+        summary_text += f"<b>🍞 פחמימות:</b> {total_carbs:.1f}ג\n"
+        
+        # השוואה לתקציב היומי
+        user_data = context.user_data or {}
+        calorie_budget = user_data.get('calorie_budget', 0)
+        if calorie_budget > 0:
+            remaining = calorie_budget - total_calories
+            if remaining >= 0:
+                summary_text += f"\n✅ <b>נשארו לך:</b> {remaining} קלוריות"
+            else:
+                summary_text += f"\n⚠️ <b>חרגת ב:</b> {abs(remaining)} קלוריות"
+        
+        await update.message.reply_text(
+            summary_text,
+            parse_mode="HTML"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error showing today's food summary: {e}")
+        await update.message.reply_text(
+            "אירעה שגיאה בטעינת הסיכום היומי. נסה שוב.",
+            parse_mode="HTML"
+        )
+
+
+async def handle_meal_building(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """מטפל בבניית ארוחה לפי רכיבים זמינים."""
+    if not update.message:
+        return
+        
+    # שלח הודעת הנחיה
+    await update.message.reply_text(
+        gendered_text(
+            "כתוב לי מה יש לך בבית (למשל: עגבניות, ביצים, לחם, גבינה) ואני אבנה לך ארוחה בריאה!",
+            "כתבי לי מה יש לך בבית (למשל: עגבניות, ביצים, לחם, גבינה) ואני אבנה לך ארוחה בריאה!",
+            context
+        ),
+        parse_mode="HTML"
+    )
+    
+    # שמור מצב - המשתמש עכשיו מחכה להזנת רכיבים
+    if context.user_data is None:
+        context.user_data = {}
+    context.user_data['waiting_for_ingredients'] = True
 
 
 async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2489,6 +2588,11 @@ async def handle_free_text_input(
     
     text = update.message.text.strip()
     
+    # בדוק אם המשתמש מחכה להזנת רכיבים לבניית ארוחה
+    if context.user_data and context.user_data.get('waiting_for_ingredients', False):
+        await handle_ingredients_input(update, context, text)
+        return
+    
     # זיהוי משפטים שמתחילים ב"אכלתי"
     if text.startswith("אכלתי") or text.startswith("אכלתי ") or "אכלתי" in text[:10]:
         # זהו צריכת מזון - עדכן את יומן הצריכה
@@ -2501,27 +2605,20 @@ async def handle_free_text_input(
         await handle_nutrition_question(update, context, text)
         return
     
-    # אם זה לא מזוהה - שלח הודעה כללית
-    try:
-        await update.message.reply_text(
-            "אני לא מבין את הבקשה. אפשר לכתוב:\n"
-            "• 'אכלתי [מה אכלת]' - לרישום מזון\n"
-            "• שאלות על תזונה וקלוריות\n"
-            "• או להשתמש בתפריט למטה",
-            parse_mode="HTML"
-        )
-    except Exception as e:
-        logger.error("Telegram API error in reply_text: %s", e)
-
     # כל טקסט חופשי אחר – שלח ל-GPT עם פרומפט מלא
     try:
         from utils import build_user_prompt_for_gpt, call_gpt
         user_data = context.user_data or {}
-        # בנה פרומפט מותאם לשאלה חופשית
-        prompt = build_free_text_prompt(user_data, text)
+        
         # שלח הודעת המתנה
         await update.message.reply_text("חושב על תשובה... ⏳")
+        
+        # בנה פרומפט מותאם לשאלה חופשית
+        prompt = build_free_text_prompt(user_data, text)
+        
+        # שלח ל-GPT
         response = await call_gpt(prompt)
+        
         if response:
             await update.message.reply_text(response, parse_mode=None)
         else:
@@ -3374,6 +3471,22 @@ async def handle_report_request(update: Update, context: ContextTypes.DEFAULT_TY
         await query.answer()
         await query.edit_message_text(summary, parse_mode="HTML")
         return
+    # פידבק חכם
+    elif report_type == 'smart_feedback':
+        await query.answer()
+        await query.edit_message_text("🧠 מנתח דפוסי תזונה... ⏳", parse_mode="HTML")
+        
+        try:
+            from report_generator import generate_long_term_feedback
+            feedback = generate_long_term_feedback(user_id, days=7)
+            await query.edit_message_text(feedback, parse_mode="HTML")
+        except Exception as e:
+            logger.error(f"Error generating smart feedback: {e}")
+            await query.edit_message_text(
+                "אירעה שגיאה בניתוח דפוסי התזונה. נסה שוב מאוחר יותר.",
+                parse_mode="HTML"
+            )
+        return
     else:
         await query.answer()
         await query.edit_message_text("סוג דוח לא נתמך.")
@@ -3454,4 +3567,55 @@ async def handle_help_action(update: Update, context: ContextTypes.DEFAULT_TYPE)
             parse_mode="HTML"
         )
         return
+
+
+async def handle_ingredients_input(update: Update, context: ContextTypes.DEFAULT_TYPE, ingredients: str):
+    """מטפל בהזנת רכיבים לבניית ארוחה."""
+    try:
+        from utils import build_meal_from_ingredients_prompt, call_gpt
+        user_data = context.user_data or {}
+        
+        # שלח הודעת המתנה
+        await update.message.reply_text("בונה לך ארוחה מהרכיבים... ⏳")
+        
+        # בנה פרומפט לבניית ארוחה
+        prompt = build_meal_from_ingredients_prompt(ingredients, user_data)
+        
+        # שלח ל-GPT
+        response = await call_gpt(prompt)
+        
+        if response:
+            await update.message.reply_text(response, parse_mode=None)
+            
+            # שמור את הארוחה במסד
+            user_id = update.effective_user.id if update.effective_user else None
+            if user_id:
+                # ניתוח הארוחה עם GPT לקבלת ערכים תזונתיים
+                meal_data = await analyze_meal_with_gpt(response)
+                if meal_data and meal_data.get('items'):
+                    nutrition_db.save_food_log(user_id, {
+                        'name': f"ארוחה מותאמת: {ingredients}",
+                        'calories': meal_data.get('total', 0),
+                        'protein': sum(item.get('protein', 0) for item in meal_data.get('items', [])),
+                        'fat': sum(item.get('fat', 0) for item in meal_data.get('items', [])),
+                        'carbs': sum(item.get('carbs', 0) for item in meal_data.get('items', [])),
+                        'meal_date': date.today().isoformat(),
+                        'meal_time': datetime.now().strftime('%H:%M')
+                    })
+        else:
+            await update.message.reply_text(
+                "לא הצלחתי לבנות ארוחה מהרכיבים שציינת. נסה שוב עם רכיבים אחרים.",
+                parse_mode="HTML"
+            )
+            
+    except Exception as e:
+        logger.error(f"Error handling ingredients input: {e}")
+        await update.message.reply_text(
+            "אירעה שגיאה בבניית הארוחה. נסה שוב.",
+            parse_mode="HTML"
+        )
+    finally:
+        # נקה את המצב
+        if context.user_data:
+            context.user_data['waiting_for_ingredients'] = False
 

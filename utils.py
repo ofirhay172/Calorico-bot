@@ -400,24 +400,42 @@ async def call_gpt(prompt: str) -> str:
 async def analyze_meal_with_gpt(text: str) -> dict:
     """
     שולח ל-GPT תיאור ארוחה חופשי ומקבל רשימת פריטים עם קלוריות לכל פריט וסך הכל.
-    מחזיר dict: {'items': [{'name': str, 'calories': int}], 'total': int}
+    מחזיר dict: {'items': [{'name': str, 'calories': int, 'protein': float, 'fat': float, 'carbs': float}], 'total': int}
     """
     prompt = f"""
-פענח את הארוחה הבאה למרכיבים ברורים, עם כמויות סבירות וקלוריות לכל פריט. אם לא צוינה כמות, השתמש בברירת מחדל ישראלית (למשל: פרוסת לחם, ביצה אחת, קערת סלט קטנה, כף שוקולד וכו').
+אתה תזונאי מנוסה. פענח את הארוחה הבאה למרכיבים ברורים עם כמויות מדויקות וקלוריות.
 
-החזר תשובה בפורמט JSON בלבד, כך:
+חשוב מאוד:
+- השתמש בטקסט המקורי של המשתמש כפי שנכתב, כולל כל הכמויות (גרם, כף, פרוסות, וכו')
+- אל תסיר או תשנה יחידות מידה
+- חשב קלוריות, חלבון, שומן ופחמימות לכל פריט
+- אם לא צוינה כמות, השתמש בברירת מחדל הגיונית (למשל: פרוסת לחם, ביצה אחת, קערת סלט קטנה)
+
+החזר תשובה בפורמט JSON בלבד:
 {{
   "items": [
-    {{"name": "שם פריט", "calories": מספר}},
-    ...
+    {{
+      "name": "שם הפריט עם הכמות המדויקת",
+      "calories": מספר קלוריות,
+      "protein": גרם חלבון,
+      "fat": גרם שומן,
+      "carbs": גרם פחמימות
+    }}
   ],
   "total": סכום כל הקלוריות
 }}
 
-הארוחה:
+הארוחה שכתב המשתמש:
 {text}
+
+הנחיות נוספות:
+- השתמש בערכים מדויקים ממאגר תזונתי אמיתי
+- אם יש בלבול בכמויות, השתמש בערכים סבירים
+- אל תוסיף פריטים שלא הוזכרו
+- שמור על הכמויות המקוריות ככל האפשר
 """
     response = await call_gpt(prompt)
+    
     # ננסה להוציא JSON מהתשובה
     try:
         # מצא את ה-json הראשון בתשובה
@@ -425,10 +443,28 @@ async def analyze_meal_with_gpt(text: str) -> dict:
         json_end = response.rfind('}') + 1
         json_str = response[json_start:json_end]
         data = json.loads(json_str)
+        
+        # וודא שיש לנו את כל השדות הנדרשים
+        if 'items' not in data or 'total' not in data:
+            raise ValueError("Missing required fields in GPT response")
+            
+        # וודא שכל פריט יש את כל השדות הנדרשים
+        for item in data['items']:
+            if 'name' not in item or 'calories' not in item:
+                raise ValueError("Missing required fields in meal item")
+            # הוסף ערכים ברירת מחדל אם חסרים
+            item.setdefault('protein', 0.0)
+            item.setdefault('fat', 0.0)
+            item.setdefault('carbs', 0.0)
+            
         return data
     except Exception as e:
         logger.error(f"Failed to parse GPT meal JSON: {e}, response: {response}")
-        return {"items": [], "total": 0}
+        # החזר מבנה ברירת מחדל
+        return {
+            "items": [{"name": text, "calories": 0, "protein": 0.0, "fat": 0.0, "carbs": 0.0}],
+            "total": 0
+        }
 
 
 def build_free_text_prompt(user_data: dict, user_text: str) -> str:
@@ -471,5 +507,57 @@ def build_free_text_prompt(user_data: dict, user_text: str) -> str:
 - אל תוסיף המלצות כלליות אם לא התבקשת.
 - ענה בעברית, בשפה טבעית וברורה.
 - אל תשתמש ב-HTML או Markdown.
+"""
+    return prompt
+
+
+def build_meal_from_ingredients_prompt(ingredients: str, user_data: dict) -> str:
+    """בונה פרומפט לבניית ארוחה מרכיבים זמינים."""
+    name = user_data.get('telegram_name') or user_data.get('name', 'חבר/ה')
+    gender = user_data.get('gender', 'לא צוין')
+    goal = user_data.get('goal', 'לא צוין')
+    diet_preferences = ", ".join(user_data.get('diet', [])) if user_data.get('diet') else "אין העדפות מיוחדות"
+    allergies = ", ".join(user_data.get('allergies', [])) if user_data.get('allergies') else "אין"
+    daily_calories = user_data.get('calorie_budget', 1800)
+    calories_consumed = user_data.get('calories_consumed', 0)
+    calories_remaining = daily_calories - calories_consumed
+    
+    prompt = f"""
+אתה תזונאי מנוסה. המשתמש/ת כתב/ה את רשימת הרכיבים שיש לו/לה בבית:
+
+{ingredients}
+
+נתוני המשתמש/ת:
+- שם: {name}
+- מגדר: {gender}
+- מטרה: {goal}
+- העדפות תזונה: {diet_preferences}
+- אלרגיות: {allergies}
+- קלוריות שנותרו להיום: {calories_remaining}
+
+בנה הצעה לארוחה פשוטה ובריאה מתוך מה שצוין. 
+
+הנחיות:
+- השתמש רק ברכיבים שצוינו (או רכיבים בסיסיים כמו מלח, פלפל, שמן)
+- הוסף כמויות מדויקות לכל רכיב
+- חשב הערכה קלורית מדויקת
+- התחשב בהעדפות התזונה והאלרגיות
+- שמור על איזון תזונתי (חלבון, פחמימות, שומן)
+- אל תחרוג מהקלוריות שנותרו להיום
+
+החזר תשובה בפורמט:
+🍽️ שם הארוחה (X קלוריות)
+
+רכיבים:
+- רכיב 1 (כמות מדויקת) - X קלוריות
+- רכיב 2 (כמות מדויקת) - X קלוריות
+...
+
+סה"כ: X קלוריות
+חלבון: X גרם
+שומן: X גרם
+פחמימות: X גרם
+
+הוראות הכנה קצרות (2-3 משפטים)
 """
     return prompt

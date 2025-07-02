@@ -591,3 +591,34 @@ def build_meal_from_ingredients_prompt(ingredients: str, user_data: dict) -> str
 הוראות הכנה קצרות (2-3 משפטים)
 """
     return prompt
+
+
+async def fallback_via_gpt(text: str, user_context: dict = None) -> dict:
+    """
+    שולח ל-GPT טקסט חופשי ומבקש זיהוי האם מדובר בצריכה בפועל או בשאלה כללית.
+    מחזיר dict:
+      - אם צריכה: {"action": "consume", "item": ..., "amount": ..., "calories": ...}
+      - אם לא: {"action": "reply", "text": ...}
+    """
+    if user_context is None:
+        user_context = {}
+    from utils import call_gpt
+    prompt = f'''
+המשתמש שלח: "{text}"
+
+האם מדובר בצריכה בפועל של מזון או שתייה? אם כן, החזר JSON:
+{{"action": "consume", "item": "שם המזון/שתייה", "amount": "כמות", "calories": מספר}}
+אם לא, החזר JSON:
+{{"action": "reply", "text": "תשובה קצרה וברורה"}}
+ענה רק בפורמט JSON, ללא הסברים נוספים.
+'''
+    response = await call_gpt(prompt)
+    import json
+    try:
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        json_str = response[json_start:json_end]
+        data = json.loads(json_str)
+        return data
+    except Exception as e:
+        return {"action": "reply", "text": response.strip()}

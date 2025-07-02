@@ -76,6 +76,7 @@ from utils import (
     analyze_meal_with_gpt,
     build_free_text_prompt,
     build_meal_from_ingredients_prompt,
+    fallback_via_gpt,
 )
 from report_generator import (
     get_weekly_report,
@@ -2754,36 +2755,43 @@ async def handle_free_text_input(
         await handle_nutrition_question(update, context, text)
         return
     
-    # כל טקסט חופשי אחר – שלח ל-GPT עם פרומפט מלא
-    try:
-        from utils import build_user_prompt_for_gpt, call_gpt
-        user_data = context.user_data or {}
-        
-        # שלח הודעת המתנה
-        await update.message.reply_text("חושב על תשובה... ⏳")
-        
-        # בנה פרומפט מותאם לשאלה חופשית
-        prompt = build_free_text_prompt(user_data, text)
-        
-        # שלח ל-GPT
-        response = await call_gpt(prompt)
-        
-        if response:
-            await update.message.reply_text(response, parse_mode=None)
-        else:
-            await update.message.reply_text(
-                "לא הצלחתי למצוא תשובה לשאלה שלך. נסה לשאול בצורה אחרת.",
-                parse_mode="HTML"
-            )
-    except Exception as e:
-        logger.error(f"Error handling free text input: {e}")
-        try:
-            await update.message.reply_text(
-                "אירעה שגיאה בעיבוד הבקשה. נסה שוב.",
-                parse_mode="HTML"
-            )
-        except Exception as e:
-            logger.error("Telegram API error in reply_text: %s", e)
+    # ודא ש-context.user_data הוא dict
+    if context.user_data is None:
+        context.user_data = {}
+    # כל טקסט חופשי אחר – נסה fallback חכם עם GPT
+    result = await fallback_via_gpt(text, context.user_data)
+    if result.get("action") == "consume":
+        # עדכן את הצריכה בפועל
+        item = result.get("item", "")
+        amount = result.get("amount", "")
+        calories = result.get("calories", 0)
+        # עדכון יומן הארוחות
+        if "daily_food_log" not in context.user_data:
+            context.user_data["daily_food_log"] = []
+        context.user_data["daily_food_log"].append({
+            "name": f"{item} ({amount})",
+            "calories": calories,
+            "timestamp": datetime.now().isoformat(),
+        })
+        if "calories_consumed" not in context.user_data:
+            context.user_data["calories_consumed"] = 0
+        context.user_data["calories_consumed"] += calories
+        user_id = update.effective_user.id if update.effective_user else None
+        if user_id:
+            nutrition_db.save_user(user_id, context.user_data)
+        # שלח אישור
+        await update.message.reply_text(f"נרשמה צריכה: {item} ({amount}) – {calories} קלוריות.")
+        # הצג תפריט ראשי מעודכן
+        from utils import build_main_keyboard
+        await update.message.reply_text(
+            "התפריט הראשי:",
+            reply_markup=build_main_keyboard(user_data=context.user_data)
+        )
+        return
+    else:
+        # תשובה רגילה
+        await update.message.reply_text(result.get("text", ""))
+        return
 
 
 async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):

@@ -105,6 +105,7 @@ from handlers import (
     handle_report_request,
     handle_update_personal_details_response,
     handle_help,
+    handle_help_action,
 )
 from utils import build_main_keyboard
 
@@ -243,6 +244,15 @@ def main():
         MessageHandler(
             filters.TEXT & filters.Regex(r"^עזרה$"),
             handle_help
+        )
+    )
+
+    # Add handler for help action buttons
+    help_action_regex = r"^(שאל שאלה חופשית|שאלי שאלה חופשית|מעבר לשאלון אישי)$"
+    application.add_handler(
+        MessageHandler(
+            filters.TEXT & filters.Regex(help_action_regex),
+            handle_help_action
         )
     )
 

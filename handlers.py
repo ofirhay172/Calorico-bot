@@ -281,6 +281,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [KeyboardButton("📘 עזרה")],
     ]
     await update.message.reply_text(msg3, parse_mode="HTML", reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True))
+    await asyncio.sleep(3)
+
+    # הודעה 4: הודעה קריטית על כפתור "סיימתי"
+    critical_msg = (
+        "**כדי לסיים את היום – יש ללחוץ על הכפתור \"סיימתי\"**\n\n"
+        "זה מאפס את התקציב, שולח לך סיכום יומי, ושואל מתי לשלוח את התפריט למחר!"
+    )
+    await update.message.reply_text(critical_msg, parse_mode="HTML")
 
     # המשך flow: אם אין שם בטלגרם - שאל שם, אחרת המשך לשאלת מגדר
     if not user.first_name:
@@ -2511,6 +2519,7 @@ async def handle_free_text_input(
         user_data = context.user_data or {}
         # בנה פרומפט מותאם לשאלה חופשית
         prompt = build_free_text_prompt(user_data, text)
+        # שלח הודעת המתנה
         await update.message.reply_text("חושב על תשובה... ⏳")
         response = await call_gpt(prompt)
         if response:
@@ -2581,22 +2590,30 @@ async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_
                 f"{meal_text}\n"
                 f"סה\"כ לארוחה: {total} קלוריות"
             )
-            # בנה הודעת מצב יומי
+            # בנה הודעת מצב יומי (ללא השורה האחרונה)
             daily_status = (
                 f"📊 מצב יומי:\n\n"
                 f"צריכה עד עכשיו: {consumed_before} קלוריות\n"
                 f"תוספת מהארוחה הנוכחית: {total} קלוריות\n"
                 f"סה\"כ עד כה: {consumed_after} קלוריות\n\n"
-                f"היעד היומי שלי: {current_budget} קלוריות\n"
-                f"נותרו לי להיום: {remaining_budget} קלוריות"
+                f"היעד היומי שלי: {current_budget} קלוריות"
             )
+            # בנה הודעה נפרדת לתקציב שנותר
+            remaining_msg = f"🔄 נותרו לי להיום: {remaining_budget} קלוריות"
             # שלח הודעות
             await update.message.reply_text(meal_summary)
-            status_msg = await update.message.reply_text(daily_status)
-            # בצע pin יחיד
+            await update.message.reply_text(daily_status)
+            # שלח הודעת תקציב נפרדת וצמד אותה
             try:
                 chat = update.effective_chat
-                await pin_single_message(chat, status_msg.message_id)
+                # הסר pin קיים
+                try:
+                    await chat.unpin_all_messages()
+                except Exception as e:
+                    logger.error(f"Error unpinning messages: {e}")
+                # שלח הודעת תקציב חדשה וצמד אותה
+                remaining_message = await update.message.reply_text(remaining_msg)
+                await chat.pin_message(remaining_message.message_id)
             except Exception as e:
                 logger.error(f"Error sending or pinning calorie budget message: {e}")
         except Exception as e:
@@ -3396,9 +3413,12 @@ async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
 אם צריך עזרה נוספת – פשוט כתבי לי 🙏""",
         context
     )
+    # כפתורים מותאמים מגדרית
+    free_question_text = gendered_text("שאל שאלה חופשית", "שאלי שאלה חופשית", context)
+    questionnaire_text = gendered_text("מעבר לשאלון אישי", "מעבר לשאלון אישי", context)
     keyboard = [
-        [KeyboardButton("שאל שאלה חופשית")],
-        [KeyboardButton("מעבר לשאלון אישי")],
+        [KeyboardButton(free_question_text)],
+        [KeyboardButton(questionnaire_text)],
     ]
     if update.message:
         await update.message.reply_text(
@@ -3412,15 +3432,26 @@ async def handle_help_action(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if not update.message or not update.message.text:
         return
     text = update.message.text.strip()
-    if text == "שאל שאלה חופשית":
+    free_question_text = gendered_text("שאל שאלה חופשית", "שאלי שאלה חופשית", context)
+    questionnaire_text = gendered_text("מעבר לשאלון אישי", "מעבר לשאלון אישי", context)
+    
+    if text == free_question_text:
         # החזר למצב free text (הסר מקלדת)
         await update.message.reply_text(
             gendered_text("אפשר לשאול כל שאלה חופשית!", "אפשר לשאול כל שאלה חופשית!", context),
             reply_markup=ReplyKeyboardRemove(),
         )
         return
-    elif text == "מעבר לשאלון אישי":
+    elif text == questionnaire_text:
         # הפעל את השאלון מחדש
         await start(update, context)
+        return
+    else:
+        # אם לא מזוהה - החזר למקלדת הראשית
+        await update.message.reply_text(
+            gendered_text("חזרה לתפריט הראשי", "חזרה לתפריט הראשי", context),
+            reply_markup=build_main_keyboard(),
+            parse_mode="HTML"
+        )
         return
 

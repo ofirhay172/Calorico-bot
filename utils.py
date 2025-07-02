@@ -9,7 +9,8 @@ import re
 import datetime
 import logging
 from typing import List, Optional
-from telegram import KeyboardButton, ReplyKeyboardMarkup
+from telegram import KeyboardButton, ReplyKeyboardMarkup, Update
+from telegram.ext import ContextTypes
 import os
 import openai
 import json
@@ -691,3 +692,29 @@ async def fallback_via_gpt(text: str, user_context: Optional[dict] = None) -> di
         return data
     except Exception as e:
         return {"action": "reply", "text": response.strip()}
+
+
+async def send_contextual_guidance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    שולח הודעת הדרכה "מה עכשיו?" עם תפריט ראשי.
+    """
+    from utils import build_main_keyboard
+    guidance_text = (
+        "💬 מה עכשיו?\n\n"
+        "אפשר פשוט לכתוב לי:\n"
+        "- מה אכלת (למשל: אכלתי חצי פיתה עם חומוס)\n"
+        "- או לשאול שאלה (כמו: כמה קלוריות יש בשניצל?)\n\n"
+        "או לבחור פעולה מהתפריט למטה ⬇️"
+    )
+    if update.message:
+        await update.message.reply_text(
+            guidance_text,
+            reply_markup=build_main_keyboard(user_data=context.user_data),
+            parse_mode="HTML"
+        )
+    elif update.callback_query:
+        await update.callback_query.message.reply_text(
+            guidance_text,
+            reply_markup=build_main_keyboard(user_data=context.user_data),
+            parse_mode="HTML"
+        )

@@ -311,6 +311,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         return await get_gender(update, context)
 
+    # שלח הודעת הדרכה מה עכשיו
+    from utils import send_contextual_guidance
+    await send_contextual_guidance(update, context)
+
 
 async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """פקודת reset - מאפסת את כל הנתונים של המשתמש."""
@@ -2285,21 +2289,47 @@ async def handle_daily_choice(
     choice = update.message.text.strip()
     if choice == "לקבלת תפריט יומי מותאם אישית":
         await generate_personalized_menu(update, context)
+        # הצג תפריט ראשי אחרי קבלת התפריט
+        if update.message:
+            from utils import build_main_keyboard
+            await update.message.reply_text(
+                "התפריט הראשי:",
+                reply_markup=build_main_keyboard(user_data=context.user_data),
+                parse_mode="HTML"
+            )
         return MENU
     elif choice == "מה אכלתי היום":
         await show_today_food_summary(update, context)
+        # הצג תפריט ראשי אחרי הסיכום
+        if update.message:
+            from utils import build_main_keyboard
+            await update.message.reply_text(
+                "התפריט הראשי:",
+                reply_markup=build_main_keyboard(user_data=context.user_data),
+                parse_mode="HTML"
+            )
         return MENU
     elif choice == "בניית ארוחה לפי מה שיש לי בבית":
         await handle_meal_building(update, context)
+        # הצג תפריט ראשי אחרי ההנחיה
+        if update.message:
+            from utils import build_main_keyboard
+            await update.message.reply_text(
+                "התפריט הראשי:",
+                reply_markup=build_main_keyboard(user_data=context.user_data),
+                parse_mode="HTML"
+            )
         return MENU
     elif choice == "✅ סיימתי להיום" or choice == "סיימתי":
         await send_summary(update, context)
+        # הצג תפריט ראשי אחרי הסיכום
         if update.message:
+            from utils import build_main_keyboard
             await update.message.reply_text(
-                gendered_text("היום אופס. מחכה לעדכן אותך מחר!", "היום אופס. מחכה לעדכן אותך מחר!", context),
-                reply_markup=ReplyKeyboardRemove(),
+                "התפריט הראשי:",
+                reply_markup=build_main_keyboard(user_data=context.user_data),
+                parse_mode="HTML"
             )
-        # TODO: reset daily data here
         return MENU
     elif choice == "קבלת דוח":
         keyboard = [
@@ -2315,20 +2345,24 @@ async def handle_daily_choice(
                 reply_markup=reply_markup,
                 parse_mode="HTML",
             )
-        if update.message:
+            # הצג תפריט ראשי אחרי הדוח
+            from utils import build_main_keyboard
             await update.message.reply_text(
-                gendered_text("בחר פעולה נוספת:", "בחרי פעולה נוספת:", context),
+                "התפריט הראשי:",
                 reply_markup=build_main_keyboard(user_data=context.user_data),
+                parse_mode="HTML"
             )
         return MENU
     elif choice == "עדכון פרטים אישיים":
         await handle_update_personal_details(update, context)
+        # הצג תפריט ראשי אחרי העדכון
         if update.message:
+            from utils import build_main_keyboard
             await update.message.reply_text(
-                gendered_text("הפרטים אופסו. נתחיל מחדש!", "הפרטים אופסו. נתחיל מחדש!", context),
-                reply_markup=ReplyKeyboardRemove(),
+                "התפריט הראשי:",
+                reply_markup=build_main_keyboard(user_data=context.user_data),
+                parse_mode="HTML"
             )
-        # TODO: start questionnaire again
         return MENU
     else:
         return await eaten(update, context)
@@ -2571,6 +2605,11 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return ConversationHandler.END
 
+    # שלב אחרון: שלח הודעת הדרכה מה עכשיו
+    from utils import send_contextual_guidance
+    await send_contextual_guidance(update, context)
+    return ConversationHandler.END
+
 
 async def schedule_menu(
         update: Update,
@@ -2666,6 +2705,8 @@ async def after_questionnaire(
         "setup_complete": True,
         "day_count": 1  # התחל מיום 1
     }
+    from utils import send_contextual_guidance
+    await send_contextual_guidance(update, context)
     return ConversationHandler.END
 
 
@@ -3066,6 +3107,9 @@ async def generate_personalized_menu(
         )
     except Exception as e:
         logger.error("Error generating personalized menu: %s", e)
+    # שלח הודעת הדרכה מה עכשיו
+    from utils import send_contextual_guidance
+    await send_contextual_guidance(update, context)
 
 
 def build_activity_types_keyboard(selected_types: list = None) -> InlineKeyboardMarkup:

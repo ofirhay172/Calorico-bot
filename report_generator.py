@@ -72,11 +72,12 @@ def get_weekly_report(user_id: int) -> List[Dict[str, Any]]:
 
 
 def build_weekly_summary_text(data: List[Dict[str, Any]]) -> str:
-    """בונה טקסט מסכם שבועי לדוח."""
+    """בונה טקסט מסכם שבועי לדוח, כולל אימוג'י ליד כל פריט מזון אם יש פירוט."""
     if not data:
         return "אין נתונים לשבוע האחרון."
 
     try:
+        from utils import get_food_emoji
         lines = []
         for day in data:
             calories = day.get('calories', 0)
@@ -84,9 +85,15 @@ def build_weekly_summary_text(data: List[Dict[str, Any]]) -> str:
             fat = day.get('fat', 0.0)
             carbs = day.get('carbs', 0.0)
             date = day.get('date', '')
-
+            meals = day.get('meals', [])
+            meal_lines = []
+            for meal in meals:
+                meal_name = meal.get('name', meal) if isinstance(meal, dict) else str(meal)
+                emoji = get_food_emoji(meal_name)
+                meal_lines.append(f"{emoji} {meal_name}")
+            meal_text = " | ".join(meal_lines) if meal_lines else ""
             lines.append(
-                f"{date}: {calories} קלוריות, חלבון: {protein:.1f}g, שומן: {fat:.1f}g, פחמימות: {carbs:.1f}g"
+                f"{date}: {calories} קלוריות, חלבון: {protein:.1f}g, שומן: {fat:.1f}g, פחמימות: {carbs:.1f}g" + (f"\n    🍽️ {meal_text}" if meal_text else "")
             )
         return "\n".join(lines)
     except Exception as e:
@@ -199,11 +206,12 @@ def get_monthly_report(user_id: int) -> List[Dict[str, Any]]:
 
 
 def build_monthly_summary_text(data: List[Dict[str, Any]]) -> str:
-    """מחזירה טקסט סיכום חודשי."""
+    """מחזירה טקסט סיכום חודשי, כולל אימוג'י ליד כל פריט מזון אם יש פירוט."""
     if not data:
         return "אין נתונים לחודש האחרון."
 
     try:
+        from utils import get_food_emoji
         # חישוב ממוצעים
         total_calories = sum(day.get("calories", 0) for day in data)
         total_protein = sum(day.get("protein", 0.0) for day in data)
@@ -225,6 +233,19 @@ def build_monthly_summary_text(data: List[Dict[str, Any]]) -> str:
         text += f"🧈 ממוצע שומן יומי: {avg_fat:.1f}ג\n"
         text += f"🍞 ממוצע פחמימות יומי: {avg_carbs:.1f}ג\n"
 
+        # הצג דוגמה של מאכלים עיקריים מהחודש
+        meals_counter = {}
+        for day in data:
+            meals = day.get('meals', [])
+            for meal in meals:
+                meal_name = meal.get('name', meal) if isinstance(meal, dict) else str(meal)
+                meals_counter[meal_name] = meals_counter.get(meal_name, 0) + 1
+        if meals_counter:
+            text += "\n<b>🍽️ מאכלים עיקריים החודש:</b>\n"
+            # הצג עד 7 מאכלים נפוצים
+            for meal_name, count in sorted(meals_counter.items(), key=lambda x: -x[1])[:7]:
+                emoji = get_food_emoji(meal_name)
+                text += f"{emoji} {meal_name} ({count} ימים)\n"
         return text
     except Exception as e:
         logger.error(f"Error building monthly summary text: {e}")

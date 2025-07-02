@@ -2288,15 +2288,21 @@ async def handle_daily_choice(
         return MENU
     choice = update.message.text.strip()
     if choice == "לקבלת תפריט יומי מותאם אישית":
+        # סגור את המקלדת מיד
+        await update.message.reply_text("מכין עבורך תפריט יומי...", reply_markup=ReplyKeyboardRemove())
+        # שלח תקציב קלוריות מוצמד
+        calorie_budget = context.user_data.get("calorie_budget", 1800)
+        budget_msg = f"📌 תקציב הקלוריות היומי שלך הוא: {calorie_budget} קלוריות"
+        sent_msg = await update.message.reply_text(budget_msg, parse_mode="HTML")
+        try:
+            await sent_msg.pin()
+        except Exception:
+            pass
+        # שלח תפריט יומי
         await generate_personalized_menu(update, context)
-        # הצג תפריט ראשי אחרי קבלת התפריט
-        if update.message:
-            from utils import build_main_keyboard
-            await update.message.reply_text(
-                "התפריט הראשי:",
-                reply_markup=build_main_keyboard(user_data=context.user_data),
-                parse_mode="HTML"
-            )
+        # שלח הודעת 'מה עכשיו?'
+        from utils import send_contextual_guidance
+        await send_contextual_guidance(update, context)
         return MENU
     elif choice == "מה אכלתי היום":
         await show_today_food_summary(update, context)
@@ -3119,15 +3125,13 @@ def build_activity_types_keyboard(selected_types: list = None) -> InlineKeyboard
     
     keyboard = []
     for activity in ACTIVITY_TYPES_MULTI:
-        # השתמש בטקסט המלא של הפעילות ב-callback_data
+        # הסר אימוג'י ורווחים ל-callback_data תקני
         activity_clean = activity.replace(" ", "_").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
         
         if activity in selected_types:
-            # אם נבחר - הצג עם ❌
             text = f"{activity} ❌"
             callback_data = f"activity_remove_{activity_clean}"
         else:
-            # אם לא נבחר - הצג עם האימוג'י המקורי
             text = activity
             callback_data = f"activity_add_{activity_clean}"
         

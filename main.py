@@ -285,8 +285,7 @@ async def main():
             ],
             WATER_REMINDER_OPT_IN: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)],
         },
-        fallbacks=[CommandHandler("start", start), CommandHandler("help", help_command)],
-        per_message=True,
+        fallbacks=[CommandHandler("start", start), CommandHandler("help", help_command)]
     )
     application.add_handler(conv_handler)
 

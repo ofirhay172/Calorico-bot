@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+*.log
+*.sqlite3
+*.sqlite
+*.db-journal
+.DS_Store
+.vscode/
+.idea/
+pylint_report.txt
+daily_menus.json
+users.json
+.env 

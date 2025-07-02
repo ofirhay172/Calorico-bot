@@ -1386,6 +1386,10 @@ async def get_limitations(
     return LIMITATIONS
 
 
+def clean_text(val):
+    return val.replace("🏊", "").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").replace(" ", "").replace("\u200e", "").strip()
+
+
 async def get_mixed_activities(
         update: Update,
         context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1396,12 +1400,9 @@ async def get_mixed_activities(
     selected = context.user_data["mixed_activities_selected"]
     if update.message and update.message.text:
         text = update.message.text.strip().replace(" ❌", "")
-        # ניקוי טקסט מהאימוג'י, רווחים ותווים נסתרים
-        def clean(val):
-            return val.replace(" ", "").replace("\u200e", "").strip()
-        cleaned_text = clean(text)
-        cleaned_options = {clean(opt): opt for opt in MIXED_ACTIVITY_OPTIONS}
-        if cleaned_text == clean("המשך"):
+        cleaned_text = clean_text(text)
+        cleaned_options = {clean_text(opt): opt for opt in MIXED_ACTIVITY_OPTIONS}
+        if cleaned_text == clean_text("המשך"):
             if not selected:
                 if update.message:
                     try:
@@ -1421,7 +1422,7 @@ async def get_mixed_activities(
                 selected.remove(real_option)
             else:
                 selected.add(real_option)
-        elif cleaned_text == clean("אין"):
+        elif cleaned_text == clean_text("אין"):
             selected.clear()
             selected.add("אין")
     if update.message:
@@ -2128,29 +2129,31 @@ async def water_intake_amount(
 
 
 async def show_daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info("[VERSION_MARKER] show_daily_menu called - version 2024-06-14")
     if context.user_data is None:
         context.user_data = {}
-    user_data = context.user_data if context.user_data is not None else {}
+    user_data = context.user_data
+    user_id = update.effective_user.id if update.effective_user else None
+    chat_id = update.effective_chat.id if update.effective_chat else None
     # סגור את המקלדת מיד אחרי הלחיצה
     if update.message:
         try:
             await update.message.reply_text("מעבד את התפריט עבורך... ⏳", reply_markup=ReplyKeyboardRemove())
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
-    # סדר שליחת ההודעות: תקציב -> תפריט -> הדרכה -> תפריט ראשי
-    user_id = update.effective_user.id if update.effective_user else None
+    # 1. שלח תקציב קלוריות כהודעה נפרדת והצמד אותה
     remaining_calories = user_data.get("remaining_calories", user_data.get("calorie_budget", 0))
-    # 1. שלח תקציב מוצמד
+    calorie_msg = f"נותרו לי להיום: {remaining_calories} קלוריות 🔄"
+    calorie_message = None
     if update.message:
         try:
-            msg = await update.message.reply_text(f"נותרו לך להיום: {remaining_calories} קלוריות 🔄")
-            await msg.pin()
+            calorie_message = await update.message.reply_text(calorie_msg)
+            if chat_id and calorie_message:
+                await context.bot.pin_chat_message(chat_id, calorie_message.message_id)
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
     # 2. שלח תפריט יומי
     try:
-        from utils import build_user_prompt_for_gpt, send_contextual_guidance, build_main_keyboard
+        from utils import build_user_prompt_for_gpt
         prompt = build_user_prompt_for_gpt(user_data)
         menu_response = await call_gpt(prompt)
         if menu_response:
@@ -2158,15 +2161,10 @@ async def show_daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error("Error generating daily menu: %s", e)
     # 3. שלח הדרכה מה עכשיו
+    from utils import send_contextual_guidance
     await send_contextual_guidance(update, context)
     # 4. שלח תפריט ראשי (פעם אחת בלבד)
-    if not user_data.get("main_menu_sent", False):
-        user_data["main_menu_sent"] = True
-        await update.message.reply_text(
-            "התפריט הראשי:",
-            reply_markup=build_main_keyboard(user_data=user_data),
-            parse_mode="HTML"
-        )
+    await send_main_menu(update, context)
     return MENU
 
 
@@ -2875,105 +2873,20 @@ async def handle_free_text_input(
 
 
 async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, silent: bool = False):
-    from utils import analyze_meal_with_gpt
     if context.user_data is None:
         context.user_data = {}
-    # זיהוי אם זו שתייה
-    drink_keywords = ["קולה", "קפה", "תה", "מים", "מיץ", "בירה", "יין", "ספרייט", "פפסי", "סודה", "משקה", "שתייה", "שתיתי"]
-    is_drink = False
-    text_lower = text.lower()
-    if text_lower.startswith("שתיתי") or any(word in text_lower for word in drink_keywords):
-        is_drink = True
-    food_desc = text.replace("אכלתי", "").replace("שתיתי", "").strip()
-    if not food_desc:
+    user = context.user_data
+    try:
+        # parsing רגיל (הקוד הקיים שלך)
+        # ... existing code ...
+        pass
+    except Exception:
+        # שלח את הטקסט ל-GPT לניתוח
         try:
-            await update.message.reply_text(
-                "מה אכלת/שתית? אנא פרט.",
-                parse_mode="HTML"
-            )
+            response = await call_gpt(f"המשתמש כתב: {text}\nאנא נתח את הקלט, זהה מאכלים וכמויות, חשב קלוריות, והצג סיכום בעברית.")
+            await update.message.reply_text(response, parse_mode="HTML")
         except Exception as e:
-            logger.error("Telegram API error in reply_text: %s", e)
-        return
-    user_id = update.effective_user.id if update.effective_user else None
-    if user_id:
-        try:
-            meal_data = await analyze_meal_with_gpt(food_desc)
-            items = meal_data.get("items", [])
-            total = meal_data.get("total", 0)
-            # עדכון יומן הארוחות, בלי כפילויות
-            if "daily_food_log" not in context.user_data:
-                context.user_data["daily_food_log"] = []
-            for item in items:
-                if not any(x["name"] == item["name"] and x["calories"] == item["calories"] for x in context.user_data["daily_food_log"]):
-                    context.user_data["daily_food_log"].append({
-                        "name": item["name"],
-                        "calories": item["calories"],
-                        "emoji": item.get("emoji", "🍽️"),
-                        "timestamp": datetime.now().isoformat(),
-                    })
-            # עדכון התקציב
-            current_budget = context.user_data.get("calorie_budget", 0)
-            if "calories_consumed" not in context.user_data:
-                context.user_data["calories_consumed"] = 0
-            consumed_before = context.user_data["calories_consumed"]
-            context.user_data["calories_consumed"] += total
-            consumed_after = context.user_data["calories_consumed"]
-            remaining_budget = current_budget - consumed_after
-            if remaining_budget < 0:
-                remaining_budget = 0
-            # שמור למסד נתונים
-            nutrition_db.save_user(user_id, context.user_data)
-            # בנה הודעת פירוט עם אימוג'י
-            meal_lines = []
-            for item in items:
-                emoji = item.get('emoji', get_food_emoji(item['name']))
-                meal_lines.append(f"{emoji} {item['name']} – {item['calories']} קלוריות")
-            meal_text = "\n".join(meal_lines)
-            if is_drink:
-                meal_summary = (
-                    f"🥤 חישוב קלורי למשקה:\n"
-                    f"{meal_text}\n\n"
-                    f"עודכן התקציב היומי שלך בהתאם."
-                )
-            else:
-                meal_summary = (
-                    f"🍽️ חישוב קלורי לארוחה:\n\n"
-                    f"{meal_text}\n"
-                    f"סה\"כ לארוחה: {total} קלוריות"
-                )
-            # שלח הודעה רק אם לא silent (כלומר, לא כחלק מסיכום יומי)
-            if not silent:
-                await update.message.reply_text(meal_summary)
-                # שלח הודעת מצב יומי (ללא השורה האחרונה)
-                daily_status = (
-                    f"📊 מצב יומי:\n\n"
-                    f"צריכה עד עכשיו: {consumed_before} קלוריות\n"
-                    f"תוספת מהארוחה הנוכחית: {total} קלוריות\n"
-                    f"סה\"כ עד כה: {consumed_after} קלוריות\n\n"
-                    f"היעד היומי שלי: {current_budget} קלוריות"
-                )
-                await update.message.reply_text(daily_status)
-                # שלח הודעת תקציב נפרדת וצמד אותה
-                try:
-                    chat = update.effective_chat
-                    try:
-                        await chat.unpin_all_messages()
-                    except Exception:
-                        pass
-                    calorie_msg = f"🔄 נותרו לי להיום: {remaining_budget} קלוריות"
-                    calorie_message = await update.message.reply_text(calorie_msg)
-                    await chat.pin_message(calorie_message.message_id)
-                except Exception as e:
-                    logger.error("Telegram API error in pinning: %s", e)
-        except Exception as e:
-            logger.error(f"Error handling food consumption: {e}")
-            try:
-                await update.message.reply_text(
-                    "אירעה שגיאה בעיבוד הצריכה. נסה שוב.",
-                    parse_mode="HTML"
-                )
-            except Exception as e:
-                logger.error("Telegram API error in reply_text: %s", e)
+            logger.error("GPT fallback failed: %s", e)
 
 
 async def handle_nutrition_question(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
@@ -3857,43 +3770,4 @@ async def send_main_menu(update, context):
             reply_markup=build_main_keyboard(user_data=context.user_data),
             parse_mode="HTML"
         )
-
-async def show_daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if context.user_data is None:
-        context.user_data = {}
-    user_data = context.user_data
-    user_id = update.effective_user.id if update.effective_user else None
-    chat_id = update.effective_chat.id if update.effective_chat else None
-    # סגור את המקלדת מיד אחרי הלחיצה
-    if update.message:
-        try:
-            await update.message.reply_text("מעבד את התפריט עבורך... ⏳", reply_markup=ReplyKeyboardRemove())
-        except Exception as e:
-            logger.error("Telegram API error in reply_text: %s", e)
-    # 1. שלח תקציב קלוריות כהודעה נפרדת והצמד אותה
-    remaining_calories = user_data.get("remaining_calories", user_data.get("calorie_budget", 0))
-    calorie_msg = f"נותרו לך להיום: {remaining_calories} קלוריות 🔄"
-    calorie_message = None
-    if update.message:
-        try:
-            calorie_message = await update.message.reply_text(calorie_msg)
-            if chat_id and calorie_message:
-                await context.bot.pin_chat_message(chat_id, calorie_message.message_id)
-        except Exception as e:
-            logger.error("Telegram API error in reply_text: %s", e)
-    # 2. שלח תפריט יומי
-    try:
-        from utils import build_user_prompt_for_gpt
-        prompt = build_user_prompt_for_gpt(user_data)
-        menu_response = await call_gpt(prompt)
-        if menu_response:
-            await update.message.reply_text(menu_response, parse_mode="HTML")
-    except Exception as e:
-        logger.error("Error generating daily menu: %s", e)
-    # 3. שלח הדרכה מה עכשיו
-    from utils import send_contextual_guidance
-    await send_contextual_guidance(update, context)
-    # 4. שלח תפריט ראשי (פעם אחת בלבד)
-    await send_main_menu(update, context)
-    return MENU
 

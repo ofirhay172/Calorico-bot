@@ -2588,7 +2588,9 @@ def classify_text_input(text: str) -> str:
 async def handle_free_text_input(
         update: Update,
         context: ContextTypes.DEFAULT_TYPE):
-    """מטפל בקלט טקסט חופשי - מזהה צריכת מזון ושאלות כלליות."""
+    # אם המשתמש נמצא בשיחה (state) של ConversationHandler, אל תטפל
+    if context.conversation_data:
+        return
     user_id = update.effective_user.id if update.effective_user else 'Unknown'
     logger.info(f"[FREE_TEXT] Received text from user {user_id}")
     

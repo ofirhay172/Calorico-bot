@@ -342,7 +342,7 @@ async def main():
         MessageHandler(
             filters.TEXT & ~filters.COMMAND & ~filters.Regex(menu_regex),
             handle_free_text_input
-        )
+        ), group=10
     )
 
     # Add command handlers

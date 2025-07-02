@@ -283,6 +283,7 @@ async def main():
     )
 
     application.add_handler(conv_handler)
+    application.add_handler(CommandHandler("start", start))
 
     # Add handlers for main menu options
     menu_regex = r"^(לקבלת תפריט יומי מותאם אישית|מה אכלתי היום|בניית ארוחה לפי מה שיש לי בבית|קבלת דוח|תזכורות על שתיית מים)$"

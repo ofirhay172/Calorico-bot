@@ -247,16 +247,17 @@ def learning_logic(context) -> str:
     return f"💡 <b>טיפ מותאם אישית:</b> {tip_text}"
 
 
-def build_main_keyboard():
-    """בונה מקלדת ראשית עם כל האפשרויות."""
+def build_main_keyboard(hide_menu_button: bool = False) -> ReplyKeyboardMarkup:
+    """בונה מקלדת ראשית עם כל האפשרויות, עם אפשרות להסתיר כפתורים מסוימים."""
     keyboard = [
-        [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
-        [KeyboardButton("מה אכלתי היום")],
-        [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
+        [KeyboardButton("לקבלת תפריט יומי מותאם אישית")] if not hide_menu_button else [],
+        [KeyboardButton("סיימתי")],
         [KeyboardButton("קבלת דוח")],
-        [KeyboardButton("תזכורות על שתיית מים")],
-        [KeyboardButton("סיימתי להיום")],
+        [KeyboardButton("עדכון פרטים אישיים")],
+        [KeyboardButton("עזרה")],
     ]
+    # הסר שורות ריקות (אם כפתור הוסתר)
+    keyboard = [row for row in keyboard if row]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 

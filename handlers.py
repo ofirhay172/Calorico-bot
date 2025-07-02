@@ -82,6 +82,8 @@ from report_generator import (
     get_nutrition_by_date,
     get_last_occurrence_of_meal,
     format_date_query_response,
+    get_monthly_report,
+    build_monthly_summary_text,
 )
 
 # Initialize logger first
@@ -211,7 +213,7 @@ def reset_user(user_id):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """מתחיל את הבוט ומציג תפריט ראשי."""
+    """מתחיל את הבוט ומציג הודעת פתיחה בשלוש הודעות נפרדות."""
     if not update.message:
         return
 
@@ -230,42 +232,57 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # קבלת שם המשתמש מטלגרם או שאלת שם
     if user.first_name:
-        # השתמש בשם מטלגרם
         context.user_data["name"] = user.first_name
         user_name = user.first_name
     else:
-        # אין שם בטלגרם - נשאל
         user_name = "חבר/ה"
-        # נשאל את השם בשלב הבא
 
     logger.info("Bot started by user %s", user.id)
 
-    # המשתמש חדש - הצג פתיח מדויק
-    try:
-        await update.message.reply_text(
-            f"שלום {user_name}! אני קלוריקו – הבוט שיעזור לך לשמור על תזונה, מעקב והתמדה 🙌\n\n"
-            "הנה מה שאני יודע לעשות:\n"
-            "✅ התאמה אישית של תפריט יומי – לפי הגובה, משקל, גיל, מטרה ותזונה שלך\n"
-            "📊 דוחות תזונתיים – שבועי וחודשי\n"
-            "💧 תזכורות חכמות לשתיית מים\n"
-            '🍽 רישום יומי של \"מה אכלתי היום\" או \"מה אכלתי אתמול\"\n'
-            "🔥 מעקב קלוריות יומי, ממוצע לארוחה וליום\n"
-            "📅 ניתוח מגמות – צריכת חלבון, שומן ופחמימות\n"
-            "🏋️ חיבור לאימונים שדיווחת עליהם\n"
-            "📝 אפשרות לעדכן בכל שלב את המשקל, המטרה, התזונה או רמת הפעילות שלך\n"
-            "⏰ תפריט יומי שנשלח אליך אוטומטית בשעה שתבחר\n\n"
-            "בוא/י נתחיל בהרשמה קצרה:",
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML",
-        )
-    except Exception as e:
-        logger.error("Telegram API error in reply_text: %s", e)
-    
-    # אם אין שם מטלגרם - נשאל
+    # הודעה 1: הצגה עצמית ופיצ'רים קיימים
+    msg1 = (
+        "היי! אני קלוריקו – הבוט שיעזור לך לשמור על תזונה ואיזון יומי 💪🥗\n\n"
+        "הנה מה שאני יודע לעשות כבר עכשיו:\n\n"
+        "🍽 תפריט יומי מותאם אישית – לפי הגובה, המשקל, הגיל, רמת הפעילות והמטרה שלך  \n"
+        "🧮 מעקב קלוריות חכם – כולל חישוב תקציב יומי, סיכום קלורי לארוחות ועדכון שוטף  \n"
+        "📝 רישום חופשי של מה שאכלת – פשוט כתוב/י: 'אכלתי...' ואני אחשב הכל  \n"
+        "🤔 שאלות חופשיות על אוכל – כמו 'אפשר המבורגר?' או 'כמה קלוריות יש בתפוח?'  \n"
+        "📌 הודעות נעוצות עם תקציב יומי מעודכן – מתעדכן אוטומטית אחרי כל ארוחה  \n"
+        "📅 תפריט חדש כל בוקר בשעה שתבחר/י  \n"
+        "🆕 שינוי קל בכל עת – משקל, יעד, תפריט, אלרגיות, ספורט ועוד"
+    )
+    await update.message.reply_text(msg1, parse_mode="HTML", reply_markup=ReplyKeyboardRemove())
+
+    # הודעה 2: דברים שיגיעו בקרוב
+    msg2 = (
+        "🚧 מה עוד בדרך?\n\n"
+        "📊 דוחות שבועיים וחודשיים – כולל מגמות אישיות  \n"
+        "🍳 ניתוח תזונתי לפי חלבון, שומן ופחמימות  \n"
+        "💧 תזכורות שתייה חכמות  \n"
+        "✅ סיכום יומי עם המלצות לשיפור  \n"
+        "📲 תמיכה באפליקציות כושר"
+    )
+    await update.message.reply_text(msg2, parse_mode="HTML")
+
+    # הודעה 3: איך להשתמש ומה עכשיו
+    msg3 = (
+        "איך מדברים איתי? פשוט מאוד:\n\n"
+        "- 'אכלתי 2 פרוסות לחם עם קוטג' וסלט'  \n"
+        "- 'בא לי שוקולד. כדאי לי?'  \n"
+        "- 'כמה קלוריות יש ב-100 גרם אורז?'  \n"
+        "- 'רוצה תפריט יומי'\n\n"
+        "📍 בוא/י נתחיל בשאלון קצר כדי שאכיר אותך טוב יותר 👇"
+    )
+    keyboard = [
+        [KeyboardButton("✏️ להתחלת שאלון אישי")],
+        [KeyboardButton("📘 עזרה")],
+    ]
+    await update.message.reply_text(msg3, parse_mode="HTML", reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True))
+
+    # המשך flow: אם אין שם בטלגרם - שאל שם, אחרת המשך לשאלת מגדר
     if not user.first_name:
         return await get_name(update, context)
     else:
-        # יש שם - נמשיך לשאלת מגדר
         return await get_gender(update, context)
 
 
@@ -1314,7 +1331,7 @@ async def get_mixed_activities(
     if update.message:
         try:
             await update.message.reply_text(
-                gendered_text(context, "בחר את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):", "בחרי את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):"),
+                gendered_text("בחר את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):", "בחרי את סוגי הפעילות הגופנית שלך (לחיצה נוספת מבטלת בחירה):", context),
                 reply_markup=ReplyKeyboardMarkup(build_mixed_activities_keyboard(selected), resize_keyboard=True),
             )
         except Exception as e:
@@ -1575,7 +1592,7 @@ async def get_diet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = build_diet_keyboard(selected_options)
     try:
         await update.message.reply_text(
-            gendered_text(context, "אנא בחר אפשרות מהתפריט למטה או לחץ על 'סיימתי בחירת העדפות'", "אנא בחרי אפשרות מהתפריט למטה או לחצי על 'סיימתי בחירת העדפות'"),
+            gendered_text("אנא בחר אפשרות מהתפריט למטה או לחץ על 'סיימתי בחירת העדפות'", "אנא בחרי אפשרות מהתפריט למטה או לחצי על 'סיימתי בחירת העדפות'", context),
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             parse_mode="HTML",
         )
@@ -2166,55 +2183,50 @@ async def handle_daily_choice(
     choice = update.message.text.strip()
     if choice == "לקבלת תפריט יומי מותאם אישית":
         await generate_personalized_menu(update, context)
-        return MENU
-    elif choice == "בניית ארוחה לפי מה שיש לי בבית":
+        # הסר את כפתור התפריט היומי עד מחר או עד 'סיימתי'
         if update.message:
-            try:
-                await update.message.reply_text(
-                    "פרטי לי מה יש לך בבית, לדוגמא - חזה עוף, בשר טחון, סלמון, פסטה וכו'",
-                    reply_markup=ReplyKeyboardRemove(),
-                    parse_mode="HTML",
-                )
-            except Exception as e:
-                logger.error("Telegram API error in reply_text: %s", e)
-        return EATEN
-    elif choice == "מה אכלתי היום":
-        return await eaten(update, context)
+            await update.message.reply_text(
+                gendered_text("התפריט היומי נשלח. כפתור זה יופיע שוב מחר.", "התפריט היומי נשלח. כפתור זה יופיע שוב מחר.", context),
+                reply_markup=build_main_keyboard(hide_menu_button=True),
+            )
+        return MENU
+    elif choice == "סיימתי":
+        await send_summary(update, context)
+        if update.message:
+            await update.message.reply_text(
+                gendered_text("היום אופס. מחכה לעדכן אותך מחר!", "היום אופס. מחכה לעדכן אותך מחר!", context),
+                reply_markup=ReplyKeyboardRemove(),
+            )
+        # TODO: reset daily data here
+        return MENU
     elif choice == "קבלת דוח":
         keyboard = [
-            [InlineKeyboardButton("📅 שבוע אחרון", callback_data="report_weekly")],
-            [InlineKeyboardButton("📊 חודש אחרון", callback_data="report_monthly")],
+            [InlineKeyboardButton("📊 סיכום יומי", callback_data="report_daily")],
+            [InlineKeyboardButton("📅 סיכום שבועי", callback_data="report_weekly")],
+            [InlineKeyboardButton("🗓 סיכום חודשי", callback_data="report_monthly")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         if update.message:
-            try:
-                await update.message.reply_text(
-                    gendered_text(context, "📊 <b>בחר סוג דוח:</b>", "📊 <b>בחרי סוג דוח:</b>"), reply_markup=reply_markup, parse_mode="HTML"
-                )
-            except Exception as e:
-                logger.error("Telegram API error in reply_text: %s", e)
-        keyboard = [
-            [KeyboardButton("לקבלת תפריט יומי מותאם אישית")],
-            [KeyboardButton("מה אכלתי היום")],
-            [KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")],
-            [KeyboardButton("קבלת דוח")],
-            [KeyboardButton("תזכורות על שתיית מים")],
-        ]
+            await update.message.reply_text(
+                gendered_text("📊 בחר סוג דוח:", "📊 בחרי סוג דוח:", context),
+                reply_markup=reply_markup,
+                parse_mode="HTML",
+            )
         if update.message:
-            try:
-                await update.message.reply_text(
-                    gendered_text(context, "בחר פעולה:", "בחרי פעולה:"),
-                    reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-                )
-            except Exception as e:
-                logger.error("Telegram API error in reply_text: %s", e)
+            await update.message.reply_text(
+                gendered_text("בחר פעולה נוספת:", "בחרי פעולה נוספת:", context),
+                reply_markup=build_main_keyboard(),
+            )
         return MENU
-    elif choice == "תזכורות על שתיית מים":
-        await water_intake_start(update, context)
-        return WATER_REMINDER_OPT_IN
-    elif choice == "סיימתי":
-        await send_summary(update, context)
-        return SCHEDULE
+    elif choice == "עדכון פרטים אישיים":
+        await handle_update_personal_details(update, context)
+        if update.message:
+            await update.message.reply_text(
+                gendered_text("הפרטים אופסו. נתחיל מחדש!", "הפרטים אופסו. נתחיל מחדש!", context),
+                reply_markup=ReplyKeyboardRemove(),
+            )
+        # TODO: start questionnaire again
+        return MENU
     else:
         return await eaten(update, context)
 
@@ -2226,6 +2238,7 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     food_log = user.get("daily_food_log", [])
     calorie_budget = user.get("calorie_budget", 0)
     calories_consumed = user.get("calories_consumed", 0)
+    # פירוט ארוחות עיקריות
     if food_log:
         eaten_lines = [f"• <b>{item['name']}</b> (<b>{item['calories']}</b> קלוריות)" for item in food_log]
         eaten = "\n".join(eaten_lines)
@@ -2248,19 +2261,61 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error getting next day recommendation: {e}")
         recommendation = ""
-    summary = f'<b>סיכום יומי:</b>\n{eaten}\n\n<b>סה\'כ נאכל:</b> <b>{total_eaten}</b> קלוריות\n<b>נשארו:</b> <b>{remaining}</b> קלוריות להיום.\n{budget_status}\n\n<b>המלצה למחר:</b> {recommendation}'
+    # שלב 1: שליחת סיכום
+    summary = (
+        f'<b>סיכום יומי:</b>\n{eaten}\n\n'
+        f'<b>סה\'כ נאכל:</b> <b>{total_eaten}</b> קלוריות\n'
+        f'<b>נשארו:</b> <b>{remaining}</b> קלוריות להיום.\n'
+        f'{budget_status}\n\n'
+        f'<b>המלצה למחר:</b> {recommendation}'
+    )
     if update.message:
         try:
             await update.message.reply_text(summary, parse_mode="HTML")
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
-    # אפס יומן ותקציב ליום חדש
+    # שלב 2: שאלה על שעת שליחת תפריט יומי
+    hour_buttons = [
+        [KeyboardButton("06:00"), KeyboardButton("07:00")],
+        [KeyboardButton("08:00"), KeyboardButton("09:00")],
+        [KeyboardButton("מעדיפה לבקש לבד")],
+    ]
+    gender = user.get("gender", "נקבה")
+    ask_time_text = gendered_text(
+        "באיזו שעה לשלוח לך את התפריט היומי מחר?",
+        "באיזו שעה לשלוח לך את התפריט היומי מחר?",
+        context
+    )
+    if update.message:
+        try:
+            await update.message.reply_text(
+                ask_time_text,
+                reply_markup=ReplyKeyboardMarkup(hour_buttons, resize_keyboard=True),
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
+    # שלב 3: איפוס יומי
     user["daily_food_log"] = []
     user["calories_consumed"] = 0
+    # עדכון תאריך ביומן צריכה (אם יש)
+    from datetime import date
+    user["last_reset_date"] = date.today().isoformat()
     user_id = update.effective_user.id if update.effective_user else None
     if user_id:
         nutrition_db.save_user(user_id, user)
-    # שלח pin חדש לתקציב
+    # שלב 4: פידבק חיובי
+    feedback = gendered_text(
+        "כל הכבוד שסיימת את היום! 💪",
+        "כל הכבוד שסיימת את היום! 💪",
+        context
+    )
+    if update.message:
+        try:
+            await update.message.reply_text(feedback, parse_mode="HTML", reply_markup=ReplyKeyboardRemove())
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
+    # שלב 5: שלח pin חדש לתקציב
     try:
         chat = update.effective_chat
         calorie_msg = f"📌 תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות"
@@ -2278,18 +2333,32 @@ async def schedule_menu(
     if not update.message or not update.message.text:
         return SCHEDULE
     time = update.message.text.strip()
-    context.user_data["schedule_time"] = time
     user_id = update.effective_user.id if update.effective_user else None
+    if time in ["06:00", "07:00", "08:00", "09:00"]:
+        context.user_data["preferred_menu_hour"] = time
+        context.user_data["daily_menu_enabled"] = True
+        msg = gendered_text(
+            f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
+            f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
+            context
+        )
+    else:
+        context.user_data["preferred_menu_hour"] = None
+        context.user_data["daily_menu_enabled"] = False
+        msg = gendered_text(
+            "לא אשלח תפריט אוטומטי. אפשר לבקש תפריט יומי בכל עת מהתפריט הראשי.",
+            "לא אשלח תפריט אוטומטי. אפשר לבקש תפריט יומי בכל עת מהתפריט הראשי.",
+            context
+        )
+    # תיעוד במסד
     if user_id:
+        from datetime import datetime
+        context.user_data["last_menu_schedule_update"] = datetime.now().isoformat()
         nutrition_db.save_user(user_id, context.user_data)
     if update.message:
         try:
             await update.message.reply_text(
-                gendered_text(
-                    context,
-                    f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
-                    f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
-                ),
+                msg,
                 reply_markup=ReplyKeyboardRemove(),
                 parse_mode="HTML",
             )
@@ -2458,7 +2527,6 @@ async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_
             if "daily_food_log" not in context.user_data:
                 context.user_data["daily_food_log"] = []
             for item in items:
-                # לא להוסיף פעמיים אותה ארוחה באותו זמן
                 if not any(x["name"] == item["name"] and x["calories"] == item["calories"] for x in context.user_data["daily_food_log"]):
                     context.user_data["daily_food_log"].append({
                         "name": item["name"],
@@ -2469,25 +2537,38 @@ async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_
             current_budget = context.user_data.get("calorie_budget", 0)
             if "calories_consumed" not in context.user_data:
                 context.user_data["calories_consumed"] = 0
+            consumed_before = context.user_data["calories_consumed"]
             context.user_data["calories_consumed"] += total
-            remaining_budget = current_budget - context.user_data["calories_consumed"]
+            consumed_after = context.user_data["calories_consumed"]
+            remaining_budget = current_budget - consumed_after
             if remaining_budget < 0:
                 remaining_budget = 0
             # שמור למסד נתונים
             nutrition_db.save_user(user_id, context.user_data)
-            # בנה סיכום ארוחה
-            meal_lines = [f"- {item['name']}: {item['calories']} קלוריות" for item in items]
+            # בנה הודעת פירוט ארוחה
+            meal_lines = [f"{item['name']} – {item['calories']} קלוריות" for item in items]
             meal_text = "\n".join(meal_lines)
-            total_today = context.user_data["calories_consumed"]
-            summary = f"🍽 פירוט קלורי לארוחה:\n\n{meal_text}\n\nסה\"כ לארוחה זו: {total} קלוריות\nסה\"כ אכלת היום עד עכשיו: {total_today} קלוריות"
-            # שלח סיכום ארוחה
-            await update.message.reply_text(summary)
-            # שלח והצמד הודעת תקציב
+            meal_summary = (
+                f"🍽️ חישוב קלורי לארוחה:\n\n"
+                f"{meal_text}\n"
+                f"סה\"כ לארוחה: {total} קלוריות"
+            )
+            # בנה הודעת מצב יומי
+            daily_status = (
+                f"📊 מצב יומי:\n\n"
+                f"צריכה עד עכשיו: {consumed_before} קלוריות\n"
+                f"תוספת מהארוחה הנוכחית: {total} קלוריות\n"
+                f"סה\"כ עד כה: {consumed_after} קלוריות\n\n"
+                f"היעד היומי שלי: {current_budget} קלוריות\n"
+                f"נותרו לי להיום: {remaining_budget} קלוריות"
+            )
+            # שלח הודעות
+            await update.message.reply_text(meal_summary)
+            status_msg = await update.message.reply_text(daily_status)
+            # בצע pin יחיד
             try:
                 chat = update.effective_chat
-                calorie_msg = f"🔥 נשארו לך היום: {remaining_budget} קלוריות"
-                calorie_message = await update.message.reply_text(calorie_msg)
-                await pin_single_message(chat, calorie_message.message_id)
+                await pin_single_message(chat, status_msg.message_id)
             except Exception as e:
                 logger.error(f"Error sending or pinning calorie budget message: {e}")
         except Exception as e:
@@ -3095,4 +3176,223 @@ async def pin_single_message(chat, message_id):
         await chat.pin_message(message_id)
     except Exception as e:
         logger.error(f"Error pinning message: {e}")
+
+
+# Stub for personal details update
+async def handle_update_personal_details(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # שלב 1: שאל אם לעדכן הכל
+    keyboard = [[KeyboardButton("כן")], [KeyboardButton("לא")]]
+    question = gendered_text(
+        "רוצה לעדכן את כל הפרטים האישיים שלך?",
+        "רוצה לעדכן את כל הפרטים האישיים שלך?",
+        context
+    )
+    if update.message:
+        await update.message.reply_text(
+            question,
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            parse_mode="HTML",
+        )
+    # שמור flag לזיהוי
+    context.user_data["awaiting_reset_confirmation"] = True
+
+async def handle_update_personal_details_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message or not update.message.text:
+        return
+    text = update.message.text.strip()
+    if not context.user_data.get("awaiting_reset_confirmation"):
+        return
+    if text == "כן":
+        # איפוס מלא
+        user_id = update.effective_user.id if update.effective_user else None
+        context.user_data.clear()
+        context.user_data["reset_in_progress"] = True
+        if user_id:
+            # מחיקת נתונים מה-DB
+            nutrition_db.save_user(user_id, {})
+        # שלח הודעה חמה
+        msg = gendered_text(
+            "מתחילים הכל מההתחלה! אשאל אותך כמה שאלות קצרות כדי להתאים לך תפריט אישי.",
+            "מתחילות הכל מההתחלה! אשאל אותך כמה שאלות קצרות כדי להתאים לך תפריט אישי.",
+            context
+        )
+        await update.message.reply_text(msg, reply_markup=ReplyKeyboardRemove(), parse_mode="HTML")
+        # התחל את השאלון מחדש (כמו start)
+        await start(update, context)
+        context.user_data.pop("awaiting_reset_confirmation", None)
+        return
+    elif text == "לא":
+        msg = gendered_text(
+            "הפרטים האישיים לא שונו. אפשר להמשיך כרגיל!",
+            "הפרטים האישיים לא שונו. אפשר להמשיך כרגיל!",
+            context
+        )
+        await update.message.reply_text(msg, reply_markup=build_main_keyboard(), parse_mode="HTML")
+        context.user_data.pop("awaiting_reset_confirmation", None)
+        return
+
+
+async def handle_report_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles report selection from the report menu (CallbackQuery)."""
+    query = update.callback_query
+    if not query or not query.data:
+        return
+    user_id = update.effective_user.id if update.effective_user else None
+    report_type = query.data.replace('report_', '')
+    # שמור בחירה במסד (לניתוח עתידי)
+    if user_id:
+        if context.user_data is None:
+            context.user_data = {}
+        context.user_data.setdefault('report_requests', []).append({
+            'type': report_type,
+            'timestamp': datetime.now().isoformat()
+        })
+        nutrition_db.save_user(user_id, context.user_data)
+    # דוח יומי
+    if report_type == 'daily':
+        from datetime import date
+        today = date.today().isoformat()
+        day_data = get_nutrition_by_date(user_id, today)
+        if not day_data or not day_data.get('meals'):
+            await query.answer()
+            await query.edit_message_text(
+                gendered_text("לא רשומים נתונים להיום.", "לא רשומים נתונים להיום.", context),
+                parse_mode="HTML"
+            )
+            return
+        # בנה סיכום יומי
+        summary = f"<b>סיכום יומי ({today}):</b>\n"
+        summary += f"סה\'כ קלוריות: <b>{day_data['calories']}</b>\n"
+        summary += f"חלבון: <b>{day_data['protein']:.1f}g</b>  שומן: <b>{day_data['fat']:.1f}g</b>  פחמימות: <b>{day_data['carbs']:.1f}g</b>\n"
+        summary += "\n<b>ארוחות עיקריות:</b>\n"
+        for meal in day_data['meals']:
+            desc = meal['desc'] if isinstance(meal, dict) and 'desc' in meal else str(meal)
+            summary += f"• {desc}\n"
+        # המלצה מ-GPT
+        try:
+            prompt = f"המשתמש/ת צרך/ה היום {day_data['calories']} קלוריות. תן המלצה קצרה ליום מחר (ב-1-2 משפטים, בעברית, ללא פתיח אישי)."
+            from utils import call_gpt
+            recommendation = await call_gpt(prompt)
+        except Exception as e:
+            logger.error(f"Error getting daily report recommendation: {e}")
+            recommendation = ""
+        if recommendation:
+            summary += f"\n<b>המלצה למחר:</b> {recommendation}"
+        await query.answer()
+        await query.edit_message_text(summary, parse_mode="HTML")
+        return
+    # דוח שבועי
+    elif report_type == 'weekly':
+        data = get_weekly_report(user_id)
+        if len(data) < 7:
+            await query.answer()
+            await query.edit_message_text(
+                gendered_text(f"נותרו עוד {7-len(data)} ימים כדי שאוכל להציג סיכום שבועי מלא 😊", f"נותרו עוד {7-len(data)} ימים כדי שאוכל להציג סיכום שבועי מלא 😊", context),
+                parse_mode="HTML"
+            )
+            return
+        summary = build_weekly_summary_text(data)
+        # המלצה מ-GPT
+        try:
+            prompt = f"המשתמש/ת צרך/ה בממוצע {sum(d['calories'] for d in data)//len(data)} קלוריות ביום בשבוע האחרון. תן המלצה קצרה לשבוע הבא (ב-1-2 משפטים, בעברית, ללא פתיח אישי)."
+            from utils import call_gpt
+            recommendation = await call_gpt(prompt)
+        except Exception as e:
+            logger.error(f"Error getting weekly report recommendation: {e}")
+            recommendation = ""
+        if recommendation:
+            summary += f"\n<b>המלצה לשבוע הבא:</b> {recommendation}"
+        await query.answer()
+        await query.edit_message_text(summary, parse_mode="HTML")
+        return
+    # דוח חודשי
+    elif report_type == 'monthly':
+        data = get_monthly_report(user_id)
+        if len(data) < 30:
+            await query.answer()
+            await query.edit_message_text(
+                gendered_text(f"נותרו עוד {30-len(data)} ימים כדי שאוכל להציג סיכום חודשי מלא 🙂", f"נותרו עוד {30-len(data)} ימים כדי שאוכל להציג סיכום חודשי מלא 🙂", context),
+                parse_mode="HTML"
+            )
+            return
+        summary = build_monthly_summary_text(data)
+        # המלצה מ-GPT
+        try:
+            prompt = f"המשתמש/ת צרך/ה בממוצע {sum(d['calories'] for d in data)//len(data)} קלוריות ביום בחודש האחרון. תן המלצה קצרה לחודש הבא (ב-1-2 משפטים, בעברית, ללא פתיח אישי)."
+            from utils import call_gpt
+            recommendation = await call_gpt(prompt)
+        except Exception as e:
+            logger.error(f"Error getting monthly report recommendation: {e}")
+            recommendation = ""
+        if recommendation:
+            summary += f"\n<b>המלצה לחודש הבא:</b> {recommendation}"
+        await query.answer()
+        await query.edit_message_text(summary, parse_mode="HTML")
+        return
+    else:
+        await query.answer()
+        await query.edit_message_text("סוג דוח לא נתמך.")
+        return
+
+
+async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Sends a formatted help message with temporary action buttons."""
+    help_text = gendered_text(
+        """📌 איך אפשר להשתמש בי?
+
+🟢 לקבלת תפריט יומי מותאם אישית – לחצו על "לקבלת תפריט יומי מותאם אישית"
+🟢 לרשום מה אכלת – כתבו "אכלתי..." (למשל: אכלתי חביתה וסלט)
+🟢 לשאול שאלות – כתבו "אפשר לאכול..." או "כמה קלוריות יש ב..."
+🟢 לסיים את היום – לחצו על "סיימתי"
+🟢 לקבל דוחות – לחצו על "קבלת דוח"
+🟢 לעדכן משקל, תזונה, פעילות – לחצו על "עדכון פרטים אישיים"
+
+🧠 עכשיו אפשר גם:
+- לשאול אותי שאלות חופשיות (כל הודעה תנותח ע"י GPT)
+- לבחור "מעבר לשאלון אישי" ולהתחיל הכל מחדש
+
+אם צריך עזרה נוספת – פשוט כתבו לי 🙏""",
+        """📌 איך אפשר להשתמש בי?
+
+🟢 לקבלת תפריט יומי מותאם אישית – לחצי על "לקבלת תפריט יומי מותאם אישית"
+🟢 לרשום מה אכלת – כתבי "אכלתי..." (למשל: אכלתי חביתה וסלט)
+🟢 לשאול שאלות – כתבי "אפשר לאכול..." או "כמה קלוריות יש ב..."
+🟢 לסיים את היום – לחצי על "סיימתי"
+🟢 לקבל דוחות – לחצי על "קבלת דוח"
+🟢 לעדכן משקל, תזונה, פעילות – לחצי על "עדכון פרטים אישיים"
+
+🧠 עכשיו אפשר גם:
+- לשאול אותי שאלות חופשיות (כל הודעה תנותח ע"י GPT)
+- לבחור "מעבר לשאלון אישי" ולהתחיל הכל מחדש
+
+אם צריך עזרה נוספת – פשוט כתבי לי 🙏""",
+        context
+    )
+    keyboard = [
+        [KeyboardButton("שאל שאלה חופשית")],
+        [KeyboardButton("מעבר לשאלון אישי")],
+    ]
+    if update.message:
+        await update.message.reply_text(
+            help_text,
+            parse_mode="HTML",
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        )
+
+# Logic for the two temporary buttons
+async def handle_help_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message or not update.message.text:
+        return
+    text = update.message.text.strip()
+    if text == "שאל שאלה חופשית":
+        # החזר למצב free text (הסר מקלדת)
+        await update.message.reply_text(
+            gendered_text("אפשר לשאול כל שאלה חופשית!", "אפשר לשאול כל שאלה חופשית!", context),
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        return
+    elif text == "מעבר לשאלון אישי":
+        # הפעל את השאלון מחדש
+        await start(update, context)
+        return
 

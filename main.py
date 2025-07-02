@@ -102,6 +102,8 @@ from handlers import (
     water_intake_start,
     water_intake_amount,
     remind_in_10_minutes,
+    handle_report_request,
+    handle_update_personal_details_response,
 )
 from utils import build_main_keyboard
 
@@ -117,7 +119,7 @@ DAILY_MENUS_FILE = "daily_menus.json"
 
 
 async def daily_menu_scheduler(context):
-    """שולח תפריט יומי למשתמשים שנרשמו לכך."""
+    """שולח תפריט יומי למשתמשים שנרשמו לכך, בשעה שנבחרה."""
     try:
         if not os.path.exists(USERS_FILE):
             logger.info(
@@ -127,15 +129,38 @@ async def daily_menu_scheduler(context):
         with open(USERS_FILE, "r", encoding="utf-8") as f:
             users = json.load(f)
 
+        now = datetime.datetime.now()
+        current_hour = now.strftime("%H:00")
+
         for user_id_str, user_data in users.items():
-            if user_data.get("daily_menu_enabled", False):
+            if user_data.get("daily_menu_enabled", False) and user_data.get("preferred_menu_hour") == current_hour:
                 try:
                     user_id = int(user_id_str)
+                    calorie_budget = user_data.get("calorie_budget", 0)
+                    gender = user_data.get("gender", "נקבה")
+                    # שלח תקציב קלוריות
+                    calorie_msg = f"📌 תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות"
+                    calorie_message = await context.bot.send_message(
+                        chat_id=user_id,
+                        text=calorie_msg,
+                    )
+                    # הצמד הודעה
+                    try:
+                        chat = await context.bot.get_chat(user_id)
+                        await chat.pin_message(calorie_message.message_id)
+                    except Exception as e:
+                        logger.error(f"Error pinning calorie message for user {user_id_str}: {e}")
+                    # שלח תפריט יומי
                     await context.bot.send_message(
                         chat_id=user_id,
                         text="🍽️ התפריט היומי שלך מוכן! לחץ על 'לקבלת תפריט יומי מותאם אישית'",
                         reply_markup=build_main_keyboard(),
                     )
+                    # תעד מועד שליחה
+                    user_data["last_menu_sent"] = now.isoformat()
+                    # שמור במסד
+                    with open(USERS_FILE, "w", encoding="utf-8") as fw:
+                        json.dump(users, fw, ensure_ascii=False, indent=2)
                     logger.info("Sent daily menu to user %s", user_id_str)
                 except Exception as e:
                     logger.error(
@@ -209,6 +234,9 @@ def main():
         )
     )
 
+    # Add handler for report menu callback
+    application.add_handler(CallbackQueryHandler(handle_report_request, pattern=r"^report_(daily|weekly|monthly)$"))
+
     # Add handler for free text input (only if not in conversation)
     application.add_handler(
         MessageHandler(
@@ -220,6 +248,14 @@ def main():
     # Add command handlers
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("menu", show_daily_menu))
+
+    # Add handler לכפתור עדכון פרטים אישיים
+    application.add_handler(
+        MessageHandler(
+            filters.TEXT & filters.Regex(r"^(כן|לא)$"),
+            handle_update_personal_details_response
+        )
+    )
 
     # Add global error handler
     async def global_error_handler(update, context):

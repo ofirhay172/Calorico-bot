@@ -429,3 +429,47 @@ async def analyze_meal_with_gpt(text: str) -> dict:
     except Exception as e:
         logger.error(f"Failed to parse GPT meal JSON: {e}, response: {response}")
         return {"items": [], "total": 0}
+
+
+def build_free_text_prompt(user_data: dict, user_text: str) -> str:
+    """בונה פרומפט מותאם לשאלה חופשית ל-GPT, כולל כל ההקשר הרלוונטי."""
+    name = user_data.get('telegram_name') or user_data.get('name', 'חבר/ה')
+    gender = user_data.get('gender', 'לא צוין')
+    age = user_data.get('age', 'לא צוין')
+    height = user_data.get('height', 'לא צוין')
+    weight = user_data.get('weight', 'לא צוין')
+    goal = user_data.get('goal', 'לא צוין')
+    activity_level = user_data.get('activity_type', user_data.get('activity', 'לא צוין'))
+    diet_preferences = ", ".join(user_data.get('diet', [])) if user_data.get('diet') else "אין העדפות מיוחדות"
+    allergies = ", ".join(user_data.get('allergies', [])) if user_data.get('allergies') else "אין"
+    daily_calories = user_data.get('calorie_budget', 1800)
+    eaten_today = user_data.get('daily_food_log', [])
+    eaten_desc = ", ".join([item.get('name', '') for item in eaten_today]) if eaten_today else "עדיין לא נאכל כלום היום"
+    calories_consumed = user_data.get('calories_consumed', 0)
+    calories_remaining = daily_calories - calories_consumed
+    prompt = f"""
+המשתמש/ת שואל/ת: {user_text}
+
+נתוני המשתמש/ת:
+- שם: {name}
+- מגדר: {gender}
+- גיל: {age}
+- גובה: {height} ס"מ
+- משקל: {weight} ק"ג
+- מטרה: {goal}
+- רמת פעילות: {activity_level}
+- העדפות תזונה: {diet_preferences}
+- אלרגיות: {allergies}
+- תקציב קלוריות יומי: {daily_calories}
+- קלוריות שנצרכו היום: {calories_consumed}
+- קלוריות שנותרו להיום: {calories_remaining}
+- מה נאכל היום: {eaten_desc}
+
+הנחיות:
+- אם המשתמש/ת שואל/ת על מאכל מסוים (למשל "אפשר לאכול המבורגר?", "בא לי שוקולד", "אני רוצה פיצה") – בדוק האם נשארו מספיק קלוריות לתקציב היומי, וענה בהתאם (אם אפשר, כמה קלוריות זה, ואם לא – הסבר למה).
+- אם השאלה כללית – ענה בקצרה, בעברית, בהתאמה אישית לנתונים.
+- אל תוסיף המלצות כלליות אם לא התבקשת.
+- ענה בעברית, בשפה טבעית וברורה.
+- אל תשתמש ב-HTML או Markdown.
+"""
+    return prompt

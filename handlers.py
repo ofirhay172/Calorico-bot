@@ -74,6 +74,7 @@ from utils import (
     build_user_prompt_for_gpt,
     call_gpt,
     analyze_meal_with_gpt,
+    build_free_text_prompt,
 )
 from report_generator import (
     get_weekly_report,
@@ -213,7 +214,7 @@ def reset_user(user_id):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """מתחיל את הבוט ומציג הודעת פתיחה בשלוש הודעות נפרדות."""
+    """מתחיל את הבוט ומציג הודעת פתיחה בשלוש הודעות נפרדות, עם השהייה של 3 שניות בין כל הודעה."""
     if not update.message:
         return
 
@@ -252,6 +253,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🆕 שינוי קל בכל עת – משקל, יעד, תפריט, אלרגיות, ספורט ועוד"
     )
     await update.message.reply_text(msg1, parse_mode="HTML", reply_markup=ReplyKeyboardRemove())
+    await asyncio.sleep(3)
 
     # הודעה 2: דברים שיגיעו בקרוב
     msg2 = (
@@ -263,6 +265,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📲 תמיכה באפליקציות כושר"
     )
     await update.message.reply_text(msg2, parse_mode="HTML")
+    await asyncio.sleep(3)
 
     # הודעה 3: איך להשתמש ומה עכשיו
     msg3 = (
@@ -2501,6 +2504,31 @@ async def handle_free_text_input(
         )
     except Exception as e:
         logger.error("Telegram API error in reply_text: %s", e)
+
+    # כל טקסט חופשי אחר – שלח ל-GPT עם פרומפט מלא
+    try:
+        from utils import build_user_prompt_for_gpt, call_gpt
+        user_data = context.user_data or {}
+        # בנה פרומפט מותאם לשאלה חופשית
+        prompt = build_free_text_prompt(user_data, text)
+        await update.message.reply_text("חושב על תשובה... ⏳")
+        response = await call_gpt(prompt)
+        if response:
+            await update.message.reply_text(response, parse_mode=None)
+        else:
+            await update.message.reply_text(
+                "לא הצלחתי למצוא תשובה לשאלה שלך. נסה לשאול בצורה אחרת.",
+                parse_mode="HTML"
+            )
+    except Exception as e:
+        logger.error(f"Error handling free text input: {e}")
+        try:
+            await update.message.reply_text(
+                "אירעה שגיאה בעיבוד הבקשה. נסה שוב.",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.error("Telegram API error in reply_text: %s", e)
 
 
 async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):

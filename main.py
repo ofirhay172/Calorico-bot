@@ -9,7 +9,7 @@ import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+import datetime
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -104,6 +104,7 @@ from handlers import (
     remind_in_10_minutes,
     handle_report_request,
     handle_update_personal_details_response,
+    handle_help,
 )
 from utils import build_main_keyboard
 
@@ -236,6 +237,14 @@ def main():
 
     # Add handler for report menu callback
     application.add_handler(CallbackQueryHandler(handle_report_request, pattern=r"^report_(daily|weekly|monthly)$"))
+
+    # Add handler for help button ("עזרה")
+    application.add_handler(
+        MessageHandler(
+            filters.TEXT & filters.Regex(r"^עזרה$"),
+            handle_help
+        )
+    )
 
     # Add handler for free text input (only if not in conversation)
     application.add_handler(

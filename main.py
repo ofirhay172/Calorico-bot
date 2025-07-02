@@ -323,10 +323,10 @@ def main():
             filters.TEXT & filters.Regex(menu_regex),
             handle_daily_choice))
 
-    # Handler לכפתור 'סיימתי להיום'
+    # Handler לכפתור 'סיימתי להיום' או 'סיימתי' (כולל וריאציות)
     application.add_handler(
         MessageHandler(
-            filters.TEXT & filters.Regex(r"^סיימתי להיום$"),
+            filters.TEXT & filters.Regex(r"^סיימתי( להיום)?[.!]?$"),
             send_summary
         )
     )

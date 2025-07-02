@@ -2287,7 +2287,7 @@ async def handle_daily_choice(
         if update.message:
             await update.message.reply_text(
                 gendered_text("התפריט היומי נשלח. כפתור זה יופיע שוב מחר.", "התפריט היומי נשלח. כפתור זה יופיע שוב מחר.", context),
-                reply_markup=build_main_keyboard(hide_menu_button=True),
+                reply_markup=build_main_keyboard(user_data=context.user_data),
             )
         return MENU
     elif choice == "מה אכלתי היום":
@@ -2322,7 +2322,7 @@ async def handle_daily_choice(
         if update.message:
             await update.message.reply_text(
                 gendered_text("בחר פעולה נוספת:", "בחרי פעולה נוספת:", context),
-                reply_markup=build_main_keyboard(),
+                reply_markup=build_main_keyboard(user_data=context.user_data),
             )
         return MENU
     elif choice == "עדכון פרטים אישיים":
@@ -2436,6 +2436,14 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     food_log = user.get("daily_food_log", [])
     calorie_budget = user.get("calorie_budget", 0)
     calories_consumed = user.get("calories_consumed", 0)
+    # אם אין צריכה כלל - אל תאפשר סיכום
+    if not food_log and calories_consumed == 0:
+        if update.message:
+            await update.message.reply_text(
+                "לא ניתן לסיים את היום לפני שהוזנה לפחות ארוחה אחת.",
+                parse_mode="HTML"
+            )
+        return
     # פירוט ארוחות עיקריות
     if food_log:
         eaten_lines = [f"• <b>{item['name']}</b> (<b>{item['calories']}</b> קלוריות)" for item in food_log]
@@ -2530,7 +2538,7 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # שלב 6: החזר תפריט ראשי
     try:
         from utils import build_main_keyboard
-        main_keyboard = build_main_keyboard(hide_menu_button=False)
+        main_keyboard = build_main_keyboard(hide_menu_button=False, user_data=context.user_data)
         await update.message.reply_text(
             "התפריט הראשי זמין לך:",
             reply_markup=main_keyboard,
@@ -2595,7 +2603,7 @@ async def schedule_menu(
     # החזר תפריט ראשי אחרי בחירת השעה
     try:
         from utils import build_main_keyboard
-        main_keyboard = build_main_keyboard(hide_menu_button=False)
+        main_keyboard = build_main_keyboard(hide_menu_button=False, user_data=context.user_data)
         await update.message.reply_text(
             "התפריט הראשי זמין לך:",
             reply_markup=main_keyboard,
@@ -3704,7 +3712,7 @@ async def handle_help_action(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # אם לא מזוהה - החזר למקלדת הראשית
         await update.message.reply_text(
             gendered_text("חזרה לתפריט הראשי", "חזרה לתפריט הראשי", context),
-            reply_markup=build_main_keyboard(),
+            reply_markup=build_main_keyboard(user_data=context.user_data),
             parse_mode="HTML"
         )
         return

@@ -247,15 +247,23 @@ def learning_logic(context) -> str:
     return f"💡 <b>טיפ מותאם אישית:</b> {tip_text}"
 
 
-def build_main_keyboard(hide_menu_button: bool = False) -> ReplyKeyboardMarkup:
-    """בונה מקלדת ראשית עם כל האפשרויות, עם אפשרות להסתיר כפתורים מסוימים."""
-    keyboard = [
-        [KeyboardButton("לקבלת תפריט יומי מותאם אישית")] if not hide_menu_button else [],
-        [KeyboardButton("סיימתי")],
-        [KeyboardButton("קבלת דוח")],
-        [KeyboardButton("עדכון פרטים אישיים")],
-        [KeyboardButton("עזרה")],
-    ]
+def build_main_keyboard(hide_menu_button: bool = False, user_data: dict = None) -> ReplyKeyboardMarkup:
+    """בונה מקלדת ראשית עם כל האפשרויות, עם אפשרות להסתיר כפתורים מסוימים.
+    כפתור 'סיימתי' יופיע רק אם המשתמש צרך משהו היום."""
+    show_end_button = False
+    if user_data:
+        food_log = user_data.get('daily_food_log', [])
+        calories = user_data.get('calories_consumed', 0)
+        if food_log or calories > 0:
+            show_end_button = True
+    keyboard = []
+    if not hide_menu_button:
+        keyboard.append([KeyboardButton("לקבלת תפריט יומי מותאם אישית")])
+    if show_end_button:
+        keyboard.append([KeyboardButton("סיימתי")])
+    keyboard.append([KeyboardButton("קבלת דוח")])
+    keyboard.append([KeyboardButton("עדכון פרטים אישיים")])
+    keyboard.append([KeyboardButton("עזרה")])
     # הסר שורות ריקות (אם כפתור הוסתר)
     keyboard = [row for row in keyboard if row]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)

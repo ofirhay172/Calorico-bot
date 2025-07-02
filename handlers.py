@@ -235,11 +235,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = user.id
     logger.info(f"[START] Processing start for user {user_id}")
 
-    # אם המשתמש כבר השלים את השאלון הראשוני, אל תתחיל מחדש אלא אם כן איפס
-    if context.user_data and context.user_data.get("flow", {}).get("setup_complete"):
+    # אם למשתמש יש gender או flow.setup_complete, קפוץ ישר לתפריט הראשי
+    if context.user_data and (context.user_data.get("gender") or context.user_data.get("flow", {}).get("setup_complete")):
         await update.message.reply_text(
-            "כבר השלמת את השאלון! תוכל לעבור לשאלון מחדש דרך התפריט או על ידי /reset.",
-            reply_markup=build_main_keyboard(),
+            "ברוך/ה הבא/ה! התפריט הראשי:",
+            reply_markup=build_main_keyboard(user_data=context.user_data),
         )
         return
 
@@ -2519,7 +2519,6 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # שלב 3: איפוס יומי (לא יגיע לכאן אם יש הודעה)
     user["daily_food_log"] = []
     user["calories_consumed"] = 0
-    # עדכון תאריך ביומן צריכה (אם יש)
     from datetime import date
     user["last_reset_date"] = date.today().isoformat()
     user_id = update.effective_user.id if update.effective_user else None

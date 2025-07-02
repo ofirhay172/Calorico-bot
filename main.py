@@ -10,10 +10,14 @@ import json
 import logging
 import os
 import datetime
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file (if available)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # dotenv not available, continue without it
+    pass
 
 from telegram import Update
 from telegram.ext import CallbackQueryHandler
@@ -220,14 +224,14 @@ def start_scheduler(application):
     logger.info("Daily menu scheduler started - checking every 10 minutes")
 
 
-def main():
+async def main():
     """הפונקציה הראשית שמתחילה את הבוט."""
     # Get bot token from environment
     bot_token = os.getenv("TELEGRAM_TOKEN")
     if not bot_token or bot_token == "your_telegram_bot_token_here":
         logger.error("TELEGRAM_TOKEN not found or not properly configured in environment variables")
         logger.error("Please set TELEGRAM_TOKEN in your .env file or environment variables")
-        return
+        raise ValueError("TELEGRAM_TOKEN not configured")
 
     # Get OpenAI API key from environment
     openai_key = os.getenv("OPENAI_API_KEY")
@@ -239,7 +243,7 @@ def main():
         application = Application.builder().token(bot_token).build()
     except Exception as e:
         logger.error(f"Failed to create application: {e}")
-        return
+        raise
 
     # Create conversation handler for questionnaire
     conv_handler = ConversationHandler(
@@ -348,11 +352,25 @@ def main():
 
     logger.info("Bot started successfully")
     try:
-        application.run_polling()
+        # Start the application without blocking
+        await application.initialize()
+        await application.start()
+        
+        # Keep the bot running
+        while True:
+            await asyncio.sleep(1)
+            
     except Exception as e:
         logger.error(f"Failed to start polling: {e}")
-        return
+        raise
+    finally:
+        # Cleanup
+        try:
+            await application.stop()
+            await application.shutdown()
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

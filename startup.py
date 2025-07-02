@@ -44,6 +44,8 @@ async def run_bot():
 
 def main():
     """Initialize and start the bot"""
+    # Log the TELEGRAM_TOKEN for debugging
+    logger.info(f"[DEBUG] TELEGRAM_TOKEN = {os.getenv('TELEGRAM_TOKEN')}")
     # Set up signal handlers for graceful shutdown
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)

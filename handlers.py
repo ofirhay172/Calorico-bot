@@ -2493,7 +2493,12 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
-    # שלב 3: איפוס יומי
+    
+    # החזר מצב SCHEDULE כדי שהמשתמש יוכל לבחור שעה
+    from config import SCHEDULE
+    return SCHEDULE
+    
+    # שלב 3: איפוס יומי (לא יגיע לכאן אם יש הודעה)
     user["daily_food_log"] = []
     user["calories_consumed"] = 0
     # עדכון תאריך ביומן צריכה (אם יש)
@@ -2521,6 +2526,22 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await pin_single_message(chat, calorie_message.message_id)
     except Exception as e:
         logger.error(f"Error sending or pinning calorie budget message: {e}")
+    
+    # שלב 6: החזר תפריט ראשי
+    try:
+        from utils import build_main_keyboard
+        main_keyboard = build_main_keyboard(hide_menu_button=False)
+        await update.message.reply_text(
+            "התפריט הראשי זמין לך:",
+            reply_markup=main_keyboard,
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.error(f"Error sending main menu: {e}")
+    
+    # אם אין הודעה, אל תחזיר מצב SCHEDULE
+    if not update.message:
+        return ConversationHandler.END
 
 
 async def schedule_menu(
@@ -2538,6 +2559,14 @@ async def schedule_menu(
         msg = gendered_text(
             f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
             f"מעולה! אשלח לך תפריט חדש כל יום בשעה {time}.",
+            context
+        )
+    elif time == "מעדיפה לבקש לבד":
+        context.user_data["preferred_menu_hour"] = "מעדיף לבקש לבד"
+        context.user_data["daily_menu_enabled"] = False
+        msg = gendered_text(
+            "לא אשלח תפריט אוטומטי. אפשר לבקש תפריט יומי בכל עת מהתפריט הראשי.",
+            "לא אשלח תפריט אוטומטי. אפשר לבקש תפריט יומי בכל עת מהתפריט הראשי.",
             context
         )
     else:
@@ -2562,6 +2591,19 @@ async def schedule_menu(
             )
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
+    
+    # החזר תפריט ראשי אחרי בחירת השעה
+    try:
+        from utils import build_main_keyboard
+        main_keyboard = build_main_keyboard(hide_menu_button=False)
+        await update.message.reply_text(
+            "התפריט הראשי זמין לך:",
+            reply_markup=main_keyboard,
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.error(f"Error sending main menu after schedule: {e}")
+    
     return ConversationHandler.END
 
 

@@ -57,6 +57,7 @@ from config import (
     BODY_FAT_CURRENT,
     BODY_FAT_TARGET_GOAL,
     WATER_REMINDER_OPT_IN,
+    SCHEDULE,
     MENU,
     NAME,
     USERS_FILE,
@@ -309,6 +310,7 @@ def main():
                 CallbackQueryHandler(get_allergies),
             ],
             WATER_REMINDER_OPT_IN: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)],
+            SCHEDULE: [MessageHandler(filters.TEXT & ~filters.COMMAND, schedule_menu)],
         },
         fallbacks=[CommandHandler("start", start), CommandHandler("help", help_command)]
     )

@@ -116,9 +116,9 @@ dmypy.json
 Thumbs.db
 
 # Bot specific
-*.db
-*.sqlite
-*.sqlite3
+# *.db  # Commented out to allow nutrition.db for Railway
+# *.sqlite  # Commented out to allow database files for Railway
+# *.sqlite3  # Commented out to allow database files for Railway
 pylint_report.txt
 daily_menus.json
 users.json

@@ -344,6 +344,11 @@ async def main():
         )
     )
 
+    # Handler כללי שמדפיס כל update שמתקבל
+    async def handle_updates(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        logger.info("[UPDATE RECEIVED] - %s", update)
+    application.add_handler(MessageHandler(filters.ALL, handle_updates), group=0)
+
     # Add global error handler
     async def global_error_handler(update, context):
         logger.error("Unhandled exception", exc_info=context.error)

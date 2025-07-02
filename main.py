@@ -248,7 +248,10 @@ async def main():
         logger.error(f"Failed to create application: {e}")
         raise
 
-    # Create conversation handler for questionnaire
+    # הוסף קודם את CommandHandler("start", start)
+    application.add_handler(CommandHandler("start", start))
+
+    # ואז את ConversationHandler
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -282,11 +285,10 @@ async def main():
             ],
             WATER_REMINDER_OPT_IN: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_water_reminder_opt_in)],
         },
-        fallbacks=[CommandHandler("help", help_command)],
+        fallbacks=[CommandHandler("start", start), CommandHandler("help", help_command)],
+        per_message=True,
     )
-
     application.add_handler(conv_handler)
-    application.add_handler(CommandHandler("start", start))
 
     # Add handlers for main menu options
     menu_regex = r"^(לקבלת תפריט יומי מותאם אישית|מה אכלתי היום|בניית ארוחה לפי מה שיש לי בבית|קבלת דוח|תזכורות על שתיית מים)$"

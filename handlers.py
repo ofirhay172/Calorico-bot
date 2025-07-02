@@ -2128,6 +2128,7 @@ async def water_intake_amount(
 
 
 async def show_daily_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info("[VERSION_MARKER] show_daily_menu called - version 2024-06-14")
     if context.user_data is None:
         context.user_data = {}
     user_data = context.user_data if context.user_data is not None else {}

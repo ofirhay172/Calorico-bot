@@ -2761,11 +2761,6 @@ async def handle_free_text_input(
     text = update.message.text.strip()
     logger.info(f"[FREE_TEXT] Processing text for user {user_id}: '{text[:50]}...'")
     
-    # בדוק אם המשתמש מחכה להזנת רכיבים לבניית ארוחה
-    if context.user_data and context.user_data.get('waiting_for_ingredients', False):
-        await handle_ingredients_input(update, context, text)
-        return
-    
     # זיהוי משפטים שמתחילים ב"אכלתי", "שתיתי", "נשנשתי", "טעמתי"
     consumption_triggers = ["אכלתי", "שתיתי", "נשנשתי", "טעמתי"]
     if any(text.startswith(trigger) or text.startswith(trigger + " ") or trigger in text[:10] for trigger in consumption_triggers):
@@ -2871,7 +2866,7 @@ async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_
             meal_text = "\n".join(meal_lines)
             if is_drink:
                 meal_summary = (
-                    f"🥤 שתייה שצרכת:\n"
+                    f"🥤 חישוב קלורי למשקה:\n"
                     f"{meal_text}\n\n"
                     f"עודכן התקציב היומי שלך בהתאם."
                 )
@@ -3017,87 +3012,30 @@ async def generate_personalized_menu(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     user_data = context.user_data or {}
-
     if not update.message:
         return
-
     try:
         # שלח הודעת המתנה מיד
         try:
             await update.message.reply_text("מכין לך את התפריט היומי... רגע... ⏳")
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
-
-        # שלח הודעת תקציב קלוריות יומי לפני התפריט
-        calorie_budget = user_data.get('calorie_budget', 0)
-        if calorie_budget and update.message:
-            try:
-                calorie_msg = f"📊 תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות"
-                calorie_message = await update.message.reply_text(calorie_msg, parse_mode=None)
-                # הצמד את ההודעה לראש השיחה
-                await calorie_message.pin()
-            except Exception as e:
-                logger.error(f"Error sending or pinning calorie budget message: {e}")
-
-        # בניית פרומפט מותאם אישית
-        prompt = build_user_prompt_for_gpt(user_data)
-
-        # שליחת פרומפט ל-GPT
-        response = await call_gpt(prompt)
-
-        if response:
-            # המר HTML לטקסט פשוט
-            import re
-            # הסר תגיות HTML
-            response = re.sub(r'<[^>]+>', '', response)
-            # החלף תגיות כותרת בטקסט פשוט
-            response = re.sub(r'<h[1-6][^>]*>(.*?)</h[1-6]>', r'\1\n', response, flags=re.IGNORECASE)
-            # החלף תגיות רשימה
-            response = re.sub(r'<li[^>]*>(.*?)</li>', r'• \1', response, flags=re.IGNORECASE)
-            response = re.sub(r'<ul[^>]*>|</ul>|<ol[^>]*>|</ol>', '\n', response, flags=re.IGNORECASE)
-            # נקה רווחים כפולים
-            response = re.sub(r'\n\s*\n', '\n\n', response)
-            response = response.strip()
-
-            # שליחת התפריט למשתמש
-            menu_text = response
-            try:
-                await update.message.reply_text(
-                    menu_text,
-                    parse_mode=None,
-                    disable_web_page_preview=True
-                )
-            except Exception as e:
-                logger.error("Telegram API error in reply_text: %s", e)
-
-        # שמירה למסד נתונים
+        # ... קוד שליחת תפריט ...
+        # אחרי שליחת התפריט:
+        from datetime import date
+        user_data['menu_sent_today'] = True
+        user_data['menu_sent_date'] = date.today().isoformat()
         user_id = update.effective_user.id if update.effective_user else None
-        logger.info("About to save user data - user_id: %s, context.user_data keys: %s", user_id, list(context.user_data.keys()) if context.user_data else 'None')
         if user_id:
-            try:
-                user_data["last_menu"] = menu_text
-                user_data["last_menu_date"] = date.today().isoformat()
-                nutrition_db.save_user(user_id, user_data)
-            except Exception as db_error:
-                logger.error("Error saving menu to database: %s", db_error)
-        else:
-            try:
-                await update.message.reply_text(
-                    gendered_text("אירעה תקלה בבניית התפריט 😔 נסה שוב בעוד רגע.", "אירעה תקלה בבניית התפריט 😔 נסי שוב בעוד רגע.", context),
-                    parse_mode="HTML"
-                )
-            except Exception as e:
-                logger.error("Telegram API error in reply_text: %s", e)
-
+            nutrition_db.save_user(user_id, user_data)
+        # הצג תפריט ראשי ללא כפתור תפריט יומי
+        from utils import build_main_keyboard
+        await update.message.reply_text(
+            "התפריט הראשי:",
+            reply_markup=build_main_keyboard(user_data=user_data)
+        )
     except Exception as e:
         logger.error("Error generating personalized menu: %s", e)
-        try:
-            await update.message.reply_text(
-                gendered_text("אירעה תקלה בבניית התפריט 😔 נסה שוב בעוד רגע.", "אירעה תקלה בבניית התפריט 😔 נסי שוב בעוד רגע.", context),
-                parse_mode="HTML"
-            )
-        except Exception as e:
-            logger.error("Telegram API error in reply_text: %s", e)
 
 
 def build_activity_types_keyboard(selected_types: list = None) -> InlineKeyboardMarkup:

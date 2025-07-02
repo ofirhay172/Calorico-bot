@@ -250,13 +250,21 @@ def learning_logic(context) -> str:
 def build_main_keyboard(hide_menu_button: bool = False, user_data: dict = None) -> ReplyKeyboardMarkup:
     """בונה מקלדת ראשית עם כל האפשרויות, עם אפשרות להסתיר כפתורים מסוימים.
     כפתור 'סיימתי' יופיע רק אם המשתמש צרך משהו היום."""
+    from datetime import date
     show_end_button = False
+    show_menu_button = True
+    today = date.today().isoformat()
     if user_data:
         food_log = user_data.get('daily_food_log', [])
         if food_log:
             show_end_button = True
+        # הסתר כפתור תפריט יומי אם כבר נשלח היום
+        menu_sent_today = user_data.get('menu_sent_today')
+        menu_sent_date = user_data.get('menu_sent_date')
+        if menu_sent_today and menu_sent_date == today:
+            show_menu_button = False
     keyboard = []
-    if not hide_menu_button:
+    if not hide_menu_button and show_menu_button:
         keyboard.append([KeyboardButton("לקבלת תפריט יומי מותאם אישית")])
     keyboard.append([KeyboardButton("מה אכלתי היום")])
     keyboard.append([KeyboardButton("בניית ארוחה לפי מה שיש לי בבית")])

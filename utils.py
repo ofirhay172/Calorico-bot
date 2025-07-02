@@ -287,8 +287,9 @@ def validate_numeric_input(text: str, min_val: float, max_val: float, field_name
 
 
 def build_user_prompt_for_gpt(user_data: dict) -> str:
-    """בונה פרומפט מותאם אישית עבור GPT לפי הנוסח החדש."""
-    name = user_data.get('name', 'חבר/ה')
+    """בונה פרומפט מותאם אישית עבור GPT לפי הנוסח החדש וההנחיות האחרונות."""
+    # שם מהטלגרם אם יש, אחרת לבקש שם מותאם מגדר
+    name = user_data.get('telegram_name') or user_data.get('name', 'חבר/ה')
     gender = user_data.get('gender', 'לא צוין')
     age = user_data.get('age', 'לא צוין')
     height = user_data.get('height', 'לא צוין')
@@ -298,7 +299,6 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
     diet_preferences = ", ".join(user_data.get('diet', [])) if user_data.get('diet') else "אין העדפות מיוחדות"
     allergies = ", ".join(user_data.get('allergies', [])) if user_data.get('allergies') else "אין"
     daily_calories = user_data.get('calorie_budget', 1800)
-
     # פירוט פעילות גופנית
     activity_details = user_data.get('activity_details', {})
     activity_details_text = ""
@@ -306,59 +306,47 @@ def build_user_prompt_for_gpt(user_data: dict) -> str:
         activity_details_text = "\n\nפירוט פעילות גופנית של המשתמש/ת:\n"
         for act, details in activity_details.items():
             freq = details.get('frequency', '')
-            activity_details_text += f"- {act}: {freq}\n"
+            duration = details.get('duration', '')
+            intensity = details.get('intensity', '')
+            activity_details_text += f"- {act}: {freq} בשבוע, {duration} דקות, עצימות: {intensity}\n"
+    prompt = f"""
+אתה תזונאי קליני מנוסה. צור תפריט יומי מותאם אישית לפי תקציב קלוריות מוגדר מראש, עבור משתמש/ת עם הנתונים הבאים:
 
-    prompt = f"""אתה תזונאי קליני מנוסה. עליך לייצר תפריט יומי מותאם אישית לפי תקציב קלוריות מוגדר מראש, עבור משתמשת בגיל ורמת פעילות מסוימת.
-
-נתוני המשתמש/ת:
 - שם: {name}
 - מגדר: {gender}
 - גיל: {age}
-- גובה: {height} ס\"מ
-- משקל: {weight} ק\"ג
+- גובה: {height} ס"מ
+- משקל: {weight} ק"ג
 - מטרה: {goal}
 - רמת פעילות: {activity_level}
 - העדפות תזונה: {diet_preferences}
 - אלרגיות: {allergies}
 - תקציב קלוריות יומי: {daily_calories} קלוריות{activity_details_text}
 
-🔹 פורמט הפלט:
-- כותרת: "תפריט יומי מותאם אישית"
-- ללא פתיחה כמו "שלום [שם]", וללא חתימה.
-- תן כותרת לכל ארוחה עם סכום הקלוריות, ואז רשימת מנות עם קלוריות מדויקות לכל רכיב.
-- בסוף כל סעיף, הקפד שהסך לא יחרוג מהתקציב של אותה ארוחה.
+🔹 מבנה הפלט:
+- התחל בכותרת בלבד (ללא ברכה, ללא "שלום").
+- עבור כל ארוחה: שם הארוחה (עם אימוג'י), קלוריות כוללות, רכיבים עם קלוריות לכל רכיב.
+- כמויות הגיוניות בלבד (למשל: 1 פרוסה, 1 ביצה, 100 גרם). אין "חצי קילו", אין "גרידת פטל".
+- שפה טבעית, עברית תקינה, ללא מונחים טכניים.
+- חלוקה קלורית: בוקר 25%, צהריים 35%, ערב 30%, נשנושים 10%.
+- נשנושים: רק פירות, יוגורט, קרקרים, חופן אגוזים. אין טונה, חזה עוף, או מנות מבושלות.
+- אין להוסיף המלצות כלליות, רק תפריט.
 
-🔹 חלוקה יומית:
-- ארוחת בוקר: 25% מהקלוריות ({int(daily_calories * 0.25)} קלוריות)
-- ארוחת צהריים: 35% ({int(daily_calories * 0.35)} קלוריות)
-- ארוחת ערב: 30% ({int(daily_calories * 0.30)} קלוריות)
-- נשנושים: 10% ({int(daily_calories * 0.10)} קלוריות)
-
-🔹 דרישות הכרחיות:
-- כמויות מדויקות וסבירות בלבד (למשל: 1 פרוסת לחם, 1 ביצה, 100 גרם אורז).
-- אין להשתמש בכמויות לא סבירות כמו "חצי קילו גבינה", "חצי קילו חסה", "חצי גרידת פטל".
-- כל רכיב חייב לכלול כמות, תיאור קצר וקלוריות משוערות (למשל: 1 פרוסת לחם מלא – 80 קלוריות).
-- שלב בכל ארוחה פחמימה, חלבון וירק או שומן בריא.
-- השתמש במרכיבים זמינים ונפוצים – לא מנות גורמה.
-- אין לתת המלצות כלליות או טיפים – רק תפריט פרקטי.
-- <b>נשנושים צריכים להיות קלים לעיכול, קטנים, ונוחים לצריכה בין הארוחות – רק פירות, יוגורט, קרקרים, חופן אגוזים. אין לכלול טונה, חזה עוף, או מנות מבושלות.</b>
-
-🔹 דוגמה מבנית:
-
-ארוחת בוקר (418 קלוריות):
-- פרוסת לחם מלא (80 קלוריות)
+🔹 דוגמה:
+🍳 ארוחת בוקר (420 קלוריות):
 - חביתה מ-2 ביצים (160 קלוריות)
-- חצי אבוקדו קטן (78 קלוריות)
-- כוס קפה שחור ללא סוכר (0 קלוריות)
-- חופן ירקות חתוכים (100 קלוריות)
+- סלט ירקות קטן (85 קלוריות)
+- פרוסת לחם מלא (80 קלוריות)
+- גבינה לבנה 5% (50 גרם, 45 קלוריות)
+- קפה שחור (0 קלוריות)
 
 ---
 
-✅ בכל סעיף ודא שהסך לא חורג מהקצאת הקלוריות.
-✅ הפלט כולו צריך להיות טקסט פשוט – בלי תגיות HTML או רשימות מסומנות.
-✅ השתמש בערכים מדויקים ממאגר תזונתי אמיתי (לא הערכות).
-✅ התחשב בהעדפות התזונה והאלרגיות של המשתמש/ת."""
-
+✅ ודא שהסך לא חורג מהקצאת הקלוריות לכל ארוחה.
+✅ הפלט כולו טקסט פשוט – בלי תגיות HTML, בלי רשימות מסומנות.
+✅ השתמש בערכים מדויקים ממאגר תזונתי אמיתי.
+✅ התחשב בהעדפות התזונה, אלרגיות ופעילות גופנית.
+"""
     return prompt
 
 
@@ -371,15 +359,13 @@ async def call_gpt(prompt: str) -> str:
             return get_gendered_text(None, 
                 "לא הצלחתי ליצור קשר עם שירות ה-AI. אנא נסה שוב מאוחר יותר.",
                 "לא הצלחתי ליצור קשר עם שירות ה-AI. אנא נסי שוב מאוחר יותר.")
-        
         client = openai.AsyncOpenAI(api_key=api_key)
         response = await client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4-0125-preview",  # או "gpt-4o"
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             max_tokens=1000
         )
-        
         if response and response.choices and response.choices[0].message:
             content = response.choices[0].message.content
             return content.strip() if content else get_gendered_text(None, 
@@ -390,7 +376,6 @@ async def call_gpt(prompt: str) -> str:
             return get_gendered_text(None, 
                 "לא קיבלתי תשובה מ-AI. אנא נסה שוב.",
                 "לא קיבלתי תשובה מ-AI. אנא נסי שוב.")
-            
     except openai.AuthenticationError:
         logger.error("OpenAI authentication failed")
         return "שגיאה באימות עם שירות ה-AI. אנא פנה למנהל המערכת."

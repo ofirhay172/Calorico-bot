@@ -2236,7 +2236,6 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     remaining = calorie_budget - total_eaten
     if remaining < 0:
         remaining = 0
-    # האם נשמר התקציב?
     if total_eaten <= calorie_budget:
         budget_status = "✅ עמדת בתקציב!"
     else:
@@ -2255,7 +2254,20 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(summary, parse_mode="HTML")
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
-    # אפשר להוסיף כאן שמירה למסד נתונים אם צריך
+    # אפס יומן ותקציב ליום חדש
+    user["daily_food_log"] = []
+    user["calories_consumed"] = 0
+    user_id = update.effective_user.id if update.effective_user else None
+    if user_id:
+        nutrition_db.save_user(user_id, user)
+    # שלח pin חדש לתקציב
+    try:
+        chat = update.effective_chat
+        calorie_msg = f"📌 תקציב הקלוריות היומי שלך: {calorie_budget} קלוריות"
+        calorie_message = await update.message.reply_text(calorie_msg)
+        await pin_single_message(chat, calorie_message.message_id)
+    except Exception as e:
+        logger.error(f"Error sending or pinning calorie budget message: {e}")
 
 
 async def schedule_menu(
@@ -2423,11 +2435,9 @@ async def handle_free_text_input(
 
 
 async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
-    """מטפל בצריכת מזון - מעדכן יומן ומחסיר מהתקציב היומי."""
+    from utils import analyze_meal_with_gpt
     if context.user_data is None:
         context.user_data = {}
-    
-    # חלץ את תיאור המזון מהטקסט
     food_desc = text.replace("אכלתי", "").strip()
     if not food_desc:
         try:
@@ -2438,43 +2448,48 @@ async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_
         except Exception as e:
             logger.error("Telegram API error in reply_text: %s", e)
         return
-    
-    # שמור ליומן הצריכה
     user_id = update.effective_user.id if update.effective_user else None
     if user_id:
         try:
-            # הוסף ליומן הצריכה היומי
+            meal_data = await analyze_meal_with_gpt(food_desc)
+            items = meal_data.get("items", [])
+            total = meal_data.get("total", 0)
+            # עדכון יומן הארוחות, בלי כפילויות
             if "daily_food_log" not in context.user_data:
                 context.user_data["daily_food_log"] = []
-            
-            food_entry = {
-                "description": food_desc,
-                "timestamp": datetime.now().isoformat(),
-                "calories": 0  # יוערך על ידי GPT
-            }
-            context.user_data["daily_food_log"].append(food_entry)
-            
+            for item in items:
+                # לא להוסיף פעמיים אותה ארוחה באותו זמן
+                if not any(x["name"] == item["name"] and x["calories"] == item["calories"] for x in context.user_data["daily_food_log"]):
+                    context.user_data["daily_food_log"].append({
+                        "name": item["name"],
+                        "calories": item["calories"],
+                        "timestamp": datetime.now().isoformat(),
+                    })
+            # עדכון התקציב
+            current_budget = context.user_data.get("calorie_budget", 0)
+            if "calories_consumed" not in context.user_data:
+                context.user_data["calories_consumed"] = 0
+            context.user_data["calories_consumed"] += total
+            remaining_budget = current_budget - context.user_data["calories_consumed"]
+            if remaining_budget < 0:
+                remaining_budget = 0
             # שמור למסד נתונים
             nutrition_db.save_user(user_id, context.user_data)
-            
-            # הערך קלוריות באמצעות GPT
-            calorie_estimate = await estimate_food_calories(food_desc)
-            food_entry["calories"] = calorie_estimate
-            
-            # עדכן את התקציב היומי
-            current_budget = context.user_data.get("calorie_budget", 0)
-            remaining_budget = current_budget - calorie_estimate
-            
+            # בנה סיכום ארוחה
+            meal_lines = [f"- {item['name']}: {item['calories']} קלוריות" for item in items]
+            meal_text = "\n".join(meal_lines)
+            total_today = context.user_data["calories_consumed"]
+            summary = f"🍽 פירוט קלורי לארוחה:\n\n{meal_text}\n\nסה\"כ לארוחה זו: {total} קלוריות\nסה\"כ אכלת היום עד עכשיו: {total_today} קלוריות"
+            # שלח סיכום ארוחה
+            await update.message.reply_text(summary)
+            # שלח והצמד הודעת תקציב
             try:
-                await update.message.reply_text(
-                    f"✅ נרשם: {food_desc}\n"
-                    f"📊 קלוריות: ~{calorie_estimate}\n"
-                    f"💰 נותר: {remaining_budget} קלוריות",
-                    parse_mode="HTML"
-                )
+                chat = update.effective_chat
+                calorie_msg = f"🔥 נשארו לך היום: {remaining_budget} קלוריות"
+                calorie_message = await update.message.reply_text(calorie_msg)
+                await pin_single_message(chat, calorie_message.message_id)
             except Exception as e:
-                logger.error("Telegram API error in reply_text: %s", e)
-                
+                logger.error(f"Error sending or pinning calorie budget message: {e}")
         except Exception as e:
             logger.error(f"Error saving food consumption: {e}")
             try:
@@ -2744,7 +2759,7 @@ async def handle_activity_types_selection(update: Update, context: ContextTypes.
         # הוסף סוג פעילות
         activity_clean = query.data.replace("activity_add_", "")
         for activity in ACTIVITY_TYPES_MULTI:
-            activity_clean_check = activity.replace(" ", "_").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("🏊", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
+            activity_clean_check = activity.replace(" ", "_").replace("🏃", "").replace("🚶", "").replace("🚴", "").replace("��", "").replace("🏋️", "").replace("🧘", "").replace("🤸", "").replace("❓", "").strip()
             if activity_clean_check == activity_clean:
                 if activity not in selected_types:
                     selected_types.append(activity)
@@ -3066,4 +3081,18 @@ async def safe_edit_message_text(query, text, reply_markup=None, parse_mode=None
 
 # יצירת instance של NutritionDB לשימוש בכל הפונקציות
 nutrition_db = NutritionDB()
+
+
+async def pin_single_message(chat, message_id):
+    """מסיר pin קודם אם יש ומצמיד הודעה חדשה."""
+    try:
+        pinned = await chat.get_pinned_message()
+        if pinned and pinned.message_id != message_id:
+            await chat.unpin_message(pinned.message_id)
+    except Exception as e:
+        logger.warning(f"Could not unpin previous pinned message: {e}")
+    try:
+        await chat.pin_message(message_id)
+    except Exception as e:
+        logger.error(f"Error pinning message: {e}")
 

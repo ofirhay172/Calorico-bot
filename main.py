@@ -224,12 +224,22 @@ def main():
     """הפונקציה הראשית שמתחילה את הבוט."""
     # Get bot token from environment
     bot_token = os.getenv("TELEGRAM_TOKEN")
-    if not bot_token:
-        logger.error("TELEGRAM_TOKEN not found in environment variables")
+    if not bot_token or bot_token == "your_telegram_bot_token_here":
+        logger.error("TELEGRAM_TOKEN not found or not properly configured in environment variables")
+        logger.error("Please set TELEGRAM_TOKEN in your .env file or environment variables")
         return
 
+    # Get OpenAI API key from environment
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if not openai_key:
+        logger.warning("OPENAI_API_KEY not found in environment variables - GPT features will not work")
+
     # Create application
-    application = Application.builder().token(bot_token).build()
+    try:
+        application = Application.builder().token(bot_token).build()
+    except Exception as e:
+        logger.error(f"Failed to create application: {e}")
+        return
 
     # Create conversation handler for questionnaire
     conv_handler = ConversationHandler(
@@ -331,10 +341,17 @@ def main():
     application.add_error_handler(global_error_handler)
 
     # Initialize scheduler
-    start_scheduler(application)
+    try:
+        start_scheduler(application)
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {e}")
 
     logger.info("Bot started successfully")
-    application.run_polling()
+    try:
+        application.run_polling()
+    except Exception as e:
+        logger.error(f"Failed to start polling: {e}")
+        return
 
 
 if __name__ == "__main__":

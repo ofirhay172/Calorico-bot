@@ -2435,6 +2435,14 @@ async def send_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data is None:
         context.user_data = {}
     user = context.user_data
+    # בדוק אם יש טקסט צריכה בהודעה של 'סיימתי'
+    if update.message and update.message.text:
+        text = update.message.text.strip()
+        # אם יש טקסט נוסף אחרי 'סיימתי', הוסף אותו ליומן בלי לשלוח הודעה
+        if text.startswith("סיימתי") and len(text) > len("סיימתי"):
+            extra = text[len("סיימתי"):].strip()
+            if extra:
+                await handle_food_consumption(update, context, extra, silent=True)
     food_log = user.get("daily_food_log", [])
     calorie_budget = user.get("calorie_budget", 0)
     calories_consumed = user.get("calories_consumed", 0)
@@ -2611,7 +2619,7 @@ async def schedule_menu(
             nutrition_db.save_user(user_id, context.user_data)
         try:
             await update.message.reply_text(
-                f"מעולה! מחר בשעה {time} תקבל/י את התפריט היומי שלך 🙌",
+                f"מעולה! תפריט יישלח אליך מחר בשעה {time} ⏰",
                 reply_markup=ReplyKeyboardRemove(),
                 parse_mode="HTML",
             )
@@ -2811,15 +2819,21 @@ async def handle_free_text_input(
         return
 
 
-async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, silent: bool = False):
     from utils import analyze_meal_with_gpt
     if context.user_data is None:
         context.user_data = {}
-    food_desc = text.replace("אכלתי", "").strip()
+    # זיהוי אם זו שתייה
+    drink_keywords = ["קולה", "קפה", "תה", "מים", "מיץ", "בירה", "יין", "ספרייט", "פפסי", "סודה", "משקה", "שתייה", "שתיתי"]
+    is_drink = False
+    text_lower = text.lower()
+    if text_lower.startswith("שתיתי") or any(word in text_lower for word in drink_keywords):
+        is_drink = True
+    food_desc = text.replace("אכלתי", "").replace("שתיתי", "").strip()
     if not food_desc:
         try:
             await update.message.reply_text(
-                "מה אכלת? אנא פרט את המזון שאכלת.",
+                "מה אכלת/שתית? אנא פרט.",
                 parse_mode="HTML"
             )
         except Exception as e:
@@ -2853,45 +2867,50 @@ async def handle_food_consumption(update: Update, context: ContextTypes.DEFAULT_
                 remaining_budget = 0
             # שמור למסד נתונים
             nutrition_db.save_user(user_id, context.user_data)
-            # בנה הודעת פירוט ארוחה
+            # בנה הודעת פירוט
             meal_lines = [f"{item['name']} – {item['calories']} קלוריות" for item in items]
             meal_text = "\n".join(meal_lines)
-            meal_summary = (
-                f"🍽️ חישוב קלורי לארוחה:\n\n"
-                f"{meal_text}\n"
-                f"סה\"כ לארוחה: {total} קלוריות"
-            )
-            # בנה הודעת מצב יומי (ללא השורה האחרונה)
-            daily_status = (
-                f"📊 מצב יומי:\n\n"
-                f"צריכה עד עכשיו: {consumed_before} קלוריות\n"
-                f"תוספת מהארוחה הנוכחית: {total} קלוריות\n"
-                f"סה\"כ עד כה: {consumed_after} קלוריות\n\n"
-                f"היעד היומי שלי: {current_budget} קלוריות"
-            )
-            # בנה הודעה נפרדת לתקציב שנותר
-            remaining_msg = f"🔄 נותרו לי להיום: {remaining_budget} קלוריות"
-            # שלח הודעות
-            await update.message.reply_text(meal_summary)
-            await update.message.reply_text(daily_status)
-            # שלח הודעת תקציב נפרדת וצמד אותה
-            try:
-                chat = update.effective_chat
-                # הסר pin קיים
+            if is_drink:
+                meal_summary = (
+                    f"🥤 שתייה שצרכת:\n"
+                    f"{meal_text}\n\n"
+                    f"עודכן התקציב היומי שלך בהתאם."
+                )
+            else:
+                meal_summary = (
+                    f"🍽️ חישוב קלורי לארוחה:\n\n"
+                    f"{meal_text}\n"
+                    f"סה\"כ לארוחה: {total} קלוריות"
+                )
+            # שלח הודעה רק אם לא silent (כלומר, לא כחלק מסיכום יומי)
+            if not silent:
+                await update.message.reply_text(meal_summary)
+                # שלח הודעת מצב יומי (ללא השורה האחרונה)
+                daily_status = (
+                    f"📊 מצב יומי:\n\n"
+                    f"צריכה עד עכשיו: {consumed_before} קלוריות\n"
+                    f"תוספת מהארוחה הנוכחית: {total} קלוריות\n"
+                    f"סה\"כ עד כה: {consumed_after} קלוריות\n\n"
+                    f"היעד היומי שלי: {current_budget} קלוריות"
+                )
+                await update.message.reply_text(daily_status)
+                # שלח הודעת תקציב נפרדת וצמד אותה
                 try:
-                    await chat.unpin_all_messages()
+                    chat = update.effective_chat
+                    try:
+                        await chat.unpin_all_messages()
+                    except Exception:
+                        pass
+                    calorie_msg = f"🔄 נותרו לי להיום: {remaining_budget} קלוריות"
+                    calorie_message = await update.message.reply_text(calorie_msg)
+                    await chat.pin_message(calorie_message.message_id)
                 except Exception as e:
-                    logger.error(f"Error unpinning messages: {e}")
-                # שלח הודעת תקציב חדשה וצמד אותה
-                remaining_message = await update.message.reply_text(remaining_msg)
-                await chat.pin_message(remaining_message.message_id)
-            except Exception as e:
-                logger.error(f"Error sending or pinning calorie budget message: {e}")
+                    logger.error("Telegram API error in pinning: %s", e)
         except Exception as e:
-            logger.error(f"Error saving food consumption: {e}")
+            logger.error(f"Error handling food consumption: {e}")
             try:
                 await update.message.reply_text(
-                    "אירעה שגיאה ברישום המזון. נסה שוב.",
+                    "אירעה שגיאה בעיבוד הצריכה. נסה שוב.",
                     parse_mode="HTML"
                 )
             except Exception as e:

@@ -285,20 +285,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg2, parse_mode="HTML")
     await asyncio.sleep(3)
 
-    # הודעה 3: איך להשתמש ומה עכשיו
+    # הודעה 3: איך להשתמש
     msg3 = (
         "איך מדברים איתי? פשוט מאוד:\n\n"
         "- 'אכלתי 2 פרוסות לחם עם קוטג' וסלט'  \n"
         "- 'בא לי שוקולד. כדאי לי?'  \n"
         "- 'כמה קלוריות יש ב-100 גרם אורז?'  \n"
-        "- 'רוצה תפריט יומי'\n\n"
-        "📍 בוא/י נתחיל בשאלון קצר כדי שאכיר אותך טוב יותר 👇"
+        "- 'רוצה תפריט יומי'"
     )
-    keyboard = [
-        [KeyboardButton("✏️ להתחלת שאלון אישי")],
-        [KeyboardButton("📘 עזרה")],
-    ]
-    await update.message.reply_text(msg3, parse_mode="HTML", reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True))
+    await update.message.reply_text(msg3, parse_mode="HTML")
     await asyncio.sleep(3)
 
     # הודעה 4: הודעה קריטית על כפתור "סיימתי"

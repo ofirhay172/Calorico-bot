@@ -24,18 +24,26 @@ def signal_handler(signum, frame):
 async def run_bot():
     """Run the bot in async mode"""
     try:
+        logger.info("[STARTUP] Starting bot initialization...")
+        
         # Check if required environment variables are set
         bot_token = os.getenv("TELEGRAM_TOKEN")
         if not bot_token:
             logger.error("TELEGRAM_TOKEN not found in environment variables")
             sys.exit(1)
+        else:
+            logger.info("[STARTUP] TELEGRAM_TOKEN found")
             
         openai_key = os.getenv("OPENAI_API_KEY")
         if not openai_key:
             logger.warning("OPENAI_API_KEY not found - GPT features will be limited")
+        else:
+            logger.info("[STARTUP] OPENAI_API_KEY found")
         
+        logger.info("[STARTUP] Importing main module...")
         # Import and run the main bot
         from main import main as bot_main
+        logger.info("[STARTUP] Starting main bot...")
         await bot_main()
         
     except Exception as e:

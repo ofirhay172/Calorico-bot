@@ -216,14 +216,20 @@ def reset_user(user_id):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """מתחיל את הבוט ומציג הודעת פתיחה בשלוש הודעות נפרדות, עם השהייה של 3 שניות בין כל הודעה."""
+    logger.info(f"[START] Received /start command from user {update.effective_user.id if update.effective_user else 'Unknown'}")
+    
     if not update.message:
+        logger.warning("[START] No message in update")
         return
 
     user = update.effective_user
     if not user:
+        logger.warning("[START] No effective user in update")
         return
 
     user_id = user.id
+    logger.info(f"[START] Processing start for user {user_id}")
+    
     # איפוס נתוני משתמש במסד נתונים
     reset_user(user_id)
     # איפוס context
@@ -239,7 +245,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         user_name = "חבר/ה"
 
-    logger.info("Bot started by user %s", user.id)
+    logger.info(f"[START] Bot started by user {user.id} ({user_name})")
 
     # הודעה 1: הצגה עצמית ופיצ'רים קיימים
     msg1 = (
@@ -2583,10 +2589,15 @@ async def handle_free_text_input(
         update: Update,
         context: ContextTypes.DEFAULT_TYPE):
     """מטפל בקלט טקסט חופשי - מזהה צריכת מזון ושאלות כלליות."""
+    user_id = update.effective_user.id if update.effective_user else 'Unknown'
+    logger.info(f"[FREE_TEXT] Received text from user {user_id}")
+    
     if not update.message or not update.message.text:
+        logger.warning(f"[FREE_TEXT] No message or text for user {user_id}")
         return
     
     text = update.message.text.strip()
+    logger.info(f"[FREE_TEXT] Processing text for user {user_id}: '{text[:50]}...'")
     
     # בדוק אם המשתמש מחכה להזנת רכיבים לבניית ארוחה
     if context.user_data and context.user_data.get('waiting_for_ingredients', False):

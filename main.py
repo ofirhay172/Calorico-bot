@@ -226,6 +226,9 @@ def start_scheduler(application):
 
 async def main():
     logger.info("[MAIN] Bot main() started")
+    logger.info(f"[MAIN] Environment: TELEGRAM_TOKEN={'SET' if os.getenv('TELEGRAM_TOKEN') else 'NOT_SET'}")
+    logger.info(f"[MAIN] Environment: OPENAI_API_KEY={'SET' if os.getenv('OPENAI_API_KEY') else 'NOT_SET'}")
+    
     # Get bot token from environment
     bot_token = os.getenv("TELEGRAM_TOKEN")
     if not bot_token or bot_token == "your_telegram_bot_token_here":
@@ -344,6 +347,11 @@ async def main():
     async def global_error_handler(update, context):
         logger.error("Unhandled exception", exc_info=context.error)
     application.add_error_handler(global_error_handler)
+    
+    # Add update handler for debugging
+    async def update_handler(update, context):
+        logger.info(f"[UPDATE] Received update: {update.update_id} from user {update.effective_user.id if update.effective_user else 'Unknown'}")
+    application.add_handler(MessageHandler(filters.ALL, update_handler))
 
     # Initialize scheduler
     try:
@@ -353,9 +361,11 @@ async def main():
 
     logger.info("[MAIN] Bot initialized, starting manually (no run_polling)...")
     try:
+        logger.info("[MAIN] Initializing application...")
         await application.initialize()
+        logger.info("[MAIN] Starting application...")
         await application.start()
-        logger.info("[MAIN] Application started, entering keep-alive loop")
+        logger.info("[MAIN] Application started successfully, entering keep-alive loop")
         while True:
             await asyncio.sleep(60)
     except Exception as e:

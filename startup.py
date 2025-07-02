@@ -21,8 +21,8 @@ def signal_handler(signum, frame):
     logger.info("Received shutdown signal, stopping bot...")
     sys.exit(0)
 
-async def run_bot():
-    """Run the bot in async mode"""
+def run_bot():
+    """Run the bot in sync mode"""
     try:
         logger.info("[STARTUP] Starting bot initialization...")
         
@@ -44,7 +44,7 @@ async def run_bot():
         # Import and run the main bot
         from main import main as bot_main
         logger.info("[STARTUP] Starting main bot...")
-        await bot_main()
+        bot_main()  # No await needed since main() is now a regular function
         
     except Exception as e:
         logger.error(f"Failed to start bot: {e}")
@@ -60,9 +60,9 @@ def main():
     
     logger.info("Starting bot...")
     
-    # Run the bot in async mode
+    # Run the bot in sync mode
     try:
-        asyncio.run(run_bot())
+        run_bot()
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
     except Exception as e:

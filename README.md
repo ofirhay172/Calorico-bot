@@ -51,8 +51,8 @@
 
 1. **Clone את הפרויקט**
 ```bash
-git clone https://github.com/your-username/yogev-bot.git
-cd yogev-bot
+git clone https://github.com/your-username/calorico-bot.git
+cd calorico-bot
 ```
 
 2. **התקן dependencies**
@@ -118,7 +118,7 @@ OPENAI_API_KEY=your_openai_key_here
 ## 📁 מבנה הפרויקט
 
 ```
-yogev-bot/
+calorico-bot/
 ├── main.py              # נקודת הכניסה הראשית
 ├── handlers.py          # handlers לכל הפונקציות
 ├── utils.py             # פונקציות עזר

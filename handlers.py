@@ -91,6 +91,9 @@ from report_generator import (
 # Initialize logger first
 logger = logging.getLogger(__name__)
 
+# Initialize database
+nutrition_db = NutritionDB()
+
 # Import OpenAI client
 try:
     from openai import OpenAI
@@ -229,7 +232,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_id = user.id
     logger.info(f"[START] Processing start for user {user_id}")
-    
+
+    # אם המשתמש כבר השלים את השאלון הראשוני, אל תתחיל מחדש אלא אם כן איפס
+    if context.user_data and context.user_data.get("flow", {}).get("setup_complete"):
+        await update.message.reply_text(
+            "כבר השלמת את השאלון! תוכל לעבור לשאלון מחדש דרך התפריט או על ידי /reset.",
+            reply_markup=build_main_keyboard(),
+        )
+        return
+
     # איפוס נתוני משתמש במסד נתונים
     reset_user(user_id)
     # איפוס context
@@ -302,6 +313,66 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await get_name(update, context)
     else:
         return await get_gender(update, context)
+
+
+async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """פקודת reset - מאפסת את כל הנתונים של המשתמש."""
+    if not update.message or not update.effective_user:
+        return
+    
+    user_name = update.effective_user.first_name or "חבר/ה"
+    
+    # בדוק אם המשתמש בטוח
+    keyboard = [
+        [InlineKeyboardButton("כן, אפס הכול", callback_data="reset_confirm")],
+        [InlineKeyboardButton("לא, ביטול", callback_data="reset_cancel")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(
+        f"שלום {user_name}! 🔄\n\n"
+        "את/ה מבקש/ת לאפס את כל הנתונים שלך.\n"
+        "זה ימחק את:\n"
+        "• כל הנתונים האישיים שלך\n"
+        "• היסטוריית התזונה\n"
+        "• העדפות התפריט\n"
+        "• כל ההגדרות\n\n"
+        "את/ה בטוח/ה שברצונך לאפס הכול?",
+        reply_markup=reply_markup
+    )
+
+
+async def handle_reset_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """מטפל באישור או ביטול של פקודת reset."""
+    if not update.callback_query or not update.effective_user:
+        return ConversationHandler.END
+    
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data == "reset_confirm":
+        # אפס את כל user_data
+        if context.user_data:
+            context.user_data.clear()
+        
+        # אפס גם את הנתונים במסד הנתונים
+        user_id = update.effective_user.id
+        reset_user(user_id)
+        
+        await query.edit_message_text(
+            "✅ אופס! כל הנתונים שלך נמחקו.\n\n"
+            "עכשיו נתחיל מחדש! מה השם שלך?"
+        )
+        
+        # התחל את התהליך מחדש
+        return NAME
+        
+    elif query.data == "reset_cancel":
+        await query.edit_message_text(
+            "❌ ביטלת את האיפוס.\n"
+            "הנתונים שלך נשמרו."
+        )
+        return ConversationHandler.END
 
 
 async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -2503,6 +2574,12 @@ async def after_questionnaire(
 ) -> int:
     if context.user_data is None:
         context.user_data = {}
+    # Set flow state to tracking and setup_complete with day count
+    context.user_data["flow"] = {
+        "stage": "tracking", 
+        "setup_complete": True,
+        "day_count": 1  # התחל מיום 1
+    }
     return ConversationHandler.END
 
 
@@ -2588,9 +2665,6 @@ def classify_text_input(text: str) -> str:
 async def handle_free_text_input(
         update: Update,
         context: ContextTypes.DEFAULT_TYPE):
-    # אם המשתמש נמצא בשיחה (state) של ConversationHandler, אל תטפל
-    if context.conversation_data:
-        return
     user_id = update.effective_user.id if update.effective_user else 'Unknown'
     logger.info(f"[FREE_TEXT] Received text from user {user_id}")
     

@@ -4,8 +4,9 @@ Database setup module for the Calorico Telegram bot.
 This module handles initial database creation and setup.
 """
 
-from nutrition_db import init_db
+from db import NutritionDB
 import sqlite3
 
-init_db()
+# Initialize database
+nutrition_db = NutritionDB()
 print("✅ בסיס הנתונים נוצר בהצלחה.")

@@ -112,6 +112,8 @@ from handlers import (
     handle_update_personal_details_response,
     handle_help,
     handle_help_action,
+    reset_command,
+    handle_reset_confirmation,
 )
 from utils import build_main_keyboard
 from db import NutritionDB
@@ -142,6 +144,11 @@ async def daily_menu_scheduler(context):
         
         for user_id, user_data in all_users.items():
             try:
+                # בדוק אם המשתמש השלים את הסקר
+                if not user_data.get("flow", {}).get("setup_complete", False):
+                    logger.info(f"User {user_id} has not completed setup, skipping daily menu")
+                    continue
+                
                 # בדוק אם המשתמש רשום לתפריט אוטומטי
                 if not user_data.get("daily_menu_enabled", False):
                     continue
@@ -198,6 +205,14 @@ async def daily_menu_scheduler(context):
                     logger.error(f"Error sending menu notification to user {user_id}: {e}")
                     continue
                 
+                # עדכן את מספר היום
+                current_day = user_data.get("flow", {}).get("day_count", 0)
+                user_data["flow"] = {
+                    "stage": "tracking", 
+                    "setup_complete": True,
+                    "day_count": current_day + 1
+                }
+                
                 # תעד מועד שליחה במסד
                 user_data["last_menu_sent"] = now.isoformat()
                 nutrition_db.save_user(user_id, user_data)
@@ -236,7 +251,7 @@ def delete_webhook():
     print(f"[WEBHOOK DELETE] {response.status_code} - {response.text}")
 
 
-async def main():
+def main():
     delete_webhook()  # שלב 1: מחיקת webhook
     logger.info("[MAIN] Bot main() started")
     logger.info(f"[MAIN] Environment: TELEGRAM_TOKEN={'SET' if os.getenv('TELEGRAM_TOKEN') else 'NOT_SET'}")
@@ -319,6 +334,9 @@ async def main():
 
     # Add handler for report menu callback
     application.add_handler(CallbackQueryHandler(handle_report_request, pattern=r"^report_(daily|weekly|monthly|smart_feedback)$"))
+    
+    # Add handler for reset confirmation
+    application.add_handler(CallbackQueryHandler(handle_reset_confirmation, pattern=r"^reset_(confirm|cancel)$"))
 
     # Add handler for help button ("עזרה")
     application.add_handler(
@@ -342,12 +360,13 @@ async def main():
         MessageHandler(
             filters.TEXT & ~filters.COMMAND & ~filters.Regex(menu_regex),
             handle_free_text_input
-        ), group=10
+        )
     )
 
     # Add command handlers
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("menu", show_daily_menu))
+    application.add_handler(CommandHandler("reset", reset_command))
 
     # Add handler לכפתור עדכון פרטים אישיים
     application.add_handler(
@@ -357,20 +376,15 @@ async def main():
         )
     )
 
-    # Handler כללי שמדפיס כל update שמתקבל
+    # Handler כללי שמדפיס כל update שמתקבל (רק אחד!)
     async def log_update(update, context):
-        print(f"[UPDATE RECEIVED] {update}")
+        logger.info(f"[UPDATE] Received update: {update.update_id} from user {update.effective_user.id if update.effective_user else 'Unknown'}")
     application.add_handler(MessageHandler(filters.ALL, log_update), group=0)
 
     # Add global error handler
     async def global_error_handler(update, context):
         logger.error("Unhandled exception", exc_info=context.error)
     application.add_error_handler(global_error_handler)
-    
-    # Add update handler for debugging
-    async def update_handler(update, context):
-        logger.info(f"[UPDATE] Received update: {update.update_id} from user {update.effective_user.id if update.effective_user else 'Unknown'}")
-    application.add_handler(MessageHandler(filters.ALL, update_handler))
 
     # Initialize scheduler
     try:
@@ -378,28 +392,23 @@ async def main():
     except Exception as e:
         logger.error(f"Failed to start scheduler: {e}")
 
-    logger.info("[MAIN] Bot initialized, starting manually (no run_polling)...")
+    logger.info("[MAIN] Bot initialized, starting with polling...")
     try:
-        logger.info("[MAIN] Initializing application...")
-        await application.initialize()
-        logger.info("[MAIN] Starting application...")
-        await application.start()
-        # שלב 2: ודא שהבוט משתמש בפולינג
-        await application.updater.start_polling()
-        logger.info("[MAIN] Application started successfully, entering keep-alive loop")
-        while True:
-            await asyncio.sleep(60)
+        logger.info("[MAIN] Starting application with polling...")
+        # Use run_polling() which handles everything internally
+        application.run_polling()
+        logger.info("[MAIN] Application started successfully with polling")
     except Exception as e:
         logger.error(f"[MAIN] Exception in main loop: {e}")
         raise
     finally:
         logger.info("[MAIN] main() is exiting, cleaning up...")
         try:
-            await application.stop()
-            await application.shutdown()
+            # Note: Cannot call async methods in non-async context
+            logger.info("[MAIN] Cleanup completed")
         except Exception as e:
             logger.error(f"[MAIN] Error during cleanup: {e}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import datetime
+import requests
 
 # Load environment variables from .env file (if available)
 try:
@@ -225,7 +226,18 @@ def start_scheduler(application):
     logger.info("Daily menu scheduler started - checking every 10 minutes")
 
 
+def delete_webhook():
+    token = os.environ.get("TELEGRAM_TOKEN")
+    if not token:
+        print("[ERROR] TELEGRAM_TOKEN not found in environment")
+        return
+    url = f"https://api.telegram.org/bot{token}/deleteWebhook"
+    response = requests.post(url)
+    print(f"[WEBHOOK DELETE] {response.status_code} - {response.text}")
+
+
 async def main():
+    delete_webhook()  # שלב 1: מחיקת webhook
     logger.info("[MAIN] Bot main() started")
     logger.info(f"[MAIN] Environment: TELEGRAM_TOKEN={'SET' if os.getenv('TELEGRAM_TOKEN') else 'NOT_SET'}")
     logger.info(f"[MAIN] Environment: OPENAI_API_KEY={'SET' if os.getenv('OPENAI_API_KEY') else 'NOT_SET'}")
@@ -346,9 +358,9 @@ async def main():
     )
 
     # Handler כללי שמדפיס כל update שמתקבל
-    async def handle_updates(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        logger.info("[UPDATE RECEIVED] - %s", update)
-    application.add_handler(MessageHandler(filters.ALL, handle_updates), group=0)
+    async def log_update(update, context):
+        print(f"[UPDATE RECEIVED] {update}")
+    application.add_handler(MessageHandler(filters.ALL, log_update), group=0)
 
     # Add global error handler
     async def global_error_handler(update, context):
@@ -372,6 +384,8 @@ async def main():
         await application.initialize()
         logger.info("[MAIN] Starting application...")
         await application.start()
+        # שלב 2: ודא שהבוט משתמש בפולינג
+        await application.updater.start_polling()
         logger.info("[MAIN] Application started successfully, entering keep-alive loop")
         while True:
             await asyncio.sleep(60)
